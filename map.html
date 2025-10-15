@@ -83,7 +83,7 @@
   <script>
     // 🔐 JSONBin setup
     const BIN_ID = "68f01f3143b1c97be96a44ca";
-    const API_KEY = "$2a$10$/c6C8qI2DclpT0tVPmDMPekyPvJoMxy2Jydy.6QammlU2uvi3dG8C"; // new key
+    const API_KEY = "$2a$10$2veWN7sqEZs.M4pC022zZediQvKzF8PR3xpTKpmQ4gzbMJbyx1VP6";
     const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
     const statusEl = document.getElementById("status");
@@ -115,7 +115,9 @@
         const data = await res.json();
         const bananas = data.record?.bananas || [];
         bananas.forEach(b => {
-          L.marker([b.lat, b.lng], { icon: bananaIcon }).addTo(map);
+          L.marker([b.lat, b.lng], { icon: bananaIcon })
+            .addTo(map)
+            .bindPopup(`🍌 <b>${b.name || "A Banana"}</b><br>${b.message || ""}`);
         });
         setStatus(`Loaded ${bananas.length} bananas 🍌`);
         return bananas;
