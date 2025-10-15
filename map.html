@@ -35,9 +35,11 @@ input,textarea{width:100%;margin:6px 0;padding:6px;border-radius:6px;border:1px 
 
 <body>
 <div class="ui">
- <div class="chip"><span>🗺️</span>
+ <div class="chip" title="Map theme">
+  <span>🗺️</span>
   <select id="themeSelect">
-   <option value="light">Light</option><option value="dark">Dark</option>
+   <option value="light">Light</option>
+   <option value="dark">Dark</option>
    <option value="voyager">Voyager</option>
   </select>
  </div>
@@ -45,113 +47,151 @@ input,textarea{width:100%;margin:6px 0;padding:6px;border-radius:6px;border:1px 
 </div>
 
 <div id="map"></div>
-<div class="watermark"><span>the banana place is under construction</span></div>
+<div class="watermark" aria-hidden="true"><span>the banana place is under construction</span></div>
 <div class="status" id="status">🍌 Loading bananas…</div>
 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 
 <script>
-const BIN_ID="68f01f3143b1c97be96a44ca";
-const API_KEY="$2a$10$/c6C8qI2DclpT0tVPmDMPekyPvJoMxy2Jydy.6QammlU2uvi3dG8C";
-const BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
-const statusEl=document.getElementById("status");
-const setStatus=(m,ok=true)=>{statusEl.textContent=m;statusEl.style.color=ok?"#111":"#b00020";};
+/* ===== JSONBin config (final) ===== */
+const BIN_ID  = "68f0265443b1c97be96a4ad5";
+const API_KEY = "$2a$10$RCnUKDWytC/ysiMgbX6/q.QRSKrLrAOPSOsZVPFYaaW06lur2V5X6";
+const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-const map=L.map("map").setView([20,0],2);
-const layers={
- light:{url:"https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"},
- dark:{url:"https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"},
- voyager:{url:"https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"}
+const statusEl = document.getElementById("status");
+const setStatus = (msg, ok = true) => { statusEl.textContent = msg; statusEl.style.color = ok ? "#111" : "#b00020"; };
+
+/* ===== Map + themes ===== */
+const map = L.map("map").setView([20,0],2);
+const providers = {
+  light:  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  dark:   'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  voyager:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
 };
-let tile;
-function setTheme(t){if(tile)map.removeLayer(tile);tile=L.tileLayer(layers[t||'light'].url,
- {attribution:"&copy;OpenStreetMap &copy;CARTO"}).addTo(map);
- localStorage.setItem('banana_theme',t);}
-const sel=document.getElementById('themeSelect');
-setTheme(localStorage.getItem('banana_theme')||'light');
-sel.value=localStorage.getItem('banana_theme')||'light';
-sel.addEventListener('change',e=>setTheme(e.target.value));
+let base;
+function setTheme(name){
+  if(base) map.removeLayer(base);
+  base = L.tileLayer(providers[name]||providers.light, { attribution:'&copy; OpenStreetMap &copy; CARTO', detectRetina:true }).addTo(map);
+  localStorage.setItem('banana_theme', name);
+}
+const select = document.getElementById('themeSelect');
+const saved = localStorage.getItem('banana_theme') || 'light';
+select.value = saved; setTheme(saved);
+select.addEventListener('change', e => setTheme(e.target.value));
 
-const icon=L.divIcon({html:"🍌",className:"banana",iconSize:[32,32],iconAnchor:[16,32]});
+const bananaIcon = L.divIcon({ html:'🍌', className:'banana', iconSize:[32,32], iconAnchor:[16,32] });
 
+/* ===== Load bananas ===== */
 async function loadBananas(){
- setStatus("🍌 Loading bananas…");
- try{
-  const r=await fetch(`${BIN_URL}/latest`,{headers:{"X-Master-Key":API_KEY}});
-  if(!r.ok)throw new Error(r.status);
-  const d=await r.json();const arr=d.record?.bananas||[];
-  arr.forEach(b=>{
-   const m=L.marker([b.lat,b.lng],{icon}).addTo(map);
-   let html=`<strong>🍌 Banana!</strong>`;
-   if(b.msg)html+=`<p>${b.msg}</p>`;
-   if(b.photo)html+=`<img src="${b.photo}" style="max-width:120px;border-radius:6px"/>`;
-   m.bindPopup(html);
-  });
-  setStatus(`✅ ${arr.length} bananas loaded`);
- }catch(e){console.error(e);setStatus("⚠️ load error",false);}
-}
-
-async function saveBanana(lat,lng,msg,photo){
- setStatus("💾 Saving…");
- try{
-  const r=await fetch(`${BIN_URL}/latest`,{headers:{"X-Master-Key":API_KEY}});
-  const d=await r.json();const arr=d.record?.bananas||[];
-  arr.push({lat,lng,msg,photo,ts:Date.now()});
-  const w=await fetch(BIN_URL,{method:"PUT",
-   headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},
-   body:JSON.stringify({bananas:arr})});
-  if(!w.ok)throw new Error(w.status);
-  setStatus("✅ Banana saved!");
- }catch(e){console.error(e);setStatus("⚠️ save error",false);}
-}
-
-map.on("click",e=>{
- const {lat,lng}=e.latlng;
- const form=document.createElement("div");
- form.innerHTML=`
-  <h4>🍌 Add a banana</h4>
-  <label>Message</label><textarea id="msg" rows="2"></textarea>
-  <label>Photo</label><input type="file" id="photo" accept="image/*"/>
-  <button id="saveBtn">Save</button>`;
- const popup=L.popup().setLatLng([lat,lng]).setContent(form).openOn(map);
- form.querySelector("#saveBtn").onclick=async()=>{
-  const msg=form.querySelector("#msg").value.trim();
-  const file=form.querySelector("#photo").files[0];
-  let photoData="";
-  if(file){
-   const r=new FileReader();
-   r.onload=async ev=>{
-    photoData=ev.target.result;
-    await saveBanana(lat,lng,msg,photoData);
-    L.marker([lat,lng],{icon})
-      .addTo(map)
-      .bindPopup(`<strong>🍌 Banana!</strong><p>${msg}</p><img src="${photoData}" style="max-width:120px;border-radius:6px"/>`)
-      .openPopup();
-   };
-   r.readAsDataURL(file);
-  }else{
-   await saveBanana(lat,lng,msg,"");
-   L.marker([lat,lng],{icon})
-     .addTo(map)
-     .bindPopup(`<strong>🍌 Banana!</strong><p>${msg}</p>`)
-     .openPopup();
+  setStatus("🍌 Loading bananas…");
+  try {
+    const res = await fetch(`${BIN_URL}/latest`, {
+      headers: { "X-Master-Key": API_KEY, "Content-Type":"application/json" }
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Read failed: ${res.status} ${body}`);
+    }
+    const data = await res.json();
+    const bananas = data.record?.bananas || [];
+    bananas.forEach(b => {
+      if (typeof b.lat === 'number' && typeof b.lng === 'number') {
+        const m = L.marker([b.lat, b.lng], { icon: bananaIcon }).addTo(map);
+        let html = `<strong>🍌 Banana!</strong>`;
+        if (b.msg)   html += `<p>${b.msg}</p>`;
+        if (b.photo) html += `<img src="${b.photo}" style="max-width:140px;border-radius:8px"/>`;
+        m.bindPopup(html);
+      }
+    });
+    setStatus(`✅ ${bananas.length} bananas loaded`);
+  } catch (err) {
+    console.error(err);
+    setStatus(`⚠️ ${err.message}`, false);
   }
-  map.closePopup();
- };
+}
+
+/* ===== Save banana ===== */
+async function saveBanana(lat, lng, msg, photo){
+  setStatus("💾 Saving…");
+  try {
+    const r = await fetch(`${BIN_URL}/latest`, { headers: { "X-Master-Key": API_KEY, "Content-Type":"application/json" }});
+    if (!r.ok) { const t = await r.text(); throw new Error(`Read-before-write failed: ${r.status} ${t}`); }
+    const j = await r.json();
+    const bananas = j.record?.bananas || [];
+    bananas.push({ lat, lng, msg, photo, ts: Date.now() });
+
+    const w = await fetch(BIN_URL, {
+      method: "PUT",
+      headers: { "X-Master-Key": API_KEY, "Content-Type":"application/json" },
+      body: JSON.stringify({ bananas })
+    });
+    if (!w.ok) { const t = await w.text(); throw new Error(`Write failed: ${w.status} ${t}`); }
+
+    setStatus("✅ Banana saved!");
+  } catch (err) {
+    console.error(err);
+    setStatus(`⚠️ ${err.message}`, false);
+  }
+}
+
+/* ===== Click-to-add form ===== */
+map.on("click", (e) => {
+  const { lat, lng } = e.latlng;
+  const form = document.createElement("div");
+  form.innerHTML = `
+    <h4 style="margin:0 0 8px">🍌 Add a banana</h4>
+    <label>Message</label>
+    <textarea id="msg" rows="2" placeholder="say something fun…"></textarea>
+    <label>Photo</label>
+    <input type="file" id="photo" accept="image/*"/>
+    <button id="saveBtn" style="margin-top:6px">Save</button>
+  `;
+  const popup = L.popup().setLatLng([lat, lng]).setContent(form).openOn(map);
+
+  form.querySelector("#saveBtn").onclick = async () => {
+    const msg = form.querySelector("#msg").value.trim();
+    const file = form.querySelector("#photo").files[0];
+
+    const addMarker = (photoData) => {
+      const m = L.marker([lat, lng], { icon: bananaIcon }).addTo(map);
+      let html = `<strong>🍌 Banana!</strong>`;
+      if (msg)       html += `<p>${msg}</p>`;
+      if (photoData) html += `<img src="${photoData}" style="max-width:140px;border-radius:8px"/>`;
+      m.bindPopup(html).openPopup();
+    };
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const photoData = ev.target.result;
+        await saveBanana(lat, lng, msg, photoData);
+        addMarker(photoData);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      await saveBanana(lat, lng, msg, "");
+      addMarker("");
+    }
+    map.closePopup();
+  };
 });
 
-function flyToUser(){
- if(!navigator.geolocation)return;
- navigator.geolocation.getCurrentPosition(p=>{
-  const{latitude,longitude}=p.coords;
-  map.flyTo([latitude,longitude],11,{duration:1.2});
-  L.marker([latitude,longitude],{icon}).addTo(map).bindPopup("🍌 You are here").openPopup();
- });
-}
+/* ===== Geolocate on load ===== */
+(function flyToUser(){
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    ({coords:{latitude,longitude}}) => {
+      map.flyTo([latitude, longitude], 11, { duration: 1.2 });
+      L.marker([latitude, longitude], { icon: bananaIcon }).addTo(map).bindPopup("🍌 You are here").openPopup();
+    },
+    (err) => console.warn("Geolocation denied/unavailable:", err?.message || err),
+    { enableHighAccuracy:true, timeout:8000, maximumAge:60000 }
+  );
+})();
 
+/* ===== Boot ===== */
 loadBananas();
-flyToUser();
 </script>
 </body>
 </html>
