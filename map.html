@@ -4,8 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Banana Travel Map 🍌</title>
+
+  <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🍌</text></svg>">
+
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
   <style>
     html, body {
       margin: 0;
@@ -13,27 +18,48 @@
       background: #FFF7CC;
       font-family: system-ui, sans-serif;
     }
+
     #map {
       width: 100%;
       height: 100dvh;
     }
+
     .leaflet-container {
       background: #FFF7CC;
     }
-    .menu-btn {
+
+    .btn {
       position: fixed;
-      top: calc(16px + env(safe-area-inset-top, 0px));
-      left: 16px;
       z-index: 999;
       background: #fff8;
       border: none;
-      border-radius: 50%;
+      border-radius: 999px;
       width: 56px;
       height: 56px;
       font-size: 24px;
       box-shadow: 0 2px 8px rgba(0,0,0,.12);
       cursor: pointer;
+      display: grid;
+      place-items: center;
     }
+
+    .home {
+      top: calc(16px + env(safe-area-inset-top,0px));
+      left: 16px;
+    }
+
+    .status {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 999;
+      background: #fff;
+      padding: 8px 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12);
+      font-size: 12px;
+    }
+
     .watermark {
       position: fixed;
       inset: 0;
@@ -42,6 +68,7 @@
       pointer-events: none;
       z-index: 2;
     }
+
     .watermark span {
       font-weight: 800;
       letter-spacing: .06em;
@@ -56,10 +83,10 @@
     }
   </style>
 </head>
-<body>
 
-  <!-- Home button -->
-  <button class="menu-btn" onclick="window.location.href='index.html'" aria-label="Back to home">🏠</button>
+<body>
+  <!-- Home Button -->
+  <button class="btn home" onclick="window.location.href='index.html'" aria-label="Back to home">🏠</button>
 
   <!-- Map -->
   <div id="map"></div>
@@ -69,35 +96,41 @@
     <span>the banana place is under construction</span>
   </div>
 
+  <!-- Status Indicator -->
+  <div class="status" id="status">Connecting…</div>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-  <!-- Leaflet -->
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <script>
-    /* -----------------------------
+    /* -------------------------------
        1️⃣ Initialize Firebase
-    ----------------------------- */
+    ------------------------------- */
     const firebaseConfig = {
       apiKey: "AIzaSyCeEjsyVfx7jWk-CJETX6HTgDOLheUaYyw",
       authDomain: "place-banana.firebaseapp.com",
       projectId: "place-banana",
-      storageBucket: "place-banana.firebasestorage.app",
+      storageBucket: "place-banana.appspot.com",
       messagingSenderId: "169335775541",
       appId: "1:169335775541:web:23d847646d927ff7f6ac7c",
       measurementId: "G-QWESTSDXT1"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    try {
+      firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+      console.error('Firebase init error:', e);
+    }
     const db = firebase.firestore();
 
-    /* -----------------------------
-       2️⃣ Setup Leaflet Map
-    ----------------------------- */
+    /* -------------------------------
+       2️⃣ Setup Map
+    ------------------------------- */
     const map = L.map('map').setView([20, 0], 2);
-
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
@@ -109,49 +142,70 @@
       iconAnchor: [16, 32],
     });
 
-    /* -----------------------------
-       3️⃣ Load existing banana pins
-    ----------------------------- */
-    db.collection('bananas').onSnapshot(snapshot => {
-      snapshot.docChanges().forEach(change => {
-        if (change.type === 'added') {
-          const data = change.doc.data();
-          L.marker([data.lat, data.lng], { icon: bananaIcon })
-            .addTo(map)
-            .bindPopup('🍌 Banana tagged here!');
+    const statusEl = document.getElementById('status');
+    function setStatus(msg, ok = true) {
+      statusEl.textContent = msg;
+      statusEl.style.color = ok ? '#111' : '#b00020';
+    }
+
+    /* -------------------------------
+       3️⃣ Load Existing Bananas (Live)
+    ------------------------------- */
+    db.collection('bananas').onSnapshot(
+      { includeMetadataChanges: true },
+      (snapshot) => {
+        if (snapshot.metadata.fromCache) {
+          setStatus('Offline: showing cached bananas', false);
+        } else {
+          setStatus('Live bananas loaded');
         }
-      });
-    });
 
-    /* -----------------------------
-       4️⃣ Allow user to add new bananas
-    ----------------------------- */
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'added') {
+            const d = change.doc.data();
+            if (typeof d.lat === 'number' && typeof d.lng === 'number') {
+              L.marker([d.lat, d.lng], { icon: bananaIcon })
+                .addTo(map)
+                .bindPopup('🍌 Banana tagged here!');
+            }
+          }
+        });
+      },
+      (err) => {
+        console.error('onSnapshot error:', err);
+        setStatus('Error loading bananas: ' + err.code, false);
+      }
+    );
+
+    /* -------------------------------
+       4️⃣ Add New Banana on Click
+    ------------------------------- */
     map.on('click', async (e) => {
-      const lat = e.latlng.lat;
-      const lng = e.latlng.lng;
+      const lat = Number(e.latlng.lat.toFixed(6));
+      const lng = Number(e.latlng.lng.toFixed(6));
 
-      // Add to map immediately
+      // Optimistic UI (shows instantly)
       L.marker([lat, lng], { icon: bananaIcon })
         .addTo(map)
         .bindPopup('🍌 You dropped a banana!')
         .openPopup();
 
-      // Save to Firestore
       try {
         await db.collection('bananas').add({
           lat,
           lng,
           created: Date.now()
         });
-        console.log('Banana saved!');
+        setStatus('Banana saved!');
       } catch (err) {
         console.error('Error saving banana:', err);
+        setStatus('Save failed: ' + (err.code || err.message), false);
       }
     });
 
-    /* -----------------------------
-       5️⃣ Optional: Center on user
-    ----------------------------- */
+    /* -------------------------------
+       5️⃣ Center Map Near User
+    ------------------------------- */
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((pos) => {
         const { latitude, longitude } = pos.coords;
@@ -159,6 +213,5 @@
       });
     }
   </script>
-
 </body>
 </html>
