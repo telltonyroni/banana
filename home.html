@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini Banana</title>
+  <style>
+    :root{
+      --bg:#FFF7CC;        /* soft peel */
+      --banana:#F7CA45;    /* body */
+      --banana-2:#FFD55E;  /* highlight */
+      --stroke:#C79A23;    /* line */
+      --stem:#6E4528;      /* stem */
+      --ink:#222;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+
+    /* Full-screen stage centered on banana */
+    .stage{display:grid;place-items:center;min-height:100vh;overflow:hidden}
+
+    /* Banana scales to viewport, keeps nice margins */
+    .banana{width:min(96vmin, 1400px);height:auto;display:block}
+
+    /* Overlay UI */
+    .top-ui{position:fixed;inset:16px 16px auto auto;display:flex;gap:.5rem;align-items:center;z-index:4}
+    .hamb{border:0;background:#ffffffaa;padding:10px 12px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.12);backdrop-filter:saturate(140%) blur(6px);cursor:pointer}
+    .hamb:focus-visible{outline:2px solid #000}
+
+    .sheet{position:fixed;inset:0 0 0 auto;width:min(88vw,340px);translate:100% 0;background:#fff;padding:24px 20px;box-shadow:-12px 0 28px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:10px;transition:translate .35s ease;z-index:5}
+    .sheet.open{translate:0 0}
+    .sheet h3{margin:0 0 6px}
+    .sheet a{padding:10px 12px;border-radius:12px}
+    .sheet a:hover{background:#f2f2f2}
+    .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.18);opacity:0;pointer-events:none;transition:opacity .35s;z-index:4}
+    .backdrop.show{opacity:1;pointer-events:auto}
+
+    /* Loading splash */
+    .splash{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:8}
+    .wobble{animation:wobble 1.5s ease-in-out infinite}
+    @keyframes wobble{0%{transform:rotate(-7deg) scale(.92);opacity:.9}50%{transform:rotate(7deg) scale(1);opacity:1}100%{transform:rotate(-7deg) scale(.92);opacity:.9}}
+    .fade-out{animation:fade .35s forwards}
+    @keyframes fade{to{opacity:0;visibility:hidden}}
+
+    /* Hover labels near peel hotspots */
+    .lbl{font:600 20px/1 system-ui;fill:#555;opacity:0;transition:opacity .18s}
+    .hot:hover + .lbl{opacity:.9}
+    .hot:hover + .lbl{opacity:.9}
+
+    /* Footer chip */
+    .chip{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#ffffffb8;padding:8px 12px;border-radius:999px;box-shadow:0 2px 12px rgba(0,0,0,.12);backdrop-filter:saturate(150%) blur(6px);font-size:12px}
+
+    .sr-only{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+      /* Curved/rotated nav text near flaps */
+    .navtext{font:600 18px/1 system-ui;fill:#333;cursor:pointer;letter-spacing:.02em;}
+    .navtext:hover{opacity:.7}
+  </style>
+</head>
+<body>
+  <!-- Loading splash -->
+  <div class="splash" id="splash" aria-hidden="true">
+    <svg class="wobble" width="220" height="220" viewBox="0 0 256.85 291.32" role="img" aria-label="Loading banana">
+      <g id="Layer_1" data-name="Layer 1">
+        <defs>
+          <style>
+            .cls-1 { fill: #34af0e; }
+            .cls-2 { fill: #ffc910; }
+            .cls-3 { fill: #f8db8f; }
+            .cls-4 { fill: #ffeda3; }
+            .cls-5 { fill: #ffdb27; }
+          </style>
+        </defs>
+        <g id="Generative_Object" data-name="Generative Object">
+          <g>
+            <g>
+              <path class="cls-3" d="M71.1,141.02c.28,1.47.88,7.33,1.51,8.76,1.93,4.39,14.28,1.42,18.58.95-11.67-38.63-11.64-82.48,8.03-118.8,6.14-11.33,14.88-23.92,27.11-29.82l.25-1.18-4.27-.47c-25.63,3.82-45.46,48.7-50.2,69.81-4.86,21.62-5.22,49.03-1,70.76Z"/>
+              <g>
+                <path class="cls-4" d="M122.3.45l4.27.47-.25,1.18c-12.23,5.9-20.97,18.49-27.11,29.82-19.67,36.32-19.7,80.17-8.03,118.8-4.3.48-16.64,3.45-18.58-.95-.63-1.42-1.22-7.29-1.51-8.76l-25.6,2.37c11.12-2.18,20.14.12,27.11,8.76-3.44,1.89-7.15,2.97-10.54,4.97-23.54,13.89-24.41,35.07-30.12,57.27-1.14,17.15,3.46,36,12.55,50.88,6.03,9.87,22.72,28.5,36.15,25.79,1.76-21.88-7.48-39.71-6.02-62.24.91-14.08,10.81-51.24,20.08-62,8.51-9.89,29.8-18.03,36.15-2.13,1.3-5.09,1.66-9.2,5.52-13.25-1.02-2.13,6.58-7.74,6.02-9.23-.07-.19-1.78-.28-2.51-2.84-8.39-29.54-10.59-63.06-5.02-93.24,2.16-11.71,10.88-29.39,3.51-40.23-1.89-2.78-5.1-3.54-7.53-5.44-3.52-.67-5.06-.52-8.53,0Z"/>
+                <path class="cls-5" d="M80.64,291.05c15.58-3.14,4.71-25.51,3.01-35.26-3.34-19.23-3.22-36.25,2.01-55.14,2.36-8.51,11.33-33.16,19.33-37.39,5.51-2.92,10.89-2.02,16.82-.95,3.42.62,5.45,2.59,9.04,2.37-6.35-15.9-27.63-7.76-36.15,2.13-9.27,10.76-19.17,47.93-20.08,62-1.45,22.52,7.78,40.35,6.02,62.24Z"/>
+              </g>
+              <g>
+                <path class="cls-2" d="M18.89,251.3c6.47-3.93,7.28-19.33,9.04-26.27.88-3.45,3.38-8.16,4.02-10.65,5.71-22.2,6.59-43.38,30.12-57.27.11-2.35,4.35-1.54,3.01-3.55-21.74-19.04-42.85,15.37-49.2,30.29-6.43,15.12-13.02,38.46-11.04,56.32.93,8.39,3.7,17.42,14.06,11.12Z"/>
+                <path class="cls-5" d="M45.49,143.38C12.83,149.77-5.18,217.75,1.31,243.96c2.27,9.18,8.63,14.45,17.57,7.34-10.36,6.29-13.13-2.73-14.06-11.12-1.97-17.86,4.62-41.2,11.04-56.32,6.34-14.93,27.46-49.33,49.2-30.29,1.33,2.01-2.91,1.2-3.01,3.55,3.39-2,7.1-3.08,10.54-4.97-6.97-8.64-15.99-10.93-27.11-8.76Z"/>
+              </g>
+            </g>
+            <g>
+              <path class="cls-5" d="M226.68,282.86c-29.25,13.86-88.77-31.06-120.23-78.8-3.94-5.99-13.84-37.32,9.8-43.5,1.53-.4,2.62-.5,3.61-.38,1.8.23,2.92.93,4.51,1.76,1.39.73,3.46,1.7,6.18,2.59.19-1.78.84-4.19,1.8-7.01.74-2.17,1.79-4.21,3.72-6.24,50.98-39.77,88.26,30.02,110.95,64.13,2.34,3,5.81,7.55,9.54,8.76.38,4.53-3.49,5.6-7.78,4.73-5.68-1.15-15.85-23.65-19.33-29.11-11.19-17.56-35.92-53.71-59.49-55.14-8.08-.49-13.28,2.2-14.31,10.18-1.71,13.24,30.61,61.14,74.3,98.45,3.01,2.57,10.69,9.03,9.79,16.33-.93,7.5-10.45,12.02-13.05,13.25Z"/>
+              <path class="cls-2" d="M227.35,283c-8.08-.83-17.63-2.33-25.6-3.61-28.79-4.62-83.79-52-94.63-77.38-2.57-6.02-9.42-29.07.79-37.25,6.96-5.58,18.77-1.65,22.94-.07-2.37-1.63-6.59-4.07-12.37-5.03-3.5-.58-6.53-.45-8.78-.16,0,0,0,0,0,0,0,0-2.19.37-4.33,1.57-6.53,3.68-11.3,12.65-11.3,12.65-4.63,8.69-6.9,17.53-8.02,24.75,6.18,10.25,15.37,24.34,28.93,39.03,11.07,12,23.42,22.98,36.59,32.91,15.18,11.45,37.24,23.97,61.16,18.46,6.38-1.47,11.36-3.93,14.65-5.85Z"/>
+              <path class="cls-4" d="M130.84.45c2.43,1.9,5.64,2.66,7.53,5.44,7.37,10.84-1.35,28.52-3.51,40.23-5.57,30.18-3.37,63.7,5.02,93.24.73,2.56,2.44,2.65,2.51,2.84.55,1.49-7.05,7.1-6.02,9.23,4.75-4.99,17.38-10.2,24.35-10.89,44.57-4.37,65.17,49.12,86.6,75.02,2.42,2.93,5.81,7.55,9.54,8.76-.98-11.53-11.28-36.78-17.57-47.09-18.14-29.76-61.94-63.82-97.9-38.34-7.85-27.87-10.78-56.96-6.53-85.67,1.96-13.26,17.27-48.73-4.02-52.77Z"/>
+              <path class="cls-1" d="M232.29,255.34c.65,2.52,2.01,9.24-.91,16.82-4.04,10.51-16.83,15.88-18.68,16.69,2.72.6,12.47.42,19.22-2.27,2.52-1,12.08-4.84,13.35-13.11,1.15-7.51-4.18-15.66-12.98-18.14Z"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Top-right UI -->
+  <div class="top-ui">
+    <button class="hamb" id="openMenu" aria-haspopup="dialog" aria-controls="sheet" aria-expanded="false" aria-label="Open menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+  </div>
+  <div class="backdrop" id="backdrop" hidden></div>
+  <aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <h3 id="sheetTitle">Navigate</h3>
+    <a href="/facts">Fun facts</a>
+    <a href="/map">Travel map</a>
+    <a href="/stories">Stories</a>
+    <a href="/about">About</a>
+    <button id="closeMenu" class="hamb" style="margin-top:auto;align-self:flex-start">Close</button>
+  </aside>
+
+  <!-- Full-screen banana stage -->
+  <main class="stage" aria-label="Interactive banana">
+    <!-- Fullscreen Banana using provided SVG -->
+    <svg class="banana" viewBox="0 0 256.85 291.32" role="img" aria-label="Banana">
+      <!-- soft ground shadow -->
+      <ellipse cx="128.4" cy="282" rx="118" ry="14" fill="#000" opacity=".06" />
+
+      <!-- Provided SVG art -->
+      <g id="Layer_1" data-name="Layer 1">
+        <defs>
+          <style>
+            .cls-1 { fill: #34af0e; }
+            .cls-2 { fill: #ffc910; }
+            .cls-3 { fill: #f8db8f; }
+            .cls-4 { fill: #ffeda3; }
+            .cls-5 { fill: #ffdb27; }
+          </style>
+        </defs>
+        <g id="Generative_Object" data-name="Generative Object">
+          <g>
+            <g>
+              <path class="cls-3" d="M71.1,141.02c.28,1.47.88,7.33,1.51,8.76,1.93,4.39,14.28,1.42,18.58.95-11.67-38.63-11.64-82.48,8.03-118.8,6.14-11.33,14.88-23.92,27.11-29.82l.25-1.18-4.27-.47c-25.63,3.82-45.46,48.7-50.2,69.81-4.86,21.62-5.22,49.03-1,70.76Z"/>
+              <g>
+                <path class="cls-4" d="M122.3.45l4.27.47-.25,1.18c-12.23,5.9-20.97,18.49-27.11,29.82-19.67,36.32-19.7,80.17-8.03,118.8-4.3.48-16.64,3.45-18.58-.95-.63-1.42-1.22-7.29-1.51-8.76l-25.6,2.37c11.12-2.18,20.14.12,27.11,8.76-3.44,1.89-7.15,2.97-10.54,4.97-23.54,13.89-24.41,35.07-30.12,57.27-1.14,17.15,3.46,36,12.55,50.88,6.03,9.87,22.72,28.5,36.15,25.79,1.76-21.88-7.48-39.71-6.02-62.24.91-14.08,10.81-51.24,20.08-62,8.51-9.89,29.8-18.03,36.15-2.13,1.3-5.09,1.66-9.2,5.52-13.25-1.02-2.13,6.58-7.74,6.02-9.23-.07-.19-1.78-.28-2.51-2.84-8.39-29.54-10.59-63.06-5.02-93.24,2.16-11.71,10.88-29.39,3.51-40.23-1.89-2.78-5.1-3.54-7.53-5.44-3.52-.67-5.06-.52-8.53,0Z"/>
+                <path class="cls-5" d="M80.64,291.05c15.58-3.14,4.71-25.51,3.01-35.26-3.34-19.23-3.22-36.25,2.01-55.14,2.36-8.51,11.33-33.16,19.33-37.39,5.51-2.92,10.89-2.02,16.82-.95,3.42.62,5.45,2.59,9.04,2.37-6.35-15.9-27.63-7.76-36.15,2.13-9.27,10.76-19.17,47.93-20.08,62-1.45,22.52,7.78,40.35,6.02,62.24Z"/>
+              </g>
+              <g>
+                <path class="cls-2" d="M18.89,251.3c6.47-3.93,7.28-19.33,9.04-26.27.88-3.45,3.38-8.16,4.02-10.65,5.71-22.2,6.59-43.38,30.12-57.27.11-2.35,4.35-1.54,3.01-3.55-21.74-19.04-42.85,15.37-49.2,30.29-6.43,15.12-13.02,38.46-11.04,56.32.93,8.39,3.7,17.42,14.06,11.12Z"/>
+                <path class="cls-5" d="M45.49,143.38C12.83,149.77-5.18,217.75,1.31,243.96c2.27,9.18,8.63,14.45,17.57,7.34-10.36,6.29-13.13-2.73-14.06-11.12-1.97-17.86,4.62-41.2,11.04-56.32,6.34-14.93,27.46-49.33,49.2-30.29,1.33,2.01-2.91,1.2-3.01,3.55,3.39-2,7.1-3.08,10.54-4.97-6.97-8.64-15.99-10.93-27.11-8.76Z"/>
+              </g>
+            </g>
+            <g>
+              <path class="cls-5" d="M226.68,282.86c-29.25,13.86-88.77-31.06-120.23-78.8-3.94-5.99-13.84-37.32,9.8-43.5,1.53-.4,2.62-.5,3.61-.38,1.8.23,2.92.93,4.51,1.76,1.39.73,3.46,1.7,6.18,2.59.19-1.78.84-4.19,1.8-7.01.74-2.17,1.79-4.21,3.72-6.24,50.98-39.77,88.26,30.02,110.95,64.13,2.34,3,5.81,7.55,9.54,8.76.38,4.53-3.49,5.6-7.78,4.73-5.68-1.15-15.85-23.65-19.33-29.11-11.19-17.56-35.92-53.71-59.49-55.14-8.08-.49-13.28,2.2-14.31,10.18-1.71,13.24,30.61,61.14,74.3,98.45,3.01,2.57,10.69,9.03,9.79,16.33-.93,7.5-10.45,12.02-13.05,13.25Z"/>
+              <path class="cls-2" d="M227.35,283c-8.08-.83-17.63-2.33-25.6-3.61-28.79-4.62-83.79-52-94.63-77.38-2.57-6.02-9.42-29.07.79-37.25,6.96-5.58,18.77-1.65,22.94-.07-2.37-1.63-6.59-4.07-12.37-5.03-3.5-.58-6.53-.45-8.78-.16,0,0,0,0,0,0,0,0-2.19.37-4.33,1.57-6.53,3.68-11.3,12.65-11.3,12.65-4.63,8.69-6.9,17.53-8.02,24.75,6.18,10.25,15.37,24.34,28.93,39.03,11.07,12,23.42,22.98,36.59,32.91,15.18,11.45,37.24,23.97,61.16,18.46,6.38-1.47,11.36-3.93,14.65-5.85Z"/>
+              <path class="cls-4" d="M130.84.45c2.43,1.9,5.64,2.66,7.53,5.44,7.37,10.84-1.35,28.52-3.51,40.23-5.57,30.18-3.37,63.7,5.02,93.24.73,2.56,2.44,2.65,2.51,2.84.55,1.49-7.05,7.1-6.02,9.23,4.75-4.99,17.38-10.2,24.35-10.89,44.57-4.37,65.17,49.12,86.6,75.02,2.42,2.93,5.81,7.55,9.54,8.76-.98-11.53-11.28-36.78-17.57-47.09-18.14-29.76-61.94-63.82-97.9-38.34-7.85-27.87-10.78-56.96-6.53-85.67,1.96-13.26,17.27-48.73-4.02-52.77Z"/>
+              <path class="cls-1" d="M232.29,255.34c.65,2.52,2.01,9.24-.91,16.82-4.04,10.51-16.83,15.88-18.68,16.69,2.72.6,12.47.42,19.22-2.27,2.52-1,12.08-4.84,13.35-13.11,1.15-7.51-4.18-15.66-12.98-18.14Z"/>
+            </g>
+          </g>
+        </g>
+      </g>
+
+      <!-- Hotspots & curved labels -->
+      <!-- Click targets -->
+      <a href="/facts" aria-label="Fun Facts" tabindex="0"><rect class="hot" x="62" y="78" width="92" height="62" fill="transparent" style="cursor:pointer"/></a>
+      <a href="/map" aria-label="Travel Map" tabindex="0"><rect class="hot" x="150" y="88" width="96" height="78" fill="transparent" style="cursor:pointer"/></a>
+      <a href="/stories" aria-label="Stories" tabindex="0"><rect class="hot" x="82" y="188" width="116" height="86" fill="transparent" style="cursor:pointer"/></a>
+      <a href="/about" aria-label="About" tabindex="0"><rect class="hot" x="210" y="146" width="42" height="70" fill="transparent" style="cursor:pointer"/></a>
+
+      <!-- Around-the-flap text (rotated to hug the contours) -->
+      <a href="/facts"><text class="navtext" x="78" y="82" transform="rotate(-16 78 82)">facts</text></a>
+      <a href="/map"><text class="navtext" x="175" y="84" transform="rotate(10 175 84)">map</text></a>
+      <a href="/stories"><text class="navtext" x="96" y="226" transform="rotate(12 96 226)">stories</text></a>
+      <a href="/about"><text class="navtext" x="226" y="156" transform="rotate(-78 226 156)">about</text></a>
+    </svg>
+  </main>
+
+  <div class="chip">Peel to explore • facts • map • stories • about</div>
+
+  <script>
+    // splash
+    window.addEventListener('load', () => {
+      const s = document.getElementById('splash');
+      setTimeout(()=>{ s.classList.add('fade-out'); setTimeout(()=>s.remove(), 360); }, 900);
+    });
+
+    // sheet nav
+    const openBtn = document.getElementById('openMenu');
+    const closeBtn = document.getElementById('closeMenu');
+    const sheet = document.getElementById('sheet');
+    const back = document.getElementById('backdrop');
+
+    function openSheet(){ sheet.classList.add('open'); back.hidden=false; back.classList.add('show'); openBtn.setAttribute('aria-expanded','true'); }
+    function closeSheet(){ sheet.classList.remove('open'); back.classList.remove('show'); setTimeout(()=>back.hidden=true, 350); openBtn.setAttribute('aria-expanded','false'); openBtn.focus(); }
+
+    openBtn.addEventListener('click', openSheet);
+    back.addEventListener('click', closeSheet);
+    window.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && sheet.classList.contains('open')) closeSheet(); });
+  </script>
+</body>
+</html>
