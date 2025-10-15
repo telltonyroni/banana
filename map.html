@@ -1,177 +1,132 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>banana.place 🍌</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🍌</text></svg>">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banana Map 🍌</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin="anonymous"
+  />
 
   <style>
-    html, body {
+    body, html {
       margin: 0;
+      padding: 0;
       height: 100%;
-      background: #FFF7CC;
-      font-family: system-ui, sans-serif;
+      background: #fffbea;
+      font-family: 'Poppins', sans-serif;
     }
     #map {
+      height: 100vh;
       width: 100%;
-      height: 100dvh;
-    }
-    .leaflet-container {
-      background: #FFF7CC;
-    }
-    .btn {
-      position: fixed;
-      z-index: 999;
-      background: #fff8;
-      border: none;
-      border-radius: 999px;
-      width: 56px;
-      height: 56px;
-      font-size: 24px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.12);
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-    }
-    .home {
-      top: calc(16px + env(safe-area-inset-top, 0px));
-      left: 16px;
     }
     .status {
       position: fixed;
-      right: 16px;
-      bottom: 16px;
-      z-index: 999;
-      background: #fff;
-      padding: 8px 12px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.12);
-      font-size: 12px;
-    }
-    .watermark {
-      position: fixed;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      pointer-events: none;
-      z-index: 2;
-    }
-    .watermark span {
-      font-weight: 800;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      font-size: clamp(28px, 12vw, 120px);
-      opacity: .08;
-      transform: rotate(-18deg);
-      color: #000;
-      mix-blend-mode: multiply;
-      text-align: center;
-      line-height: 1.05;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 235, 59, 0.9);
+      color: #333;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      z-index: 1000;
     }
   </style>
 </head>
 
 <body>
-  <button class="btn home" onclick="window.location.href='index.html'" aria-label="Back to home">🏠</button>
   <div id="map"></div>
-  <div class="watermark" aria-hidden="true"><span>the banana place is under construction</span></div>
-  <div class="status" id="status">Connecting…</div>
+  <div class="status" id="status">🍌 Loading bananas...</div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Leaflet JS -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin="anonymous"
+  ></script>
+
   <script>
-    // 🔐 JSONBin setup
-    const BIN_ID = "68f01f3143b1c97be96a44ca";
-    const API_KEY = "$2a$10$2veWN7sqEZs.M4pC022zZediQvKzF8PR3xpTKpmQ4gzbMJbyx1VP6";
-    const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+    // ===== CONFIG =====
+    const BIN_URL = "https://api.jsonbin.io/v3/b/68f01f3143b1c97be96a44ca";
+    const API_KEY = "$2a$10$RCnUKDWytC/ysiMgbX6/q.QRSKrLrAOPSOsZVPFYaaW06lur2V5X6";
 
-    const statusEl = document.getElementById("status");
-    const setStatus = (msg, ok = true) => {
-      statusEl.textContent = msg;
-      statusEl.style.color = ok ? "#111" : "#b00020";
-    };
+    const statusDiv = document.getElementById("status");
 
-    // 🗺️ Initialize map
-    const map = L.map('map').setView([20, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+    // ===== INITIALIZE MAP =====
+    const map = L.map("map").setView([0, 0], 2);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap",
     }).addTo(map);
 
-    const bananaIcon = L.divIcon({
-      html: '🍌',
-      className: 'banana-icon',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-    });
-
-    // 🍌 Load bananas
+    // ===== LOAD BANANAS =====
     async function loadBananas() {
-      setStatus("Loading bananas...");
       try {
         const res = await fetch(`${BIN_URL}/latest`, {
-          headers: { "X-Master-Key": API_KEY }
+          headers: {
+            "X-Master-Key": API_KEY,
+            "Content-Type": "application/json"
+          }
         });
-        const data = await res.json();
-        const bananas = data.record?.bananas || [];
+        const json = await res.json();
+        console.log("Loaded bin data:", json);
+
+        const bananas = json.record?.bananas || [];
         bananas.forEach(b => {
-          L.marker([b.lat, b.lng], { icon: bananaIcon })
-            .addTo(map)
-            .bindPopup(`🍌 <b>${b.name || "A Banana"}</b><br>${b.message || ""}`);
+          if (b.lat && b.lng) L.marker([b.lat, b.lng]).addTo(map);
         });
-        setStatus(`Loaded ${bananas.length} bananas 🍌`);
-        return bananas;
-      } catch (err) {
-        console.error(err);
-        setStatus("Failed to load bananas", false);
-        return [];
+        statusDiv.innerText = `🍌 Loaded ${bananas.length} bananas!`;
+      } catch (e) {
+        console.error("Error loading bananas:", e);
+        statusDiv.innerText = "⚠️ Error loading bananas.";
       }
     }
 
-    // 💾 Save new banana
-    async function addBanana(lat, lng) {
+    // ===== SAVE BANANA =====
+    async function saveBanana(lat, lng) {
+      statusDiv.innerText = "💾 Saving banana...";
       try {
         const res = await fetch(`${BIN_URL}/latest`, {
-          headers: { "X-Master-Key": API_KEY }
+          headers: {
+            "X-Master-Key": API_KEY,
+            "Content-Type": "application/json"
+          }
         });
         const data = await res.json();
         const bananas = data.record?.bananas || [];
-        bananas.push({ lat, lng, created: Date.now() });
+        bananas.push({ lat, lng });
 
-        await fetch(BIN_URL, {
+        const updateRes = await fetch(BIN_URL, {
           method: "PUT",
           headers: {
-            "Content-Type": "application/json",
-            "X-Master-Key": API_KEY
+            "X-Master-Key": API_KEY,
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({ bananas })
         });
 
-        setStatus("Banana saved!");
-      } catch (err) {
-        console.error("Save error:", err);
-        setStatus("Failed to save banana", false);
+        if (!updateRes.ok) throw new Error("Failed to update bin");
+        L.marker([lat, lng]).addTo(map);
+        statusDiv.innerText = "✅ Banana saved!";
+      } catch (e) {
+        console.error("Save error:", e);
+        statusDiv.innerText = "⚠️ Could not save banana.";
       }
     }
 
-    // 👆 Add marker on click
-    map.on('click', async (e) => {
+    // ===== MAP CLICK =====
+    map.on("click", e => {
       const { lat, lng } = e.latlng;
-      L.marker([lat, lng], { icon: bananaIcon })
-        .addTo(map)
-        .bindPopup("🍌 You dropped a banana!")
-        .openPopup();
-
-      await addBanana(lat, lng);
+      saveBanana(lat, lng);
     });
 
-    // 📍 Center on user if possible
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        map.setView([pos.coords.latitude, pos.coords.longitude], 5);
-      });
-    }
-
+    // ===== START =====
     loadBananas();
   </script>
 </body>
