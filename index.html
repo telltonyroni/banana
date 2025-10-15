@@ -4,7 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="theme-color" content="#FFF7CC"/>
-  <title>Mini Banana</title>
+  <title>banana.place 🍌</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🍌</text></svg>">
   <style>
     :root{
       --bg:#FFF7CC;
@@ -17,25 +18,25 @@
     .container{position:relative;width:100%;height:100dvh;display:flex;align-items:center;justify-content:center;touch-action:manipulation;}
 
     .banana{width:min(92vmin,720px);height:auto;display:block;animation:wobble 3s ease-in-out infinite;will-change:transform;}
-    @keyframes wobble{0%,100%{transform:rotate(-3.5deg)}50%{transform:rotate(3.5deg)}}50%{transform:rotate(4deg)}}
+    @keyframes wobble{0%,100%{transform:rotate(-3.5deg)}50%{transform:rotate(3.5deg)}}
 
-    .menu-btn{position:fixed;top:calc(16px + env(safe-area-inset-top, 0px));right:16px;z-index:10;border:none;background:#fff8;border-radius:50%;width:56px;height:56px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);font-size:24px;line-height:1;touch-action:manipulation;}
+    .menu-btn{position:fixed;top:calc(16px + env(safe-area-inset-top, 0px));right:16px;z-index:10;border:none;background:#fff8;border-radius:50%;width:56px;height:56px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);font-size:24px;line-height:1;touch-action:manipulation;display:flex;align-items:center;justify-content:center;transition:transform .3s;}
+    .menu-btn.open{transform:rotate(90deg);}
 
     .menu{position:fixed;inset:0;background:rgba(255,247,204,0.96);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;opacity:0;pointer-events:none;transition:opacity .35s;z-index:9;padding:calc(20px + env(safe-area-inset-top, 0px)) 16px 16px;}
     .menu.open{opacity:1;pointer-events:auto;}
+
     .menu a{font-size:clamp(18px,4.8vw,28px);text-decoration:none;color:#222;font-weight:700;transition:transform .2s, background .2s;display:block;background:#fff;border-radius:16px;padding:14px 20px;width:min(92vw,460px);text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.08);}
     .menu a:hover{transform:scale(1.02);}
-    /* Watermark */
+
     .watermark{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:2}
     .watermark span{font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:clamp(28px,12vw,120px);opacity:.08;transform:rotate(-18deg);color:#000;mix-blend-mode:multiply;text-align:center;line-height:1.05}
 
-    /* Motion accessibility */
     @media (prefers-reduced-motion: reduce){
       .banana{animation:none}
       .menu a:hover{transform:none}
     }
 
-    /* Mobile tuning */
     @media (max-width:480px){
       .menu-btn{width:56px;height:56px}
       .menu{gap:14px}
@@ -44,7 +45,7 @@
   </style>
 </head>
 <body>
-  <button class="menu-btn" id="menuBtn">☰</button>
+  <button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
 
   <div class="menu" id="menu">
     <a href="/facts" role="button">Fun Facts</a>
@@ -93,8 +94,13 @@
   <script>
     const menuBtn=document.getElementById('menuBtn');
     const menu=document.getElementById('menu');
+    let isOpen=false;
     menuBtn.addEventListener('click',()=>{
-      menu.classList.toggle('open');
+      isOpen=!isOpen;
+      menu.classList.toggle('open',isOpen);
+      menuBtn.classList.toggle('open',isOpen);
+      menuBtn.textContent=isOpen?'✕':'☰';
+      menuBtn.setAttribute('aria-label',isOpen?'Close menu':'Menu');
     });
   </script>
 </body>
