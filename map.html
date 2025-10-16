@@ -6,8 +6,8 @@
 <title>banana.place 🍌</title>
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='0.9em' font-size='90'>🍌</text></svg>'"/>
-<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet"/>
-<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 
 <style>
 :root{--bg:#FFF7CC;--surface:#fff;--ink:#101010;--muted:#6b7280;--accent:#111;--warn:#b00020;--shadow:0 8px 28px rgba(0,0,0,.14)}
@@ -15,48 +15,24 @@
 html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Helvetica,Arial}
 #map{position:relative;height:100dvh;width:100%}
 
-/* Icons */
-.icon{width:22px;height:22px;display:inline-block;fill:currentColor}
+/* Basics from previous build (trimmed but same behavior) */
+.icon{width:22px;height:22px;display:inline-block}
 .icon-lg{width:26px;height:26px}
-
-/* Header */
 .header{position:fixed;top:10px;left:10px;right:10px;z-index:30010;display:flex;justify-content:space-between;gap:8px}
 .brand{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:9999px;padding:8px 12px;box-shadow:var(--shadow);font-weight:700}
-.brand .emoji{font-size:18px;line-height:1}
 .hgroup{display:flex;gap:8px}
 .iconbtn{width:44px;height:44px;border:none;border-radius:14px;background:var(--surface);display:grid;place-items:center;box-shadow:var(--shadow);cursor:pointer}
-
-/* Collapsible search */
-.search-wrap{position:fixed;left:50%;transform:translateX(-50%);top:64px;width:min(720px,92vw);z-index:30006;display:none}
-.search{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:16px;padding:10px 14px;box-shadow:var(--shadow)}
-.search input{border:none;outline:none;background:transparent;font:inherit;width:100%}
-.results{margin-top:8px;background:var(--surface);border-radius:14px;box-shadow:var(--shadow);max-height:45vh;overflow:auto;display:none}
-.results.show{display:block}
-.result-item{padding:10px 14px;border-top:1px solid #f1f1f1;cursor:pointer}
-.result-item:first-child{border-top:none}
-.result-item small{display:block;color:var(--muted)}
-
-/* Menu */
 .menu{position:fixed;right:10px;top:64px;z-index:30008;background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:10px;min-width:230px;display:none}
 .menu.show{display:block}
 .menu .row{display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:12px;cursor:pointer}
 .menu .row:hover{background:#f6f6f6}
 .menu .split{height:1px;background:#eee;margin:6px 0}
-
-/* Legend bottom-left */
 .legend{position:fixed;left:12px;bottom:12px;z-index:30004;background:var(--surface);border-radius:9999px;padding:8px 12px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px}
-.legend .emoji{font-size:18px;line-height:1}
 .legend .cluster{width:18px;height:18px;border-radius:50%;background:#FFE066;border:2px solid #E0C24B}
-
-/* Drop FAB */
 .fab{position:fixed;right:12px;bottom:12px;z-index:30000;border:none;border-radius:16px;background:var(--accent);color:#fff;font-weight:700;display:flex;align-items:center;gap:10px;padding:12px 16px;box-shadow:var(--shadow);cursor:pointer}
 .fab[disabled]{opacity:.5;cursor:not-allowed}
-
-/* Status */
-.status{position:fixed;left:50%;transform:translateX(-50%);bottom:110px;z-index:30000;background:var(--surface);padding:8px 12px;border-radius:12px;box-shadow:var(--shadow);font-size:12px}
+.status{position:fixed;left:50%;transform:translateX(-50%);bottom:110px;z-index:30000;background:var(--surface);padding:8px 12px;border-radius:12px;box-shadow:var(--shadow);font-size:12px;max-width:92vw}
 .status button{margin-left:8px;padding:4px 8px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;font-weight:600;cursor:pointer}
-
-/* Bottom-sheet (add/edit) */
 .sheet{position:fixed;left:0;right:0;bottom:-100%;z-index:30012;background:#fff;border-top-left-radius:20px;border-top-right-radius:20px;box-shadow:0 -20px 40px rgba(0,0,0,.15);padding:14px 16px 18px;transition:bottom .25s ease}
 .sheet.show{bottom:0}
 .sheet .grab{width:44px;height:4px;background:#ddd;border-radius:4px;margin:6px auto 10px}
@@ -70,43 +46,14 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 .sheet .row button{flex:1;padding:12px;border:none;border-radius:12px;font-weight:700;cursor:pointer}
 .sheet .save{background:var(--accent);color:#fff}
 .sheet .cancel{background:#f2f2f2;color:#111}
-
-/* Popup + buttons */
 .maplibregl-popup{max-width:300px}
 .maplibregl-popup-content img{max-width:140px;border-radius:8px;display:block;margin-top:6px}
-.popbtn{
-  appearance:none;border:none;padding:8px 12px;border-radius:10px;
-  background:#111;color:#fff;font-weight:700;cursor:pointer
-}
-.popbtn + .popbtn{ margin-left:10px }
-.popbtn.danger{ background:#b00020 }
-
-/* Emoji marker (DOM) — iOS-friendly tap target */
-.banana-pin{
-  font-size:28px; line-height:1;
-  padding:10px;            /* bigger hit area */
-  margin: -10px 0 0 -10px; /* keep visual centered while padding adds hitbox */
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,.25));
-  user-select:none; -webkit-user-select:none;
-  -webkit-tap-highlight-color: rgba(0,0,0,0);
-  touch-action: manipulation;
-  cursor:pointer;
-  transform: translateY(-4px);
-  background: transparent; border-radius:14px;
-}
-
-/* Swipe deck */
+.popbtn{appearance:none;border:none;padding:8px 12px;border-radius:10px;background:#111;color:#fff;font-weight:700;cursor:pointer}
+.popbtn + .popbtn{margin-left:10px}.popbtn.danger{background:#b00020}
+.banana-pin{font-size:28px;line-height:1;padding:10px;margin:-10px 0 0 -10px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer;transform:translateY(-4px);background:transparent;border-radius:14px}
 .deck{position:fixed;left:0;right:0;bottom:10px;z-index:30011;display:none;justify-content:center}
 .deck.show{display:flex}
-.card{
-  width:min(560px,92vw);
-  background:var(--surface);
-  border-radius:18px;
-  box-shadow:var(--shadow);
-  padding:14px 14px 12px;
-  touch-action:pan-y;
-  will-change:transform;
-}
+.card{width:min(560px,92vw);background:var(--surface);border-radius:18px;box-shadow:var(--shadow);padding:14px 14px 12px;touch-action:pan-y;will-change:transform}
 .card h4{margin:4px 0 6px 0;font-size:16px}
 .card p{margin:0 0 6px 0;color:#333}
 .card img{max-width:100%;border-radius:12px;margin-top:6px}
@@ -114,32 +61,15 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 .card .actions button{flex:1;padding:10px;border:none;border-radius:12px;font-weight:700;cursor:pointer;background:#111;color:#fff}
 .deck-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
 .deck-nav button{pointer-events:auto;border:none;background:rgba(255,255,255,.9);box-shadow:var(--shadow);width:38px;height:38px;border-radius:999px;display:grid;place-items:center;cursor:pointer}
-
-/* Deck top bar (title + close) */
-.deckbar{
-  position:absolute; top:-42px; left:0; right:0; height:36px;
-  display:flex; align-items:center; justify-content:center; gap:8px;
-}
-.deckbar .close{
-  position:absolute; right:6px; top:0;
-  border:none; background:rgba(255,255,255,.9); box-shadow:var(--shadow);
-  width:36px; height:36px; border-radius:999px; display:grid; place-items:center; cursor:pointer;
-}
-
-/* Watermark */
+.deckbar{position:absolute;top:-42px;left:0;right:0;height:36px;display:flex;align-items:center;justify-content:center;gap:8px}
+.deckbar .close{position:absolute;right:6px;top:0;border:none;background:rgba(255,255,255,.9);box-shadow:var(--shadow);width:36px;height:36px;border-radius:999px;display:grid;place-items:center;cursor:pointer}
 .watermark{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:2}
 .watermark span{font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:clamp(26px,11vw,110px);opacity:.08;transform:rotate(-18deg);color:#000;mix-blend-mode:multiply;text-align:center;line-height:1.05}
-
-/* Mobile tweaks */
-@media (max-width:520px){
-  .legend{left:10px;bottom:10px}
-  .banana-pin{font-size:26px}
-}
+@media (max-width:520px){.banana-pin{font-size:26px}}
 </style>
 </head>
-
 <body>
-<!-- SVG icon sprite -->
+<!-- tiny icon sprite -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><path d="M11 19a8 8 0 1 1 5.292-14.036A8 8 0 0 1 11 19Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M21 21l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
@@ -149,8 +79,6 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
   <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M3 8c5 0 6 8 12 8h6M3 16c5 0 6-8 12-8h6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
-  <symbol id="i-browse" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
   <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
 </svg>
 
@@ -163,58 +91,37 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
   </div>
 </div>
 
-<!-- Search -->
-<div class="search-wrap" id="searchWrap">
-  <div class="search">
-    <svg class="icon"><use href="#i-search"/></svg>
-    <input id="searchInput" type="text" placeholder="Search a place…"/>
-  </div>
-  <div class="results" id="results"></div>
-</div>
-
-<!-- Legend -->
-<div class="legend">
-  <span class="emoji">🍌</span>
-  <span style="color:var(--muted);font-weight:600">banana</span>
-  <span class="cluster"></span><span style="color:var(--muted);font-weight:600">cluster</span>
-</div>
-
 <!-- Menu -->
 <div class="menu" id="menu">
   <div class="row" id="seeMine"><svg class="icon"><use href="#i-eye"/></svg><span class="label">See my banana</span></div>
   <div class="row" id="shareMine"><svg class="icon"><use href="#i-share"/></svg><span class="label">Share my banana</span></div>
   <div class="row" id="deleteMine"><svg class="icon"><use href="#i-trash"/></svg><span class="label" style="color:var(--warn)">Delete my banana</span></div>
   <div class="split"></div>
-  <div class="row" id="randomBanana"><svg class="icon"><use href="#i-shuffle"/></svg><span class="label">Random banana</span></div>
-  <div class="row" id="browseBananas"><svg class="icon"><use href="#i-browse"/></svg><span class="label">Browse bananas</span></div>
-  <div class="split"></div>
-  <div class="row" style="justify-content:space-between">
-    <span class="label">Auto refresh</span>
-    <input id="liveToggle" type="checkbox" checked style="appearance:none;width:40px;height:24px;background:#ddd;border-radius:999px;position:relative;cursor:pointer;outline:none">
-  </div>
-  <div class="row" style="cursor:default;color:var(--muted);font-size:12px">Refreshes every 20s.</div>
+  <div class="row" id="randomBanana">🎲 <span class="label">Random banana</span></div>
+  <div class="row" id="browseBananas">🌍 <span class="label">Browse bananas</span></div>
 </div>
 
+<!-- Legend -->
+<div class="legend"><span class="emoji">🍌</span><span style="color:var(--muted);font-weight:600">banana</span><span class="cluster"></span><span style="color:var(--muted);font-weight:600">cluster</span></div>
+
 <!-- Drop FAB -->
-<button id="dropBtn" class="fab" title="Drop a banana">
-  <svg class="icon-lg"><use href="#i-plus"/></svg><span>Drop Banana</span>
-</button>
+<button id="dropBtn" class="fab" title="Drop a banana"><svg class="icon-lg"><use href="#i-plus"/></svg><span>Drop Banana</span></button>
 
 <div id="map"></div>
 <div class="watermark" aria-hidden="true"><span>the banana place is under construction</span></div>
-<div class="status" id="status">🍌 Loading bananas… <button id="retryBtn" style="display:none">Retry</button></div>
+<div class="status" id="status">🍌 Booting… <button id="retryBtn" style="display:none">Retry</button></div>
 
-<!-- Bottom-sheet (add/edit) -->
+<!-- Bottom-sheet -->
 <div class="sheet" id="sheet">
   <div class="grab"></div>
   <h3 id="sheetTitle">Add a banana</h3>
   <label for="name">Name</label>
-  <input id="name" type="text" placeholder="your name"/>
+  <input id="name" type="text" placeholder="your name">
   <label for="msg">Message</label>
   <textarea id="msg" rows="3" placeholder="say something fun…"></textarea>
   <label for="photo">Photo (optional)</label>
-  <input id="photo" type="file" accept="image/*"/>
-  <div class="preview" id="preview"><img alt="preview"/></div>
+  <input id="photo" type="file" accept="image/*">
+  <div class="preview" id="preview"><img alt="preview"></div>
   <div class="row"><button class="cancel" id="cancelBtn">Cancel</button><button class="save" id="saveBtn">Save</button></div>
   <div style="margin-top:6px;color:#999;font-size:11px">Search by Nominatim • Map © OpenStreetMap & CARTO</div>
 </div>
@@ -228,10 +135,8 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
   <div class="card" id="card">
     <h4 id="cardTitle">Banana</h4>
     <p id="cardMsg" style="display:none"></p>
-    <img id="cardImg" alt="" style="display:none"/>
-    <div class="actions">
-      <button id="focusBtn">Focus on map</button>
-    </div>
+    <img id="cardImg" alt="" style="display:none">
+    <div class="actions"><button id="focusBtn">Focus on map</button></div>
   </div>
   <div class="deck-nav">
     <button id="prevBtn" aria-label="Previous"><svg class="icon"><use href="#i-left"/></svg></button>
@@ -240,33 +145,36 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 </div>
 
 <script>
-/* ===== JSONBin config ===== */
+/* ---------- panic logger so we see problems on the page ---------- */
+const statusEl=document.getElementById('status'), retryBtn=document.getElementById('retryBtn');
+function setStatus(msg,ok=true,showRetry=false){ statusEl.textContent=msg; statusEl.style.color=ok?"#111":"#b00020"; retryBtn.style.display=showRetry?'inline-block':'none'; if(showRetry) statusEl.appendChild(retryBtn); }
+window.addEventListener('error',e=>{ setStatus('⚠️ JS error: '+(e.message||'unknown'), false, true); console.error(e.error||e.message); });
+window.addEventListener('unhandledrejection',e=>{ setStatus('⚠️ Promise error: '+(e.reason?.message||e.reason||'unknown'), false, true); console.error(e.reason); });
+
+/* ---------- JSONBin config (yours) ---------- */
 const BIN_ID  = "68f0265443b1c97be96a4ad5";
 const API_KEY = "$2a$10$RCnUKDWytC/ysiMgbX6/q.QRSKrLrAOPSOsZVPFYaaW06lur2V5X6";
 const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-/* ===== UI refs ===== */
-const statusEl = document.getElementById("status");
-const retryBtn = document.getElementById("retryBtn");
-const setStatus=(msg,ok=true,showRetry=false)=>{ statusEl.textContent=msg; statusEl.style.color=ok?"#111":"#b00020"; if(showRetry){ retryBtn.style.display='inline-block'; statusEl.appendChild(retryBtn);} else retryBtn.style.display='none'; };
-
-/* One banana per device */
+/* ---------- utils ---------- */
 function uuid(){return([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));}
-const DEVICE_KEY='banana_device_id';
-let deviceId=localStorage.getItem(DEVICE_KEY);
-if(!deviceId){ deviceId=uuid(); localStorage.setItem(DEVICE_KEY,deviceId); }
-const DROPPED_KEY='banana_already_dropped';
+function escapeHTML(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function fileToDataURL(file){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsDataURL(file);});}
 
-/* ===== Map (Voyager) ===== */
+/* ---------- device + one-banana policy ---------- */
+const DEVICE_KEY='banana_device_id', DROPPED_KEY='banana_already_dropped';
+let deviceId=localStorage.getItem(DEVICE_KEY); if(!deviceId){ deviceId=uuid(); localStorage.setItem(DEVICE_KEY,deviceId); }
+
+/* ---------- map style (Voyager raster) ---------- */
 function makeStyle(){
   const sub=['a','b','c','d'];
   const base='https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
   const labels='https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png';
-  return{version:8,glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+  return {version:8,glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
     sources:{
-      base:{type:'raster',tiles:sub.map(s=>base.replace('{s}',s)),tileSize:256,attribution:'© OpenStreetMap, © CARTO'},
-      labels:{type:'raster',tiles:sub.map(s=>labels.replace('{s}',s)),tileSize:256,attribution:'© CARTO labels'},
-      bananas:{type:'geojson',data:{type:'FeatureCollection',features:[]},cluster:true,clusterRadius:55}
+      base:{type:'raster', tiles: sub.map(s=>base.replace('{s}',s)), tileSize:256, attribution:'© OpenStreetMap, © CARTO'},
+      labels:{type:'raster', tiles: sub.map(s=>labels.replace('{s}',s)), tileSize:256},
+      bananas:{type:'geojson', data:{type:'FeatureCollection',features:[]}, cluster:true, clusterRadius:55}
     },
     layers:[
       {id:'base',type:'raster',source:'base'},
@@ -275,28 +183,45 @@ function makeStyle(){
         paint:{'circle-color':'#FFE066','circle-stroke-width':2,'circle-stroke-color':'#E0C24B',
                'circle-radius':['step',['get','point_count'],14,10,18,25,24,50,30]}},
       {id:'cluster-count',type:'symbol',source:'bananas',filter:['has','point_count'],
-        layout:{'text-field':['get','point_count_abbreviated'],'text-size':12,'text-font':['Open Sans Bold','Noto Sans Regular','Arial Unicode MS Bold']},
+        layout:{'text-field':['get','point_count_abbreviated'],'text-size':12,
+                'text-font':['Open Sans Bold','Noto Sans Regular','Arial Unicode MS Bold']},
         paint:{'text-color':'#222'}}
-      /* unclustered pins use DOM markers */
     ]};
 }
-const map=new maplibregl.Map({container:'map',style:makeStyle(),center:[0,20],zoom:2});
-map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');
 
-/* ===== Data helpers ===== */
-let bananasCache=[]; let lastGeoJSON={type:'FeatureCollection',features:[]};
+/* ---------- boot map safely ---------- */
+let map;
+(async function boot(){
+  try{
+    setStatus('🗺️ Loading map…');
+    map=new maplibregl.Map({container:'map',style:makeStyle(),center:[0,20],zoom:2});
+    map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');
+
+    map.on('load', async ()=>{
+      setStatus('🍌 Loading bananas…');
+      await loadBananas();
+      startAuto();
+      geolocateOnce();
+    });
+
+    wireUI();
+  }catch(e){
+    console.error(e);
+    setStatus('⚠️ Failed to init map: '+(e.message||e), false, true);
+  }
+})();
+
+/* ---------- bananas data ---------- */
+let bananasCache=[]; let domMarkers=[];
 const asFeature=b=>({type:'Feature',properties:{deviceId:b.deviceId||'',name:b.name||'',msg:b.msg||'',photo:b.photo||'',ts:b.ts||0},geometry:{type:'Point',coordinates:[b.lng,b.lat]}});
 
-/* DOM emoji markers with iOS-tap fixes */
-let domMarkers=[];
 function clearDomMarkers(){ domMarkers.forEach(m=>m.remove()); domMarkers=[]; }
 
-/* Popup HTML renders real buttons, wired after popup opens */
 function popupHTML(p){
   const title=p.name?escapeHTML(p.name):'Banana';
   let h=`<div><strong>${title}</strong>`;
   if(p.msg) h+=`<p style="margin:.35rem 0">${escapeHTML(p.msg)}</p>`;
-  if(p.photo) h+=`<img src="${p.photo}" alt="banana photo"/>`;
+  if(p.photo) h+=`<img src="${p.photo}" alt="banana photo">`;
   if(p.deviceId===deviceId){
     h+=`<div style="display:flex;gap:12px;margin-top:8px">
           <button class="popbtn" data-action="edit">Edit</button>
@@ -306,46 +231,34 @@ function popupHTML(p){
   return h+`</div>`;
 }
 
-/* Build a marker element and robust handlers */
 function createBananaMarker(feature){
   const el=document.createElement('div');
   el.className='banana-pin';
   el.textContent='🍌';
-  el.title = feature.properties.name || 'Banana';
+  el.title=feature.properties.name||'Banana';
 
-  const openDetails = (ev)=>{
+  const openDetails=(ev)=>{
     ev.preventDefault(); ev.stopPropagation();
     const p=feature.properties, coords=feature.geometry.coordinates;
-
-    const popup = new maplibregl.Popup({offset:12, closeOnClick:true})
-      .setLngLat(coords)
-      .setHTML(popupHTML(p))
-      .addTo(map);
-
-    // Bind after DOM exists
+    const popup=new maplibregl.Popup({offset:12,closeOnClick:true}).setLngLat(coords).setHTML(popupHTML(p)).addTo(map);
     popup.on('open', ()=>{
-      const root = popup.getElement();
+      const root=popup.getElement();
       root.addEventListener('click', (e)=>{
-        const btn = e.target.closest('.popbtn');
+        const btn=e.target.closest('.popbtn');
         if(!btn) return;
         e.preventDefault(); e.stopPropagation();
-        const action = btn.dataset.action;
-        if(action==='edit'){
-          openSheet('edit', { lat:coords[1], lng:coords[0], ...p });
-        }else if(action==='delete'){
+        if(btn.dataset.action==='edit'){
+          openSheet('edit',{lat:coords[1],lng:coords[0],...p});
+        }else{
           deleteMyBanana();
         }
-      }, { passive:false });
+      });
     });
   };
-
-  // Make sure map doesn't swallow taps
-  ['pointerdown','touchstart','mousedown'].forEach(type=>{
-    el.addEventListener(type,(e)=>{ e.stopPropagation(); }, {passive:true});
-  });
-  el.addEventListener('pointerup', openDetails, {passive:false});
-  el.addEventListener('touchend',  openDetails, {passive:false});
-  el.addEventListener('click',     openDetails, {passive:false});
+  ['pointerdown','touchstart','mousedown'].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
+  el.addEventListener('pointerup',openDetails);
+  el.addEventListener('touchend',openDetails);
+  el.addEventListener('click',openDetails);
 
   return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(feature.geometry.coordinates);
 }
@@ -353,87 +266,129 @@ function createBananaMarker(feature){
 function renderDomMarkers(geojson){
   clearDomMarkers();
   geojson.features.forEach(f=>{
-    if (f.properties.point_count) return;
-    const marker=createBananaMarker(f).addTo(map);
-    domMarkers.push(marker);
+    if(f.properties.point_count) return;
+    const m=createBananaMarker(f).addTo(map);
+    domMarkers.push(m);
   });
-}
-
-function drawBananas(gj){
-  lastGeoJSON=gj;
-  const src=map.getSource('bananas');
-  if(src) src.setData(gj);
-  renderDomMarkers(gj);
 }
 
 async function fetchLatest(){
   const res=await fetch(`${BIN_URL}/latest`,{headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"}});
-  if(!res.ok){ const t=await res.text(); throw new Error(`Read ${res.status}: ${t||'check BIN_ID/key/privacy'}`); }
+  if(!res.ok){ throw new Error(`Read ${res.status} – check BIN_ID/key/privacy`); }
   return res.json();
 }
 async function putBananas(arr){
-  const w=await fetch(BIN_URL,{method:"PUT",headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({bananas:arr})});
-  if(!w.ok){ const t=await w.text(); throw new Error(`Write ${w.status}: ${t||'check BIN permissions'}`); }
+  const w=await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({bananas:arr})});
+  if(!w.ok){ throw new Error(`Write ${w.status} – check BIN permissions`); }
 }
 
-/* Load & retry */
-async function loadBananas(skipToast=false){
-  if(!skipToast) setStatus("🍌 Loading bananas…");
+async function loadBananas(){
   try{
     const data=await fetchLatest();
-    bananasCache=data.record?.bananas||=[];
+    bananasCache=data.record?.bananas||[];
     const feats=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number').map(asFeature);
-    drawBananas({type:'FeatureCollection',features:feats});
+    const src=map.getSource('bananas');
+    if(src) src.setData({type:'FeatureCollection',features:feats});
+    renderDomMarkers({type:'FeatureCollection',features:feats});
     const already=bananasCache.some(b=>b.deviceId===deviceId)||localStorage.getItem(DROPPED_KEY)==='true';
+    const dropBtn=document.getElementById('dropBtn');
     dropBtn.disabled=already; dropBtn.querySelector('span').textContent=already?"Banana Dropped":"Drop Banana";
-    if(!skipToast) setStatus(`✅ Loaded ${feats.length} bananas`);
-  }catch(e){ console.error(e); setStatus(`⚠️ ${e.message}`,false,true); }
+    setStatus(`✅ Loaded ${feats.length} bananas`);
+  }catch(e){
+    console.error(e);
+    setStatus('⚠️ '+e.message, false, true);
+  }
 }
-retryBtn.onclick=()=> loadBananas(false);
 
-/* Search */
-const searchWrap=document.getElementById('searchWrap');
-const toggleSearch=document.getElementById('toggleSearch');
-const input=document.getElementById('searchInput');
-const results=document.getElementById('results');
-toggleSearch.onclick=()=>{const open=searchWrap.style.display==='block'; searchWrap.style.display=open?'none':'block'; if(!open) input.focus();}
-function showResults(items){ results.innerHTML=''; items.forEach(r=>{const d=document.createElement('div'); d.className='result-item'; d.innerHTML=`<strong>${escapeHTML(r.display_name.split(',')[0])}</strong><small>${escapeHTML(r.display_name)}</small>`; d.onclick=()=>{results.classList.remove('show'); map.easeTo({center:[+r.lon,+r.lat],zoom:15,duration:800});}; results.appendChild(d);}); results.classList.toggle('show',items.length>0); }
-async function doSearch(q){ if(!q.trim()){results.classList.remove('show');return;} try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8`); showResults(await r.json()); }catch(e){console.error(e);} }
-input.addEventListener('keydown',e=>{ if(e.key==='Enter') doSearch(input.value); });
-input.addEventListener('input',debounce(()=>doSearch(input.value),300));
-document.addEventListener('click',e=>{ if(!searchWrap.contains(e.target)&&e.target!==toggleSearch){ results.classList.remove('show'); }});
-function debounce(fn,ms){let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms);}}
+/* ---------- search (kept minimal) ---------- */
+function wireSearch(){
+  const searchWrap=document.getElementById('searchWrap');
+  const toggleSearch=document.getElementById('toggleSearch');
+  const input=document.getElementById('searchInput');
+  const results=document.getElementById('results');
+  function showResults(items){ results.innerHTML=''; items.forEach(r=>{const d=document.createElement('div'); d.className='result-item'; d.innerHTML=`<strong>${escapeHTML(r.display_name.split(',')[0])}</strong><small>${escapeHTML(r.display_name)}</small>`; d.onclick=()=>{results.classList.remove('show'); map.easeTo({center:[+r.lon,+r.lat],zoom:15,duration:800});}; results.appendChild(d);}); results.classList.toggle('show',items.length>0); }
+  async function doSearch(q){ if(!q.trim()){results.classList.remove('show');return;} try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8`); showResults(await r.json()); }catch(e){console.error(e);} }
+  function debounce(fn,ms){let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms);} }
+  toggleSearch.onclick=()=>{const open=searchWrap.style.display==='block'; searchWrap.style.display=open?'none':'block'; if(!open) input.focus();};
+  input?.addEventListener('keydown',e=>{ if(e.key==='Enter') doSearch(input.value); });
+  input?.addEventListener('input',debounce(()=>doSearch(input.value),300));
+  document.addEventListener('click',e=>{ if(searchWrap && !searchWrap.contains(e.target) && e.target!==toggleSearch){ const res=document.getElementById('results'); if(res) res.classList.remove('show'); }});
+}
 
-/* Add/Edit sheet */
-const sheet=document.getElementById('sheet'); const sheetTitle=document.getElementById('sheetTitle');
-const nameEl=document.getElementById('name'); const msgEl=document.getElementById('msg'); const photoEl=document.getElementById('photo');
-const preview=document.getElementById('preview'); const previewImg=preview.querySelector('img');
-const cancelBtn=document.getElementById('cancelBtn'); const saveBtn=document.getElementById('saveBtn');
-let sheetMode='add'; let sheetTarget={lat:null,lng:null,existingPhoto:""};
+/* ---------- UI wiring ---------- */
+function wireUI(){
+  wireSearch();
+  const menu=document.getElementById('menu'), toggleMenu=document.getElementById('toggleMenu');
+  toggleMenu.onclick=()=>{const open=menu.classList.contains('show'); menu.classList.toggle('show',!open); };
+  document.addEventListener('click',e=>{ if(!menu.contains(e.target)&&e.target!==toggleMenu) menu.classList.remove('show'); });
+
+  const dropBtn=document.getElementById('dropBtn');
+  dropBtn.onclick=()=>{
+    if(dropBtn.disabled) return;
+    const openForm=(lat,lng)=>{ map.easeTo({center:[lng,lat],zoom:18,duration:800}); openSheet('add',{lat,lng}); };
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>openForm(latitude,longitude),
+        ()=>{ const c=map.getCenter(); openForm(c.lat,c.lng); },
+        {enableHighAccuracy:true,timeout:6000,maximumAge:60000});
+    } else { const c=map.getCenter(); openForm(c.lat,c.lng); }
+  };
+
+  document.getElementById('seeMine').onclick=async()=>{
+    try{
+      const data=await fetchLatest(); const arr=data.record?.bananas||[]; const b=arr.find(x=>x.deviceId===deviceId);
+      if(!b){ setStatus("You haven't dropped a banana yet.",false); return; }
+      map.easeTo({center:[b.lng,b.lat],zoom:18,duration:1000});
+      setStatus("📍 Showing your banana");
+      menu.classList.remove('show');
+    }catch(e){ setStatus('⚠️ '+e.message,false,true); }
+  };
+  document.getElementById('shareMine').onclick=async()=>{
+    try{
+      const data=await fetchLatest(); const arr=data.record?.bananas||[]; const b=arr.find(x=>x.deviceId===deviceId);
+      if(!b){ setStatus("Drop a banana first to share.",false); return; }
+      const url=new URL(location.href); url.searchParams.set('id',deviceId);
+      await navigator.clipboard.writeText(url.toString());
+      setStatus("🔗 Link copied!");
+      menu.classList.remove('show');
+    }catch(e){ setStatus('⚠️ '+e.message,false,true); }
+  };
+  document.getElementById('deleteMine').onclick=()=>{ menu.classList.remove('show'); deleteMyBanana(); };
+
+  document.getElementById('randomBanana').onclick=()=>{ menu.classList.remove('show'); goRandomBanana(); };
+  document.getElementById('browseBananas').onclick=()=>{ menu.classList.remove('show'); openDeck(); };
+
+  retryBtn.onclick=()=> loadBananas();
+}
+
+/* ---------- add/edit sheet ---------- */
+const sheet=document.getElementById('sheet'), sheetTitle=document.getElementById('sheetTitle');
+const nameEl=document.getElementById('name'), msgEl=document.getElementById('msg'), photoEl=document.getElementById('photo');
+const preview=document.getElementById('preview'), previewImg=preview.querySelector('img');
+const cancelBtn=document.getElementById('cancelBtn'), saveBtn=document.getElementById('saveBtn');
+let sheetMode='add', sheetTarget={lat:null,lng:null,existingPhoto:''};
 photoEl.addEventListener('change',async()=>{const f=photoEl.files[0]; if(!f){preview.style.display='none'; previewImg.src=''; return;} const d=await fileToDataURL(f); previewImg.src=d; preview.style.display='block';});
-function openSheet(mode,p){ sheetMode=mode; if(mode==='add'){ sheetTitle.textContent='Add a banana'; nameEl.value=''; msgEl.value=''; photoEl.value=''; preview.style.display='none'; sheetTarget={lat:p.lat,lng:p.lng,existingPhoto:""}; } else { sheetTitle.textContent='Edit your banana'; nameEl.value=p.name||''; msgEl.value=p.msg||''; photoEl.value=''; preview.style.display='none'; sheetTarget={lat:p.lat,lng:p.lng,existingPhoto:p.photo||""}; } sheet.classList.add('show'); }
-const closeSheet=()=> sheet.classList.remove('show'); cancelBtn.onclick=closeSheet;
-function fileToDataURL(file){return new Promise((res,rej)=>{const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsDataURL(file);});}
+function openSheet(mode,p){
+  sheetMode=mode;
+  if(mode==='add'){ sheetTitle.textContent='Add a banana'; nameEl.value=''; msgEl.value=''; photoEl.value=''; preview.style.display='none'; sheetTarget={lat:p.lat,lng:p.lng,existingPhoto:''}; }
+  else{ sheetTitle.textContent='Edit your banana'; nameEl.value=p.name||''; msgEl.value=p.msg||''; photoEl.value=''; preview.style.display='none'; sheetTarget={lat:p.lat,lng:p.lng,existingPhoto:p.photo||''}; }
+  sheet.classList.add('show');
+}
+const closeSheet=()=>sheet.classList.remove('show'); cancelBtn.onclick=closeSheet;
 
-/* CRUD */
 async function saveBanana(lat,lng,msg,photo,name){
   setStatus("💾 Saving…");
-  try{
-    const data=await fetchLatest();
-    const arr=data.record?.bananas||[];
-    if(arr.some(b=>b.deviceId===deviceId)){ setStatus("You already dropped a banana on this device.",false); dropBtn.disabled=true; dropBtn.querySelector('span').textContent='Banana Dropped'; return; }
-    arr.push({lat,lng,msg,photo,name,ts:Date.now(),deviceId});
-    await putBananas(arr);
-    localStorage.setItem(DROPPED_KEY,'true');
-    await loadBananas(true);
-    setStatus("✅ Banana saved!");
-  }catch(e){ console.error(e); setStatus(`⚠️ ${e.message}`,false,true); }
+  const data=await fetchLatest();
+  const arr=data.record?.bananas||[];
+  if(arr.some(b=>b.deviceId===deviceId)){ setStatus("You already dropped a banana on this device.",false); document.getElementById('dropBtn').disabled=true; return; }
+  arr.push({lat,lng,msg,photo,name,ts:Date.now(),deviceId});
+  await putBananas(arr);
+  localStorage.setItem(DROPPED_KEY,'true');
+  await loadBananas();
+  setStatus("✅ Banana saved!");
 }
 saveBtn.onclick=async()=>{
   try{
-    const name=nameEl.value.trim();
-    const msg=msgEl.value.trim();
-    const f=photoEl.files[0];
+    const name=nameEl.value.trim(), msg=msgEl.value.trim(), f=photoEl.files[0];
     let photo=sheetMode==='edit'?(sheetTarget.existingPhoto||""):"";
     if(f) photo=await fileToDataURL(f);
     if(sheetMode==='add'){
@@ -445,11 +400,11 @@ saveBtn.onclick=async()=>{
       if(idx===-1){ setStatus("😕 Couldn’t find your banana.",false,true); return; }
       arr[idx]={...arr[idx],msg,photo,name};
       await putBananas(arr);
-      await loadBananas(true);
+      await loadBananas();
       setStatus("✅ Banana updated!");
     }
     closeSheet();
-  }catch(e){ console.error(e); setStatus(`⚠️ ${e.message}`,false,true); }
+  }catch(e){ setStatus('⚠️ '+(e.message||e), false, true); }
 };
 async function deleteMyBanana(){
   try{
@@ -461,187 +416,42 @@ async function deleteMyBanana(){
     setStatus("🗑️ Deleting…");
     arr.splice(idx,1); await putBananas(arr);
     localStorage.removeItem(DROPPED_KEY);
-    dropBtn.disabled=false; dropBtn.querySelector('span').textContent='Drop Banana';
-    await loadBananas(true);
+    document.getElementById('dropBtn').disabled=false;
+    await loadBananas();
     setStatus("✅ Banana deleted.");
-  }catch(e){ console.error(e); setStatus(`⚠️ ${e.message}`,false,true); }
+  }catch(e){ setStatus('⚠️ '+(e.message||e), false, true); }
 }
 
-/* Buttons & menu */
-const dropBtn=document.getElementById('dropBtn');
-const menu=document.getElementById('menu');
-const toggleMenu=document.getElementById('toggleMenu');
-toggleMenu.onclick=()=>{const open=menu.classList.contains('show'); menu.classList.toggle('show',!open); searchWrap.style.display='none';}
-document.addEventListener('click',e=>{ if(!menu.contains(e.target)&&e.target!==toggleMenu) menu.classList.remove('show'); });
+/* ---------- random + swipe deck ---------- */
+function goRandomBanana(){
+  const list=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number');
+  if(!list.length){ setStatus("No bananas yet.", false); return; }
+  const pick=list[Math.floor(Math.random()*list.length)];
+  map.easeTo({center:[pick.lng,pick.lat],zoom:18,duration:900});
+  new maplibregl.Popup({offset:12}).setLngLat([pick.lng,pick.lat]).setHTML(popupHTML(pick)).addTo(map);
+}
+const deck=document.getElementById('deck'), deckClose=document.getElementById('deckClose');
+const card=document.getElementById('card'), cardTitle=document.getElementById('cardTitle'), cardMsg=document.getElementById('cardMsg'), cardImg=document.getElementById('cardImg');
+const focusBtn=document.getElementById('focusBtn'), prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn');
+let deckOpen=false, deckList=[], deckIndex=0;
+function refreshDeckList(){ deckList=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number').sort((a,b)=>(b.ts||0)-(a.ts||0)); if(deckList.length&&deckIndex>=deckList.length) deckIndex=deckList.length-1; if(deckOpen) renderCard(); }
+function openDeck(){ refreshDeckList(); if(!deckList.length){ setStatus("No bananas to browse yet.",false); return; } deckOpen=true; deck.classList.add('show'); renderCard(); }
+function closeDeck(){ deckOpen=false; deck.classList.remove('show'); } deckClose.onclick=closeDeck;
+function renderCard(){ const b=deckList[deckIndex]; if(!b){ closeDeck(); return; } cardTitle.textContent=b.name||'Banana'; if(b.msg){ cardMsg.style.display='block'; cardMsg.textContent=b.msg; } else { cardMsg.style.display='none'; } if(b.photo){ cardImg.style.display='block'; cardImg.src=b.photo; } else { cardImg.style.display='none'; cardImg.removeAttribute('src'); } focusBtn.onclick=()=>{ map.easeTo({center:[b.lng,b.lat],zoom:18,duration:800}); new maplibregl.Popup({offset:12}).setLngLat([b.lng,b.lat]).setHTML(popupHTML(b)).addTo(map); }; }
+prevBtn.onclick=()=>{ if(!deckList.length) return; deckIndex=(deckIndex-1+deckList.length)%deckList.length; renderCard(); };
+nextBtn.onclick=()=>{ if(!deckList.length) return; deckIndex=(deckIndex+1)%deckList.length; renderCard(); };
 
-dropBtn.onclick=()=>{
-  if(dropBtn.disabled) return;
-  const openForm=(lat,lng)=>{ map.easeTo({center:[lng,lat],zoom:18,duration:800}); openSheet('add',{lat,lng}); };
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>openForm(latitude,longitude),
-      ()=>{ const c=map.getCenter(); openForm(c.lat,c.lng); },
-      {enableHighAccuracy:true,timeout:6000,maximumAge:60000});
-  } else { const c=map.getCenter(); openForm(c.lat,c.lng); }
-};
-
-/* Menu: See/Share/Delete/Random/Browse */
-document.getElementById('seeMine').onclick=async()=>{
-  try{
-    const latest=await fetchLatest();
-    const arr=latest.record?.bananas||[];
-    const b=arr.find(x=>x.deviceId===deviceId);
-    if(!b){ setStatus("You haven't dropped a banana yet.",false); return; }
-    map.easeTo({center:[b.lng,b.lat],zoom:18,duration:1000});
-    setStatus("📍 Showing your banana");
-    menu.classList.remove('show');
-  }catch(e){ console.error(e); setStatus(`⚠️ ${e.message}`,false,true); }
-};
-document.getElementById('shareMine').onclick=async()=>{
-  try{
-    const latest=await fetchLatest();
-    const arr=latest.record?.bananas||[];
-    const b=arr.find(x=>x.deviceId===deviceId);
-    if(!b){ setStatus("Drop a banana first to share.",false); return; }
-    const url=new URL(location.href); url.searchParams.set('id',deviceId);
-    await navigator.clipboard.writeText(url.toString());
-    setStatus("🔗 Link copied!");
-    menu.classList.remove('show');
-  }catch(e){ console.error(e); setStatus(`⚠️ ${e.message}`,false,true); }
-};
-document.getElementById('deleteMine').onclick=()=>{ menu.classList.remove('show'); deleteMyBanana(); };
-
-document.getElementById('randomBanana').onclick=()=>{ menu.classList.remove('show'); goRandomBanana(); };
-document.getElementById('browseBananas').onclick=()=>{ menu.classList.remove('show'); openDeck(); };
-
-/* Live reload */
-const liveToggle=document.getElementById('liveToggle'); let refreshHandle=null;
-function startAuto(){ stopAuto(); refreshHandle=setInterval(async()=>{ await loadBananas(true); if(deckOpen) refreshDeckList(); },20000); }
+/* ---------- auto refresh + geolocate ---------- */
+let refreshHandle=null;
+function startAuto(){ stopAuto(); refreshHandle=setInterval(async()=>{ await loadBananas(); if(deckOpen) refreshDeckList(); },20000); }
 function stopAuto(){ if(refreshHandle){ clearInterval(refreshHandle); refreshHandle=null; } }
-liveToggle.addEventListener('change',()=> liveToggle.checked?startAuto():stopAuto());
-window.addEventListener('visibilitychange',()=>{ if(document.hidden) stopAuto(); else if(liveToggle.checked) startAuto(); });
-window.addEventListener('beforeunload',stopAuto);
-
-/* Geolocate on load */
-if(navigator.geolocation){
+function geolocateOnce(){
+  if(!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(
-    ({coords:{latitude,longitude}})=>{
-      map.easeTo({center:[longitude,latitude],zoom:18,duration:900});
-      new maplibregl.Popup({offset:12}).setLngLat([longitude,latitude]).setHTML("You are here").addTo(map);
-    }, ()=>{}, {enableHighAccuracy:true,timeout:8000,maximumAge:60000}
+    ({coords:{latitude,longitude}})=>{ map.easeTo({center:[longitude,latitude],zoom:18,duration:900}); new maplibregl.Popup({offset:12}).setLngLat([longitude,latitude]).setHTML("You are here").addTo(map); },
+    ()=>{}, {enableHighAccuracy:true,timeout:8000,maximumAge:60000}
   );
 }
-
-/* Cluster click → zoom into cluster + boot */
-map.on('load', async ()=>{
-  map.on('click','clusters', e=>{
-    const f = map.queryRenderedFeatures(e.point,{layers:['clusters']})[0];
-    const id = f.properties.cluster_id;
-    map.getSource('bananas').getClusterExpansionZoom(id,(err,z)=>{ if(err) return; map.easeTo({center:f.geometry.coordinates, zoom:z}); });
-  });
-  map.on('mouseenter','clusters',()=> map.getCanvas().style.cursor='pointer');
-  map.on('mouseleave','clusters',()=> map.getCanvas().style.cursor='');
-
-  await loadBananas();
-  startAuto();
-
-  // Deep-link ?id=
-  const qid = new URLSearchParams(location.search).get('id');
-  if (qid){
-    const latest=await fetchLatest(); const arr=latest.record?.bananas||[];
-    const b=arr.find(x=>x.deviceId===qid); if(b){ map.easeTo({center:[b.lng,b.lat],zoom:18,duration:1000}); }
-  }
-});
-
-/* ===== Random Banana ===== */
-function goRandomBanana(){
-  const list = bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number');
-  if(!list.length){ setStatus("No bananas yet.", false); return; }
-  const pick = list[Math.floor(Math.random()*list.length)];
-  map.easeTo({center:[pick.lng,pick.lat],zoom:18,duration:900});
-  const html = popupHTML(pick);
-  new maplibregl.Popup({offset:12}).setLngLat([pick.lng,pick.lat]).setHTML(html).addTo(map);
-}
-
-/* ===== Swipe Deck (Tinder-like) ===== */
-const deck = document.getElementById('deck');
-const deckClose = document.getElementById('deckClose');
-const card = document.getElementById('card');
-const cardTitle = document.getElementById('cardTitle');
-const cardMsg = document.getElementById('cardMsg');
-const cardImg = document.getElementById('cardImg');
-const focusBtn = document.getElementById('focusBtn');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-
-let deckOpen=false, deckList=[], deckIndex=0;
-
-function refreshDeckList(){
-  deckList = bananasCache
-    .filter(b=>typeof b.lat==='number'&&typeof b.lng==='number')
-    .sort((a,b)=> (b.ts||0)-(a.ts||0));
-  if(deckList.length && deckIndex>=deckList.length) deckIndex=deckList.length-1;
-  if(deckOpen) renderCard();
-}
-function openDeck(){
-  refreshDeckList();
-  if(!deckList.length){ setStatus("No bananas to browse yet.",false); return; }
-  deckOpen=true; deck.classList.add('show');
-  renderCard();
-}
-function closeDeck(){ deckOpen=false; deck.classList.remove('show'); }
-deckClose.onclick=closeDeck;
-
-function renderCard(){
-  const b = deckList[deckIndex];
-  if(!b){ closeDeck(); return; }
-  cardTitle.textContent = b.name ? b.name : 'Banana';
-  if(b.msg){ cardMsg.style.display='block'; cardMsg.textContent=b.msg; } else { cardMsg.style.display='none'; }
-  if(b.photo){ cardImg.style.display='block'; cardImg.src=b.photo; } else { cardImg.style.display='none'; cardImg.removeAttribute('src'); }
-  focusBtn.onclick = ()=>{
-    map.easeTo({center:[b.lng,b.lat],zoom:18,duration:800});
-    const html = popupHTML(b);
-    new maplibregl.Popup({offset:12}).setLngLat([b.lng,b.lat]).setHTML(html).addTo(map);
-  };
-}
-prevBtn.onclick=()=>{ if(!deckList.length) return; deckIndex = (deckIndex-1+deckList.length)%deckList.length; animateSnap(-1); renderCard(); };
-nextBtn.onclick=()=>{ if(!deckList.length) return; deckIndex = (deckIndex+1)%deckList.length; animateSnap(1); renderCard(); };
-function animateSnap(dir){
-  card.style.transition='transform .18s ease, opacity .18s ease';
-  card.style.transform=`translateX(${dir*40}px)`;
-  card.style.opacity='0.7';
-  setTimeout(()=>{ card.style.transform='translateX(0)'; card.style.opacity='1'; }, 180);
-  setTimeout(()=>{ card.style.transition=''; }, 200);
-}
-/* Swipe gestures + swipe-down-to-close */
-let startX=0, startY=0, dragging=false;
-function onStart(e){ dragging=true; const t=e.touches?e.touches[0]:e; startX=t.clientX; startY=t.clientY; card.style.transition=''; }
-function onMove(e){
-  if(!dragging) return;
-  const t=e.touches?e.touches[0]:e; const dx=t.clientX-startX; const dy=t.clientY-startY;
-  card.style.transform=`translate(${dx}px, ${Math.max(0,dy)}px) rotate(${dx*0.02}deg)`;
-  card.style.opacity=String(Math.max(0.6, 1-Math.abs(dx)/400));
-}
-function onEnd(e){
-  if(!dragging) return; dragging=false;
-  const t=e.changedTouches?e.changedTouches[0]:e; const dx=t.clientX-startX; const dy=t.clientY-startY;
-  const TH=80, CLOSE=120;
-  card.style.transition='transform .2s ease, opacity .2s ease';
-  if(dy>CLOSE){ card.style.transform='translateY(160px)'; card.style.opacity='0.6'; setTimeout(closeDeck,180); return; }
-  if(dx>TH){ card.style.transform='translateX(120px) rotate(6deg)'; card.style.opacity='0.6'; setTimeout(()=>{ nextBtn.click(); card.style.transform='translateX(0)'; card.style.opacity='1'; },180); }
-  else if(dx<-TH){ card.style.transform='translateX(-120px) rotate(-6deg)'; card.style.opacity='0.6'; setTimeout(()=>{ prevBtn.click(); card.style.transform='translateX(0)'; card.style.opacity='1'; },180); }
-  else{ card.style.transform='translate(0,0) rotate(0)'; card.style.opacity='1'; }
-}
-card.addEventListener('touchstart',onStart,{passive:true});
-card.addEventListener('touchmove',onMove,{passive:true});
-card.addEventListener('touchend',onEnd);
-card.addEventListener('mousedown',onStart);
-window.addEventListener('mousemove',onMove);
-window.addEventListener('mouseup',onEnd);
-/* Close deck on ESC */
-window.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDeck(); });
-
-/* Utils */
-function escapeHTML(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 </script>
 </body>
 </html>
