@@ -56,7 +56,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 .status{position:fixed;left:50%;transform:translateX(-50%);bottom:110px;z-index:30000;background:var(--surface);padding:8px 12px;border-radius:12px;box-shadow:var(--shadow);font-size:12px}
 .status button{margin-left:8px;padding:4px 8px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;font-weight:600;cursor:pointer}
 
-/* Bottom-sheet */
+/* Bottom-sheet (add/edit) */
 .sheet{position:fixed;left:0;right:0;bottom:-100%;z-index:30012;background:#fff;border-top-left-radius:20px;border-top-right-radius:20px;box-shadow:0 -20px 40px rgba(0,0,0,.15);padding:14px 16px 18px;transition:bottom .25s ease}
 .sheet.show{bottom:0}
 .sheet .grab{width:44px;height:4px;background:#ddd;border-radius:4px;margin:6px auto 10px}
@@ -81,12 +81,35 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
   user-select:none; -webkit-user-select:none; cursor:pointer; transform: translateY(-4px);
 }
 
+/* Swipe deck */
+.deck{position:fixed;left:0;right:0;bottom:10px;z-index:30011;display:none;justify-content:center}
+.deck.show{display:flex}
+.card{
+  width:min(560px,92vw);
+  background:var(--surface);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  padding:14px 14px 12px;
+  touch-action:pan-y;
+  will-change:transform;
+}
+.card h4{margin:4px 0 6px 0;font-size:16px}
+.card p{margin:0 0 6px 0;color:#333}
+.card img{max-width:100%;border-radius:12px;margin-top:6px}
+.card .actions{display:flex;gap:8px;margin-top:10px}
+.card .actions button{flex:1;padding:10px;border:none;border-radius:12px;font-weight:700;cursor:pointer;background:#111;color:#fff}
+.deck-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.deck-nav button{pointer-events:auto;border:none;background:rgba(255,255,255,.9);box-shadow:var(--shadow);width:38px;height:38px;border-radius:999px;display:grid;place-items:center;cursor:pointer}
+
 /* Watermark */
 .watermark{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:2}
 .watermark span{font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:clamp(26px,11vw,110px);opacity:.08;transform:rotate(-18deg);color:#000;mix-blend-mode:multiply;text-align:center;line-height:1.05}
 
-/* Mobile */
-@media (max-width:520px){ .legend{left:10px;bottom:10px} }
+/* Mobile tweaks */
+@media (max-width:520px){
+  .legend{left:10px;bottom:10px}
+  .banana-pin{font-size:26px}
+}
 </style>
 </head>
 
@@ -99,6 +122,10 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></symbol>
   <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3v14M7 8l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M3 8c5 0 6 8 12 8h6M3 16c5 0 6-8 12-8h6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
+  <symbol id="i-browse" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
 </svg>
 
 <!-- Header -->
@@ -132,6 +159,9 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
   <div class="row" id="shareMine"><svg class="icon"><use href="#i-share"/></svg><span class="label">Share my banana</span></div>
   <div class="row" id="deleteMine"><svg class="icon"><use href="#i-trash"/></svg><span class="label" style="color:var(--warn)">Delete my banana</span></div>
   <div class="split"></div>
+  <div class="row" id="randomBanana"><svg class="icon"><use href="#i-shuffle"/></svg><span class="label">Random banana</span></div>
+  <div class="row" id="browseBananas"><svg class="icon"><use href="#i-browse"/></svg><span class="label">Browse bananas</span></div>
+  <div class="split"></div>
   <div class="row" style="justify-content:space-between">
     <span class="label">Auto refresh</span>
     <input id="liveToggle" type="checkbox" checked style="appearance:none;width:40px;height:24px;background:#ddd;border-radius:999px;position:relative;cursor:pointer;outline:none">
@@ -148,7 +178,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 <div class="watermark" aria-hidden="true"><span>the banana place is under construction</span></div>
 <div class="status" id="status">🍌 Loading bananas… <button id="retryBtn" style="display:none">Retry</button></div>
 
-<!-- Bottom-sheet -->
+<!-- Bottom-sheet (add/edit) -->
 <div class="sheet" id="sheet">
   <div class="grab"></div>
   <h3 id="sheetTitle">Add a banana</h3>
@@ -161,6 +191,22 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
   <div class="preview" id="preview"><img alt="preview"/></div>
   <div class="row"><button class="cancel" id="cancelBtn">Cancel</button><button class="save" id="saveBtn">Save</button></div>
   <div style="margin-top:6px;color:#999;font-size:11px">Search by Nominatim • Map © OpenStreetMap & CARTO</div>
+</div>
+
+<!-- Swipe deck -->
+<div class="deck" id="deck">
+  <div class="card" id="card">
+    <h4 id="cardTitle">Banana</h4>
+    <p id="cardMsg" style="display:none"></p>
+    <img id="cardImg" alt="" style="display:none"/>
+    <div class="actions">
+      <button id="focusBtn">Focus on map</button>
+    </div>
+  </div>
+  <div class="deck-nav">
+    <button id="prevBtn" aria-label="Previous"><svg class="icon"><use href="#i-left"/></svg></button>
+    <button id="nextBtn" aria-label="Next"><svg class="icon"><use href="#i-right"/></svg></button>
+  </div>
 </div>
 
 <script>
@@ -201,7 +247,7 @@ function makeStyle(){
       {id:'cluster-count',type:'symbol',source:'bananas',filter:['has','point_count'],
         layout:{'text-field':['get','point_count_abbreviated'],'text-size':12,'text-font':['Open Sans Bold','Noto Sans Regular','Arial Unicode MS Bold']},
         paint:{'text-color':'#222'}}
-      /* no unclustered layer — we render DOM emoji markers for those */
+      /* unclustered pins = DOM emoji markers */
     ]};
 }
 const map=new maplibregl.Map({container:'map',style:makeStyle(),center:[0,20],zoom:2});
@@ -214,10 +260,25 @@ const asFeature=b=>({type:'Feature',properties:{deviceId:b.deviceId||'',name:b.n
 /* DOM emoji markers for unclustered points */
 let domMarkers=[];
 function clearDomMarkers(){ domMarkers.forEach(m=>m.remove()); domMarkers=[]; }
+
+function popupHTML(p){
+  const title=p.name?escapeHTML(p.name):'Banana';
+  let h=`<div><strong>${title}</strong>`;
+  if(p.msg) h+=`<p style="margin:.35rem 0">${escapeHTML(p.msg)}</p>`;
+  if(p.photo) h+=`<img src="${p.photo}" alt="banana photo"/>`;
+  if(p.deviceId===deviceId){
+    h+=`<div style="display:flex;gap:12px;margin-top:8px">
+          <a href="#" id="editBan">Edit</a>
+          <a href="#" id="delBan" style="color:${getComputedStyle(document.documentElement).getPropertyValue('--warn')||'#b00020'}">Delete</a>
+        </div>`;
+  }
+  return h+`</div>`;
+}
+
 function renderDomMarkers(geojson){
   clearDomMarkers();
   geojson.features.forEach(f=>{
-    if (f.properties.point_count) return; // clusters handled by layers
+    if (f.properties.point_count) return;
     const el=document.createElement('div');
     el.className='banana-pin';
     el.textContent='🍌';
@@ -283,23 +344,7 @@ input.addEventListener('input',debounce(()=>doSearch(input.value),300));
 document.addEventListener('click',e=>{ if(!searchWrap.contains(e.target)&&e.target!==toggleSearch){ results.classList.remove('show'); }});
 function debounce(fn,ms){let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms);}}
 
-/* Popups + edit/delete (shared) */
-let currentPopup=null;
-function popupHTML(p){
-  const title=p.name?escapeHTML(p.name):'Banana';
-  let h=`<div><strong>${title}</strong>`;
-  if(p.msg) h+=`<p style="margin:.35rem 0">${escapeHTML(p.msg)}</p>`;
-  if(p.photo) h+=`<img src="${p.photo}" alt="banana photo"/>`;
-  if(p.deviceId===deviceId){
-    h+=`<div style="display:flex;gap:12px;margin-top:8px">
-          <a href="#" id="editBan">Edit</a>
-          <a href="#" id="delBan" style="color:${getComputedStyle(document.documentElement).getPropertyValue('--warn')||'#b00020'}">Delete</a>
-        </div>`;
-  }
-  return h+`</div>`;
-}
-
-/* Bottom-sheet */
+/* Add/Edit sheet */
 const sheet=document.getElementById('sheet'); const sheetTitle=document.getElementById('sheetTitle');
 const nameEl=document.getElementById('name'); const msgEl=document.getElementById('msg'); const photoEl=document.getElementById('photo');
 const preview=document.getElementById('preview'); const previewImg=preview.querySelector('img');
@@ -343,7 +388,7 @@ saveBtn.onclick=async()=>{
       await loadBananas(true);
       setStatus("✅ Banana updated!");
     }
-    closeSheet(); if(currentPopup) currentPopup.remove();
+    closeSheet();
   }catch(e){ console.error(e); setStatus(`⚠️ ${e.message}`,false,true); }
 };
 async function deleteMyBanana(){
@@ -359,7 +404,6 @@ async function deleteMyBanana(){
     dropBtn.disabled=false; dropBtn.querySelector('span').textContent='Drop Banana';
     await loadBananas(true);
     setStatus("✅ Banana deleted.");
-    if(currentPopup) currentPopup.remove();
   }catch(e){ console.error(e); setStatus(`⚠️ ${e.message}`,false,true); }
 }
 
@@ -380,6 +424,7 @@ dropBtn.onclick=()=>{
   } else { const c=map.getCenter(); openForm(c.lat,c.lng); }
 };
 
+/* Menu: See/Share/Delete */
 document.getElementById('seeMine').onclick=async()=>{
   try{
     const latest=await fetchLatest();
@@ -391,7 +436,6 @@ document.getElementById('seeMine').onclick=async()=>{
     menu.classList.remove('show');
   }catch(e){ console.error(e); setStatus(`⚠️ ${e.message}`,false,true); }
 };
-
 document.getElementById('shareMine').onclick=async()=>{
   try{
     const latest=await fetchLatest();
@@ -404,12 +448,15 @@ document.getElementById('shareMine').onclick=async()=>{
     menu.classList.remove('show');
   }catch(e){ console.error(e); setStatus(`⚠️ ${e.message}`,false,true); }
 };
-
 document.getElementById('deleteMine').onclick=()=>{ menu.classList.remove('show'); deleteMyBanana(); };
+
+/* Menu: Random & Browse (swipe) */
+document.getElementById('randomBanana').onclick=()=>{ menu.classList.remove('show'); goRandomBanana(); };
+document.getElementById('browseBananas').onclick=()=>{ menu.classList.remove('show'); openDeck(); };
 
 /* Live reload */
 const liveToggle=document.getElementById('liveToggle'); let refreshHandle=null;
-function startAuto(){ stopAuto(); refreshHandle=setInterval(()=>loadBananas(true),20000); }
+function startAuto(){ stopAuto(); refreshHandle=setInterval(async()=>{ await loadBananas(true); if(deckOpen) refreshDeckList(); },20000); }
 function stopAuto(){ if(refreshHandle){ clearInterval(refreshHandle); refreshHandle=null; } }
 liveToggle.addEventListener('change',()=> liveToggle.checked?startAuto():stopAuto());
 window.addEventListener('visibilitychange',()=>{ if(document.hidden) stopAuto(); else if(liveToggle.checked) startAuto(); });
@@ -425,27 +472,8 @@ if(navigator.geolocation){
   );
 }
 
-/* Utils */
-function escapeHTML(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-function debounce(fn,ms){let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms);}}
-
-/* Boot */
-map.on('load', async ()=>{
-  try{
-    wireClusterClicks();
-    await loadBananas();
-    startAuto();
-    // Deep-link ?id=
-    const qid = new URLSearchParams(location.search).get('id');
-    if (qid){
-      const latest=await fetchLatest(); const arr=latest.record?.bananas||[];
-      const b=arr.find(x=>x.deviceId===qid); if(b){ map.easeTo({center:[b.lng,b.lat],zoom:18,duration:1000}); }
-    }
-  }catch(e){ console.error(e); setStatus(`⚠️ ${e.message}`,false,true); }
-});
-
 /* Cluster click → zoom into cluster */
-function wireClusterClicks(){
+map.on('load', async ()=>{
   map.on('click','clusters', e=>{
     const f = map.queryRenderedFeatures(e.point,{layers:['clusters']})[0];
     const id = f.properties.cluster_id;
@@ -453,7 +481,116 @@ function wireClusterClicks(){
   });
   map.on('mouseenter','clusters',()=> map.getCanvas().style.cursor='pointer');
   map.on('mouseleave','clusters',()=> map.getCanvas().style.cursor='');
+
+  await loadBananas();
+  startAuto();
+
+  // Deep-link ?id=
+  const qid = new URLSearchParams(location.search).get('id');
+  if (qid){
+    const latest=await fetchLatest(); const arr=latest.record?.bananas||[];
+    const b=arr.find(x=>x.deviceId===qid); if(b){ map.easeTo({center:[b.lng,b.lat],zoom:18,duration:1000}); }
+  }
+});
+
+/* ===== Random Banana ===== */
+function goRandomBanana(){
+  const list = bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number');
+  if(!list.length){ setStatus("No bananas yet.", false); return; }
+  const pick = list[Math.floor(Math.random()*list.length)];
+  map.easeTo({center:[pick.lng,pick.lat],zoom:18,duration:900});
+  const html = popupHTML(pick);
+  new maplibregl.Popup({offset:12}).setLngLat([pick.lng,pick.lat]).setHTML(html).addTo(map);
+  setTimeout(()=>{
+    const edit=document.getElementById('editBan');
+    const del =document.getElementById('delBan');
+    if(edit && pick.deviceId===deviceId) edit.onclick=(ev)=>{ev.preventDefault(); openSheet('edit',{lat:pick.lat,lng:pick.lng,...pick});};
+    if(del && pick.deviceId===deviceId)  del.onclick =(ev)=>{ev.preventDefault(); deleteMyBanana();};
+  },0);
 }
+
+/* ===== Swipe Deck (Tinder-like) ===== */
+const deck = document.getElementById('deck');
+const card = document.getElementById('card');
+const cardTitle = document.getElementById('cardTitle');
+const cardMsg = document.getElementById('cardMsg');
+const cardImg = document.getElementById('cardImg');
+const focusBtn = document.getElementById('focusBtn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+let deckOpen=false;
+let deckList=[];   // array of bananas (raw objects from bananasCache)
+let deckIndex=0;
+
+function refreshDeckList(){
+  deckList = bananasCache
+    .filter(b=>typeof b.lat==='number'&&typeof b.lng==='number')
+    // Optional: sort newest first
+    .sort((a,b)=> (b.ts||0)-(a.ts||0));
+  if(deckList.length && deckIndex>=deckList.length) deckIndex=deckList.length-1;
+  if(deckOpen) renderCard();
+}
+function openDeck(){
+  refreshDeckList();
+  if(!deckList.length){ setStatus("No bananas to browse yet.",false); return; }
+  deckOpen=true; deck.style.display='flex';
+  renderCard();
+}
+function closeDeck(){ deckOpen=false; deck.style.display='none'; }
+
+function renderCard(){
+  const b = deckList[deckIndex];
+  if(!b){ closeDeck(); return; }
+  cardTitle.textContent = b.name ? b.name : 'Banana';
+  if(b.msg){ cardMsg.style.display='block'; cardMsg.textContent=b.msg; } else { cardMsg.style.display='none'; }
+  if(b.photo){ cardImg.style.display='block'; cardImg.src=b.photo; } else { cardImg.style.display='none'; cardImg.removeAttribute('src'); }
+  focusBtn.onclick = ()=>{
+    map.easeTo({center:[b.lng,b.lat],zoom:18,duration:800});
+    const html = popupHTML(b);
+    new maplibregl.Popup({offset:12}).setLngLat([b.lng,b.lat]).setHTML(html).addTo(map);
+  };
+}
+
+prevBtn.onclick=()=>{ if(!deckList.length) return; deckIndex = (deckIndex-1+deckList.length)%deckList.length; animateSnap(-1); renderCard(); };
+nextBtn.onclick=()=>{ if(!deckList.length) return; deckIndex = (deckIndex+1)%deckList.length; animateSnap(1); renderCard(); };
+
+function animateSnap(dir){
+  // simple slide animation feedback
+  card.style.transition='transform .18s ease, opacity .18s ease';
+  card.style.transform=`translateX(${dir*40}px)`;
+  card.style.opacity='0.7';
+  setTimeout(()=>{ card.style.transform='translateX(0)'; card.style.opacity='1'; }, 180);
+  setTimeout(()=>{ card.style.transition=''; }, 200);
+}
+
+/* Swipe gestures */
+let startX=0, dragging=false;
+function onStart(e){ dragging=true; startX=(e.touches?e.touches[0].clientX:e.clientX); card.style.transition=''; }
+function onMove(e){ if(!dragging) return; const x=(e.touches?e.touches[0].clientX:e.clientX); const dx=x-startX; card.style.transform=`translateX(${dx}px) rotate(${dx*0.02}deg)`; card.style.opacity=String(Math.max(0.6, 1-Math.abs(dx)/400)); }
+function onEnd(e){ if(!dragging) return; dragging=false; const endX=(e.changedTouches?e.changedTouches[0].clientX:e.clientX); const dx=endX-startX; const TH=80; card.style.transition='transform .2s ease, opacity .2s ease';
+  if(dx>TH){ // next
+    card.style.transform='translateX(120px) rotate(6deg)'; card.style.opacity='0.6';
+    setTimeout(()=>{ nextBtn.click(); card.style.transform='translateX(0)'; card.style.opacity='1'; },180);
+  }else if(dx<-TH){ // prev
+    card.style.transform='translateX(-120px) rotate(-6deg)'; card.style.opacity='0.6';
+    setTimeout(()=>{ prevBtn.click(); card.style.transform='translateX(0)'; card.style.opacity='1'; },180);
+  }else{
+    card.style.transform='translateX(0) rotate(0)'; card.style.opacity='1';
+  }
+}
+card.addEventListener('touchstart',onStart,{passive:true});
+card.addEventListener('touchmove',onMove,{passive:true});
+card.addEventListener('touchend',onEnd);
+card.addEventListener('mousedown',onStart);
+window.addEventListener('mousemove',onMove);
+window.addEventListener('mouseup',onEnd);
+
+/* Close deck on ESC */
+window.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDeck(); });
+
+/* Utils */
+function escapeHTML(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 </script>
 </body>
 </html>
