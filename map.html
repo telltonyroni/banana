@@ -6,73 +6,113 @@
 <title>banana.place 🍌</title>
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='0.9em' font-size='90'>🍌</text></svg>"/>
+
+<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"/>
+
+<!-- MarkerCluster CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 
 <style>
 :root{--bg:#FFF7CC;--chip-bg:#fff;--chip-ink:#222;--chip-shadow:0 2px 8px rgba(0,0,0,.12);}
 html,body{margin:0;height:100%;background:var(--bg);font-family:system-ui,sans-serif;}
 #map{width:100%;height:100dvh;}
-.ui{position:fixed;z-index:9999;top:16px;right:16px;display:flex;gap:10px;align-items:center;}
+.ui{position:fixed;z-index:9999;top:16px;right:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
 .chip{background:var(--chip-bg);color:var(--chip-ink);border:none;border-radius:999px;
  box-shadow:var(--chip-shadow);display:inline-flex;align-items:center;gap:10px;
  padding:10px 14px;font-weight:600;}
-.chip select{border:none;background:transparent;font:inherit;color:inherit;cursor:pointer;
- appearance:none;padding-right:18px;}
-.btn{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;border:none;
- background:var(--chip-bg);box-shadow:var(--chip-shadow);font-size:22px;cursor:pointer;}
-.status{position:fixed;z-index:9999;left:50%;transform:translateX(-50%);bottom:16px;
- background:#fff;color:#222;padding:8px 12px;border-radius:12px;box-shadow:var(--chip-shadow);
- font-size:12px;}
+.chip select{border:none;background:transparent;font:inherit;color:inherit;cursor:pointer;appearance:none;padding-right:18px;}
+.btn{border:none;cursor:pointer;}
+.round{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--chip-bg);box-shadow:var(--chip-shadow);font-size:22px;}
+.primary{position:fixed;left:16px;bottom:16px;z-index:9999;background:#111;color:#fff;border-radius:999px;
+ padding:12px 16px;box-shadow:var(--chip-shadow);font-weight:700;display:flex;gap:10px;align-items:center;}
+.secondary{position:fixed;right:16px;bottom:16px;z-index:9999;background:#fff;color:#111;border-radius:999px;
+ padding:12px 16px;box-shadow:var(--chip-shadow);font-weight:700;display:flex;gap:10px;align-items:center;}
+.primary[disabled]{opacity:.45;cursor:not-allowed;}
+.status{position:fixed;z-index:9999;left:50%;transform:translateX(-50%);bottom:72px;
+ background:#fff;color:#222;padding:8px 12px;border-radius:12px;box-shadow:var(--chip-shadow);font-size:12px;}
 .watermark{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:2;}
 .watermark span{font-weight:800;letter-spacing:.06em;text-transform:uppercase;
- font-size:clamp(28px,12vw,120px);opacity:.08;transform:rotate(-18deg);color:#000;
- mix-blend-mode:multiply;text-align:center;line-height:1.05;}
-input,textarea{width:100%;margin:6px 0;padding:6px;border-radius:6px;border:1px solid #ccc;
- font:inherit;}
+ font-size:clamp(28px,12vw,120px);opacity:.08;transform:rotate(-18deg);color:#000;mix-blend-mode:multiply;text-align:center;line-height:1.05;}
+input,textarea{width:100%;margin:6px 0;padding:6px;border-radius:6px;border:1px solid #ccc;font:inherit;}
+.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(255,235,59,.35);}
+.marker-cluster div{background:#FFE066;color:#222;border:2px solid #E0C24B;font-weight:800;}
+.edit-links{display:flex;gap:12px;margin-top:8px;}
+.edit-links a{font-weight:700;text-decoration:none;}
 </style>
 </head>
 
 <body>
+<!-- Theme + Home -->
 <div class="ui">
- <div class="chip" title="Map theme">
-  <span>🗺️</span>
-  <select id="themeSelect">
-   <option value="light">Light</option>
-   <option value="dark">Dark</option>
-   <option value="voyager">Voyager</option>
-  </select>
- </div>
- <button class="btn" onclick="window.location.href='index.html'">🏠</button>
+  <div class="chip" title="Map theme">
+    <span>🗺️</span>
+    <select id="themeSelect">
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+      <option value="voyager">Voyager</option>
+      <option value="cartoony">Cartoony 🍌 (Watercolor)</option>
+    </select>
+  </div>
+  <button class="round btn" onclick="window.location.href='index.html'">🏠</button>
 </div>
+
+<!-- Action buttons -->
+<button id="dropBtn" class="primary btn"><span>🍌</span><span>Drop Banana</span></button>
+<button id="seeMineBtn" class="secondary btn"><span>🔎</span><span>See My Banana</span></button>
 
 <div id="map"></div>
 <div class="watermark" aria-hidden="true"><span>the banana place is under construction</span></div>
 <div class="status" id="status">🍌 Loading bananas…</div>
 
+<!-- Leaflet JS -->
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 
+<!-- MarkerCluster JS -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
 <script>
-/* ===== JSONBin config (final) ===== */
+/* ===== JSONBin config ===== */
 const BIN_ID  = "68f0265443b1c97be96a4ad5";
 const API_KEY = "$2a$10$RCnUKDWytC/ysiMgbX6/q.QRSKrLrAOPSOsZVPFYaaW06lur2V5X6";
 const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 const statusEl = document.getElementById("status");
+const dropBtn  = document.getElementById("dropBtn");
+const seeMineBtn  = document.getElementById("seeMineBtn");
 const setStatus = (msg, ok = true) => { statusEl.textContent = msg; statusEl.style.color = ok ? "#111" : "#b00020"; };
 
+/* ===== Device identity (one banana per device) ===== */
+function uuid(){return([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));}
+const DEVICE_KEY = 'banana_device_id';
+let deviceId = localStorage.getItem(DEVICE_KEY);
+if(!deviceId){ deviceId = uuid(); localStorage.setItem(DEVICE_KEY, deviceId); }
+const DROPPED_KEY = 'banana_already_dropped';
+
 /* ===== Map + themes ===== */
-const map = L.map("map").setView([20,0],2);
+const map = L.map("map", { zoomControl: true }).setView([20,0], 2);
 const providers = {
-  light:  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  dark:   'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  voyager:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+  light:   { url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attr:'&copy; OpenStreetMap &copy; CARTO' },
+  dark:    { url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attr:'&copy; OpenStreetMap &copy; CARTO' },
+  voyager: { url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attr:'&copy; OpenStreetMap &copy; CARTO' },
+  cartoonyBase: { url:'https://stamen-tiles.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg', attr:'Map tiles by Stamen Design, CC BY 3.0 — Data © OpenStreetMap' },
+  cartoonyLines:{ url:'https://stamen-tiles.a.ssl.fastly.net/toner-lines/{z}/{x}/{y}.png', attr:'Stamen Toner Lines, CC BY 3.0' }
 };
-let base;
+let baseLayer=null, overlayLines=null;
 function setTheme(name){
-  if(base) map.removeLayer(base);
-  base = L.tileLayer(providers[name]||providers.light, { attribution:'&copy; OpenStreetMap &copy; CARTO', detectRetina:true }).addTo(map);
+  if(baseLayer) map.removeLayer(baseLayer);
+  if(overlayLines){ map.removeLayer(overlayLines); overlayLines = null; }
+
+  if(name==='cartoony'){
+    baseLayer = L.tileLayer(providers.cartoonyBase.url, { attribution: providers.cartoonyBase.attr, maxZoom: 19 }).addTo(map);
+    overlayLines = L.tileLayer(providers.cartoonyLines.url, { attribution: providers.cartoonyLines.attr, opacity: .6, maxZoom: 19 }).addTo(map);
+  } else {
+    const p = providers[name] || providers.light;
+    baseLayer = L.tileLayer(p.url, { attribution: p.attr, detectRetina:true, maxZoom: 20 }).addTo(map);
+  }
   localStorage.setItem('banana_theme', name);
 }
 const select = document.getElementById('themeSelect');
@@ -82,28 +122,57 @@ select.addEventListener('change', e => setTheme(e.target.value));
 
 const bananaIcon = L.divIcon({ html:'🍌', className:'banana', iconSize:[32,32], iconAnchor:[16,32] });
 
-/* ===== Load bananas ===== */
+// Cluster group
+const clusters = L.markerClusterGroup({ maxClusterRadius: 50, spiderfyOnMaxZoom: true, disableClusteringAtZoom: 17 });
+map.addLayer(clusters);
+
+// In-memory indexes
+let myMarker = null;
+let bananasCache = [];   // latest array from JSONBin
+let markersByIndex = []; // parallel to bananasCache
+
+/* ===== Helpers: fetch latest, put updated ===== */
+async function fetchLatest(){
+  const res = await fetch(`${BIN_URL}/latest`, { headers: { "X-Master-Key": API_KEY, "Content-Type":"application/json" }});
+  if (!res.ok) { const t = await res.text(); throw new Error(`Read failed: ${res.status} ${t}`); }
+  return res.json();
+}
+async function putBananas(bananas){
+  const w = await fetch(BIN_URL, {
+    method: "PUT",
+    headers: { "X-Master-Key": API_KEY, "Content-Type":"application/json" },
+    body: JSON.stringify({ bananas })
+  });
+  if (!w.ok) { const t = await w.text(); throw new Error(`Write failed: ${w.status} ${t}`); }
+}
+
+/* ===== Load bananas (and detect mine) ===== */
 async function loadBananas(){
   setStatus("🍌 Loading bananas…");
   try {
-    const res = await fetch(`${BIN_URL}/latest`, {
-      headers: { "X-Master-Key": API_KEY, "Content-Type":"application/json" }
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Read failed: ${res.status} ${body}`);
-    }
-    const data = await res.json();
+    const data = await fetchLatest();
     const bananas = data.record?.bananas || [];
-    bananas.forEach(b => {
+    bananasCache = bananas;
+    markersByIndex = [];
+    clusters.clearLayers();
+
+    let already = false;
+
+    bananas.forEach((b, i) => {
       if (typeof b.lat === 'number' && typeof b.lng === 'number') {
-        const m = L.marker([b.lat, b.lng], { icon: bananaIcon }).addTo(map);
-        let html = `<strong>🍌 Banana!</strong>`;
-        if (b.msg)   html += `<p>${b.msg}</p>`;
-        if (b.photo) html += `<img src="${b.photo}" style="max-width:140px;border-radius:8px"/>`;
-        m.bindPopup(html);
+        const m = L.marker([b.lat, b.lng], { icon: bananaIcon });
+        m.bindPopup(buildPopupHTML(b, i));
+        clusters.addLayer(m);
+        markersByIndex[i] = m;
+        if (b.deviceId === deviceId) { myMarker = m; already = true; }
       }
     });
+
+    if (already || localStorage.getItem(DROPPED_KEY)==='true') {
+      dropBtn.disabled = true;
+      dropBtn.innerHTML = "🍌 Banana Dropped";
+    }
+
     setStatus(`✅ ${bananas.length} bananas loaded`);
   } catch (err) {
     console.error(err);
@@ -111,22 +180,165 @@ async function loadBananas(){
   }
 }
 
-/* ===== Save banana ===== */
+/* ===== Popup builder (Edit/Delete on mine) ===== */
+function buildPopupHTML(banana, index){
+  let html = `<strong>🍌 Banana!</strong>`;
+  if (banana.msg)   html += `<p>${banana.msg}</p>`;
+  if (banana.photo) html += `<img src="${banana.photo}" style="max-width:140px;border-radius:8px;display:block;margin-top:6px"/>`;
+  html += `<div class="edit-links">`;
+  if (banana.deviceId === deviceId) {
+    html += `<a href="#" data-edit="${index}">✏️ Edit</a>`;
+    html += `<a href="#" data-delete="${index}" style="color:#b00020">🗑️ Delete</a>`;
+  }
+  html += `</div>`;
+  return `<div data-index="${index}">${html}</div>`;
+}
+
+/* ===== Attach edit/delete handlers when popup opens ===== */
+map.on('popupopen', (e) => {
+  const container = e.popup.getContent();
+  if (!(container instanceof HTMLElement)) return;
+
+  const editLink = container.querySelector('[data-edit]');
+  if (editLink) {
+    editLink.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const idx = parseInt(editLink.getAttribute('data-edit'), 10);
+      openEditForm(idx);
+    }, { once: true });
+  }
+
+  const delLink = container.querySelector('[data-delete]');
+  if (delLink) {
+    delLink.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      const idx = parseInt(delLink.getAttribute('data-delete'), 10);
+      await deleteMyBanana(idx);
+    }, { once: true });
+  }
+});
+
+/* ===== Edit flow ===== */
+function openEditForm(index){
+  const b = bananasCache[index];
+  if (!b || b.deviceId !== deviceId) return;
+
+  const form = document.createElement('div');
+  form.innerHTML = `
+    <h4 style="margin:0 0 8px">✏️ Edit your banana</h4>
+    <label>Message</label>
+    <textarea id="msg" rows="2" placeholder="update your note…">${b.msg || ""}</textarea>
+    <label>Replace Photo (optional)</label>
+    <input type="file" id="photo" accept="image/*"/>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button id="save" style="padding:6px 10px">Save</button>
+      <button id="cancel" style="padding:6px 10px;background:#eee">Cancel</button>
+    </div>
+  `;
+  const marker = markersByIndex[index];
+  const popup = L.popup().setLatLng(marker.getLatLng()).setContent(form).openOn(map);
+
+  form.querySelector('#cancel').onclick = () => { map.closePopup(); marker.openPopup(); };
+
+  form.querySelector('#save').onclick = async () => {
+    try {
+      const newMsg = form.querySelector('#msg').value.trim();
+      const file = form.querySelector('#photo').files[0];
+
+      let photoData = b.photo || "";
+      if (file) photoData = await fileToDataURL(file);
+
+      bananasCache[index] = { ...b, msg: newMsg, photo: photoData };
+      setStatus("💾 Saving…");
+      await putBananas(bananasCache);
+
+      const newHTML = buildPopupHTML(bananasCache[index], index);
+      marker.bindPopup(newHTML).openPopup();
+      setStatus("✅ Banana updated!");
+    } catch (e) {
+      console.error(e);
+      setStatus(`⚠️ ${e.message}`, false);
+    }
+  };
+}
+
+/* ===== Delete flow ===== */
+async function deleteMyBanana(index){
+  const b = bananasCache[index];
+  if (!b || b.deviceId !== deviceId) return;
+
+  const confirmDelete = confirm("Delete your banana? This cannot be undone.");
+  if (!confirmDelete) return;
+
+  try {
+    setStatus("🗑️ Deleting…");
+    // Fetch fresh to minimize overwrite risk
+    const data = await fetchLatest();
+    const arr = data.record?.bananas || [];
+    const idx = arr.findIndex(x => x.deviceId === deviceId);
+    if (idx === -1) { setStatus("😕 Couldn’t find your banana.", false); return; }
+
+    arr.splice(idx, 1);
+    await putBananas(arr);
+
+    // Update local caches & UI
+    const marker = markersByIndex[index];
+    if (marker) { clusters.removeLayer(marker); }
+    bananasCache = arr;
+    markersByIndex = []; // force rebuild on next load
+    myMarker = null;
+
+    localStorage.removeItem(DROPPED_KEY);
+    dropBtn.disabled = false;
+    dropBtn.innerHTML = "🍌 Drop Banana";
+
+    setStatus("✅ Banana deleted.");
+  } catch (e) {
+    console.error(e);
+    setStatus(`⚠️ ${e.message}`, false);
+  }
+}
+
+/* ===== Utility: file -> dataURL ===== */
+function fileToDataURL(file){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+/* ===== Save new banana (enforce one-per-device) ===== */
 async function saveBanana(lat, lng, msg, photo){
   setStatus("💾 Saving…");
   try {
-    const r = await fetch(`${BIN_URL}/latest`, { headers: { "X-Master-Key": API_KEY, "Content-Type":"application/json" }});
-    if (!r.ok) { const t = await r.text(); throw new Error(`Read-before-write failed: ${r.status} ${t}`); }
-    const j = await r.json();
-    const bananas = j.record?.bananas || [];
-    bananas.push({ lat, lng, msg, photo, ts: Date.now() });
+    const data = await fetchLatest();
+    const bananas = data.record?.bananas || [];
 
-    const w = await fetch(BIN_URL, {
-      method: "PUT",
-      headers: { "X-Master-Key": API_KEY, "Content-Type":"application/json" },
-      body: JSON.stringify({ bananas })
-    });
-    if (!w.ok) { const t = await w.text(); throw new Error(`Write failed: ${w.status} ${t}`); }
+    if (bananas.some(b => b.deviceId === deviceId)) {
+      setStatus("⚠️ You already dropped a banana on this device.", false);
+      dropBtn.disabled = true;
+      dropBtn.innerHTML = "🍌 Banana Dropped";
+      return;
+    }
+
+    const newBanana = { lat, lng, msg, photo, ts: Date.now(), deviceId };
+    bananas.push(newBanana);
+    await putBananas(bananas);
+
+    // Update caches & UI
+    bananasCache = bananas;
+    const m = L.marker([lat, lng], { icon: bananaIcon });
+    const idx = bananasCache.length - 1;
+    m.bindPopup(buildPopupHTML(newBanana, idx)).openPopup();
+    clusters.addLayer(m);
+    markersByIndex[idx] = m;
+    myMarker = m;
+
+    localStorage.setItem(DROPPED_KEY, 'true');
+    dropBtn.disabled = true;
+    dropBtn.innerHTML = "🍌 Banana Dropped";
 
     setStatus("✅ Banana saved!");
   } catch (err) {
@@ -135,9 +347,10 @@ async function saveBanana(lat, lng, msg, photo){
   }
 }
 
-/* ===== Click-to-add form ===== */
-map.on("click", (e) => {
-  const { lat, lng } = e.latlng;
+/* ===== Create the input form at a lat/lng ===== */
+function openCreateForm(lat, lng){
+  if (map.getZoom() < 17) map.flyTo([lat, lng], 18, { duration: 0.8 });
+
   const form = document.createElement("div");
   form.innerHTML = `
     <h4 style="margin:0 0 8px">🍌 Add a banana</h4>
@@ -150,42 +363,77 @@ map.on("click", (e) => {
   const popup = L.popup().setLatLng([lat, lng]).setContent(form).openOn(map);
 
   form.querySelector("#saveBtn").onclick = async () => {
+    if (localStorage.getItem(DROPPED_KEY)==='true') {
+      setStatus("⚠️ You already dropped a banana on this device.", false);
+      dropBtn.disabled = true;
+      dropBtn.innerHTML = "🍌 Banana Dropped";
+      map.closePopup();
+      return;
+    }
+
     const msg = form.querySelector("#msg").value.trim();
     const file = form.querySelector("#photo").files[0];
 
-    const addMarker = (photoData) => {
-      const m = L.marker([lat, lng], { icon: bananaIcon }).addTo(map);
-      let html = `<strong>🍌 Banana!</strong>`;
-      if (msg)       html += `<p>${msg}</p>`;
-      if (photoData) html += `<img src="${photoData}" style="max-width:140px;border-radius:8px"/>`;
-      m.bindPopup(html).openPopup();
-    };
-
     if (file) {
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        const photoData = ev.target.result;
-        await saveBanana(lat, lng, msg, photoData);
-        addMarker(photoData);
-      };
-      reader.readAsDataURL(file);
+      const photoData = await fileToDataURL(file);
+      await saveBanana(lat, lng, msg, photoData);
     } else {
       await saveBanana(lat, lng, msg, "");
-      addMarker("");
     }
     map.closePopup();
   };
+}
+
+/* ===== Buttons ===== */
+dropBtn.addEventListener('click', () => {
+  if (dropBtn.disabled) return;
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      ({coords:{latitude,longitude}}) => openCreateForm(latitude, longitude),
+      () => { const c = map.getCenter(); openCreateForm(c.lat, c.lng); },
+      { enableHighAccuracy:true, timeout:6000, maximumAge:60000 }
+    );
+  } else {
+    const c = map.getCenter(); openCreateForm(c.lat, c.lng);
+  }
 });
 
-/* ===== Geolocate on load ===== */
+seeMineBtn.addEventListener('click', async () => {
+  try {
+    const data = await fetchLatest();
+    bananasCache = data.record?.bananas || [];
+    // rebuild markers map if needed
+    if (!markersByIndex.length) await loadBananas();
+
+    const idx = bananasCache.findIndex(b => b.deviceId === deviceId);
+    if (idx === -1) { setStatus("😕 You haven't dropped a banana yet.", false); return; }
+
+    const marker = markersByIndex[idx];
+    if (!marker) { await loadBananas(); }
+    const m = markersByIndex[idx];
+    if (!m) { setStatus("😕 Couldn’t locate your banana. Try reloading.", false); return; }
+
+    const { lat, lng } = m.getLatLng();
+    map.flyTo([lat, lng], 18, { duration: 1.0 });
+    m.openPopup();
+    setStatus("📍 Showing your banana");
+  } catch (e) {
+    console.error(e);
+    setStatus(`⚠️ ${e.message}`, false);
+  }
+});
+
+/* ===== Geolocate on load — building view ===== */
 (function flyToUser(){
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(
     ({coords:{latitude,longitude}}) => {
-      map.flyTo([latitude, longitude], 11, { duration: 1.2 });
-      L.marker([latitude, longitude], { icon: bananaIcon }).addTo(map).bindPopup("🍌 You are here").openPopup();
+      map.flyTo([latitude, longitude], 18, { duration: 1.2 });
+      const m = L.marker([latitude, longitude], { icon: bananaIcon }).bindPopup("🍌 You are here");
+      clusters.addLayer(m);
+      m.openPopup();
     },
-    (err) => console.warn("Geolocation denied/unavailable:", err?.message || err),
+    () => {}, // ignore errors
     { enableHighAccuracy:true, timeout:8000, maximumAge:60000 }
   );
 })();
