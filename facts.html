@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#FFF7CC"/>
+  <title>Fun Facts - banana.place 🍌</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🍌</text></svg>">
+  <style>
+    :root{
+      --bg:#FFF7CC;
+      --ink:#222;
+      --accent:#FFD93D;
+      --card:#fff;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow-x:hidden;}
+    body{
+      background:var(--bg);
+      color:var(--ink);
+      font-family:system-ui, sans-serif;
+      min-height:100dvh;
+      overscroll-behavior:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    /* Header */
+    .header{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      background:var(--bg);
+      padding:20px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      z-index:100;
+      border-bottom:1px solid rgba(0,0,0,0.05);
+    }
+    .back-btn{
+      text-decoration:none;
+      color:var(--ink);
+      font-size:15px;
+      font-weight:600;
+      padding:8px 16px;
+      background:#fff;
+      border-radius:100px;
+      transition:all 0.2s;
+      border:none;
+      cursor:pointer;
+    }
+    .back-btn:hover{
+      transform:translateX(-4px);
+      box-shadow:0 2px 8px rgba(0,0,0,0.08);
+    }
+    .header-title{
+      font-size:20px;
+      font-weight:700;
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+    }
+    .menu-btn{
+      background:transparent;
+      border:none;
+      font-size:24px;
+      cursor:pointer;
+      width:40px;
+      height:40px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    /* Dropdown Menu */
+    .menu{
+      position:fixed;
+      top:70px;
+      right:24px;
+      background:#fff;
+      border-radius:12px;
+      box-shadow:0 4px 24px rgba(0,0,0,.1);
+      opacity:0;
+      pointer-events:none;
+      transform:translateY(-8px);
+      transition:opacity .25s, transform .25s;
+      z-index:99;
+      overflow:hidden;
+      min-width:160px;
+    }
+    .menu.open{
+      opacity:1;
+      pointer-events:auto;
+      transform:translateY(0);
+    }
+    .menu a{
+      display:block;
+      padding:14px 20px;
+      text-decoration:none;
+      color:var(--ink);
+      font-weight:500;
+      font-size:15px;
+      border-bottom:1px solid #f5f5f5;
+      transition:background .15s;
+    }
+    .menu a:last-child{
+      border-bottom:none;
+    }
+    .menu a:hover{
+      background:#fafafa;
+    }
+
+    /* Main Content */
+    .main{
+      padding:100px 24px 40px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+
+    /* Hero Section */
+    .hero{
+      text-align:center;
+      margin-bottom:60px;
+    }
+    .hero-title{
+      font-size:clamp(36px,6vw,56px);
+      font-weight:800;
+      margin-bottom:12px;
+      letter-spacing:-0.02em;
+    }
+    .hero-subtitle{
+      font-size:clamp(16px,3vw,20px);
+      opacity:0.5;
+      font-weight:400;
+    }
+
+    /* Counter */
+    .counter{
+      text-align:center;
+      margin-bottom:48px;
+    }
+    .counter-number{
+      font-size:clamp(48px,8vw,72px);
+      font-weight:800;
+      color:var(--accent);
+      margin-bottom:8px;
+    }
+    .counter-label{
+      font-size:16px;
+      opacity:0.6;
+      font-weight:500;
+    }
+
+    /* Facts Grid */
+    .facts-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+      gap:24px;
+      margin-bottom:48px;
+    }
+
+    /* Fact Card */
+    .fact-card{
+      background:var(--card);
+      border-radius:20px;
+      padding:32px;
+      cursor:pointer;
+      transition:all 0.3s ease;
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 2px 12px rgba(0,0,0,0.06);
+    }
+    .fact-card::before{
+      content:'';
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:4px;
+      background:var(--accent);
+      transform:scaleX(0);
+      transition:transform 0.3s ease;
+      transform-origin:left;
+    }
+    .fact-card:hover{
+      transform:translateY(-8px);
+      box-shadow:0 12px 32px rgba(0,0,0,0.12);
+    }
+    .fact-card:hover::before{
+      transform:scaleX(1);
+    }
+    .fact-card.flipped{
+      background:var(--accent);
+    }
+    .fact-number{
+      font-size:14px;
+      font-weight:700;
+      color:var(--accent);
+      margin-bottom:16px;
+      opacity:0.7;
+    }
+    .fact-card.flipped .fact-number{
+      color:var(--ink);
+      opacity:0.5;
+    }
+    .fact-title{
+      font-size:20px;
+      font-weight:700;
+      margin-bottom:12px;
+      line-height:1.3;
+    }
+    .fact-content{
+      font-size:16px;
+      line-height:1.6;
+      opacity:0.7;
+    }
+    .fact-back{
+      display:none;
+      font-size:16px;
+      line-height:1.7;
+      font-weight:500;
+    }
+    .fact-card.flipped .fact-front{
+      display:none;
+    }
+    .fact-card.flipped .fact-back{
+      display:block;
+    }
+    .flip-hint{
+      position:absolute;
+      bottom:16px;
+      right:20px;
+      font-size:13px;
+      opacity:0.4;
+      font-weight:600;
+    }
+    .fact-card.flipped .flip-hint{
+      opacity:0.6;
+    }
+
+    /* Random Button */
+    .random-btn{
+      display:block;
+      margin:48px auto 0;
+      padding:16px 40px;
+      background:var(--accent);
+      border:none;
+      border-radius:100px;
+      font-size:17px;
+      font-weight:700;
+      cursor:pointer;
+      transition:all 0.3s ease;
+      box-shadow:0 4px 16px rgba(255,217,61,0.3);
+    }
+    .random-btn:hover{
+      transform:scale(1.05);
+      box-shadow:0 8px 24px rgba(255,217,61,0.4);
+    }
+    .random-btn:active{
+      transform:scale(0.98);
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .fact-card:hover{transform:none}
+      .random-btn:hover{transform:none}
+    }
+
+    @media (max-width:768px){
+      .facts-grid{
+        grid-template-columns:1fr;
+        gap:20px;
+      }
+      .header-title{
+        position:static;
+        transform:none;
+      }
+      .header{
+        flex-direction:column;
+        gap:12px;
+        align-items:flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <a href="/" class="back-btn">← Back</a>
+    <h2 class="header-title">Fun Facts</h2>
+    <button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+  </div>
+
+  <!-- Dropdown Menu -->
+  <div class="menu" id="menu">
+    <a href="/">Home</a>
+    <a href="#map">Travel Map</a>
+    <a href="#stories">Stories</a>
+    <a href="#about">About</a>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main">
+    <!-- Hero -->
+    <div class="hero">
+      <h1 class="hero-title">Banana Facts</h1>
+      <p class="hero-subtitle">Did you know?</p>
+    </div>
+
+    <!-- Counter -->
+    <div class="counter">
+      <div class="counter-number" id="counter">0</div>
+      <div class="counter-label">facts discovered</div>
+    </div>
+
+    <!-- Facts Grid -->
+    <div class="facts-grid" id="factsGrid">
+      <!-- Facts will be inserted here -->
+    </div>
+
+    <!-- Random Fact Button -->
+    <button class="random-btn" id="randomBtn">Surprise Me!</button>
+  </main>
+
+  <script>
+    const facts = [
+      {
+        title: "Bananas are berries",
+        content: "Botanically speaking, bananas are classified as berries, while strawberries are not!",
+        detail: "True berries are fruits that develop from a single flower with one ovary. Bananas fit this definition perfectly, developing from the banana flower. Meanwhile, strawberries develop from multiple ovaries, making them aggregate fruits rather than true berries."
+      },
+      {
+        title: "They're radioactive",
+        content: "Bananas contain potassium-40, a naturally occurring radioactive isotope.",
+        detail: "Don't worry though! The radiation from bananas is completely harmless. You'd need to eat about 10 million bananas at once to die from radiation poisoning. Scientists even use the 'banana equivalent dose' as a way to explain radiation exposure to the public."
+      },
+      {
+        title: "Bananas float in water",
+        content: "Bananas are less dense than water, which means they naturally float.",
+        detail: "This is because bananas are about 75% water and have a lot of air pockets in their structure. This low density makes them buoyant. You can test this yourself - drop a banana in water and watch it float!"
+      },
+      {
+        title: "Humans share 60% DNA with bananas",
+        content: "We have more in common with bananas than you might think!",
+        detail: "All living organisms share genetic material because we all evolved from common ancestors billions of years ago. While 60% might sound like a lot, it's actually not that surprising - even basic cellular functions require similar genes across all life forms."
+      },
+      {
+        title: "Bananas are curved",
+        content: "Bananas grow towards the sun, giving them their distinctive curve.",
+        detail: "This process is called negative geotropism. As bananas grow, they turn away from gravity and towards the light. Since banana plants grow in tropical regions where the sun is strong, the fruit curves upward as it develops, creating that iconic banana shape."
+      },
+      {
+        title: "There are over 1,000 varieties",
+        content: "The world has more than 1,000 types of bananas, though we mostly eat one kind.",
+        detail: "The Cavendish banana is the most common variety sold in stores. However, thousands of banana varieties exist worldwide, ranging from red to purple, from tiny to enormous. Many are grown locally and never exported."
+      },
+      {
+        title: "Bananas can help you sleep",
+        content: "Bananas contain tryptophan, which the body converts into serotonin and melatonin.",
+        detail: "These are the relaxation and sleep-regulating hormones. Eating a banana before bed can help you fall asleep faster and sleep more soundly. The magnesium in bananas also helps relax muscles, contributing to better sleep quality."
+      },
+      {
+        title: "The banana plant isn't a tree",
+        content: "Banana 'trees' are actually giant herbs, not trees at all.",
+        detail: "The banana plant is the world's largest herb. It doesn't have a woody trunk like trees do - instead, its 'trunk' is actually made of tightly packed leaf sheaths. This makes bananas the largest herbaceous flowering plant in the world."
+      },
+      {
+        title: "Bananas can ripen other fruit",
+        content: "Bananas release ethylene gas, which speeds up the ripening of nearby fruits.",
+        detail: "Ethylene is a natural plant hormone that triggers ripening. If you want to ripen avocados, tomatoes, or other fruits faster, just put them in a bag with a banana. The confined space concentrates the ethylene gas, accelerating the ripening process."
+      },
+      {
+        title: "They were once luxury items",
+        content: "In the early 1900s, bananas were considered exotic luxury goods in America.",
+        detail: "Before modern refrigeration and fast shipping, bananas were rare in temperate countries. They were so special that banana-themed parties became trendy, where serving banana splits was a sign of wealth and sophistication."
+      },
+      {
+        title: "Bananas can improve your mood",
+        content: "The vitamin B6 in bananas helps produce serotonin, the 'happy hormone.'",
+        detail: "A medium banana contains about 25% of your daily recommended vitamin B6. This vitamin is essential for creating neurotransmitters that regulate mood. Combined with the natural sugars that provide quick energy, bananas are a natural mood booster."
+      },
+      {
+        title: "Wild bananas have seeds",
+        content: "Commercial bananas are seedless, but wild bananas are full of large, hard seeds.",
+        detail: "The bananas we eat today are the result of thousands of years of selective breeding. Wild bananas have so many hard seeds that they're barely edible. Modern bananas are parthenocarpic, meaning they develop without fertilization and produce no seeds."
+      }
+    ];
+
+    let discoveredCount = 0;
+    const factsGrid = document.getElementById('factsGrid');
+    const counter = document.getElementById('counter');
+    const randomBtn = document.getElementById('randomBtn');
+
+    // Shuffle and display facts
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function displayFacts() {
+      const shuffledFacts = shuffleArray([...facts]);
+      factsGrid.innerHTML = '';
+      
+      shuffledFacts.forEach((fact, index) => {
+        const card = document.createElement('div');
+        card.className = 'fact-card';
+        card.innerHTML = `
+          <div class="fact-front">
+            <div class="fact-number">FACT #${index + 1}</div>
+            <h3 class="fact-title">${fact.title}</h3>
+            <p class="fact-content">${fact.content}</p>
+            <div class="flip-hint">tap to learn more</div>
+          </div>
+          <div class="fact-back">
+            ${fact.detail}
+            <div class="flip-hint">tap to flip back</div>
+          </div>
+        `;
+        
+        card.addEventListener('click', () => {
+          const wasFlipped = card.classList.contains('flipped');
+          card.classList.toggle('flipped');
+          
+          if (!wasFlipped && !card.dataset.discovered) {
+            card.dataset.discovered = 'true';
+            discoveredCount++;
+            animateCounter();
+          }
+        });
+        
+        factsGrid.appendChild(card);
+      });
+    }
+
+    function animateCounter() {
+      const start = discoveredCount - 1;
+      const end = discoveredCount;
+      const duration = 500;
+      const startTime = performance.now();
+      
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = Math.floor(start + (end - start) * progress);
+        counter.textContent = current;
+        
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        }
+      }
+      
+      requestAnimationFrame(update);
+    }
+
+    // Random fact button
+    randomBtn.addEventListener('click', () => {
+      const cards = document.querySelectorAll('.fact-card');
+      const unflipped = Array.from(cards).filter(card => !card.classList.contains('flipped'));
+      
+      if (unflipped.length > 0) {
+        const randomCard = unflipped[Math.floor(Math.random() * unflipped.length)];
+        randomCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        setTimeout(() => {
+          randomCard.click();
+        }, 500);
+      } else {
+        // All flipped, shuffle
+        displayFacts();
+        discoveredCount = 0;
+        counter.textContent = '0';
+      }
+    });
+
+    // Menu functionality
+    const menuBtn = document.getElementById('menuBtn');
+    const menu = document.getElementById('menu');
+    let isOpen = false;
+    
+    menuBtn.addEventListener('click', () => {
+      isOpen = !isOpen;
+      menu.classList.toggle('open', isOpen);
+      menuBtn.textContent = isOpen ? '✕' : '☰';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (isOpen && !menu.contains(e.target) && !menuBtn.contains(e.target)) {
+        isOpen = false;
+        menu.classList.remove('open');
+        menuBtn.textContent = '☰';
+      }
+    });
+
+    // Initialize
+    displayFacts();
+  </script>
+</body>
+</html>
