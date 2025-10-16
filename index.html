@@ -10,6 +10,7 @@
     :root{
       --bg:#FFF7CC;
       --ink:#222;
+      --accent:#FFD93D;
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%;overflow:hidden;}
@@ -42,16 +43,18 @@
       visibility:hidden;
     }
     .loading-banana{
-      font-size:80px;
+      font-size:72px;
+      font-weight:800;
+      color:var(--ink);
       animation:bounce 1s ease-in-out infinite;
     }
     .loading-text{
-      margin-top:24px;
-      font-size:16px;
+      margin-top:20px;
+      font-size:15px;
       font-weight:500;
       color:var(--ink);
-      opacity:0.6;
-      letter-spacing:0.1em;
+      opacity:0.5;
+      letter-spacing:0.08em;
     }
     @keyframes bounce{
       0%,100%{transform:translateY(0)}
@@ -61,15 +64,15 @@
     /* Menu Button */
     .menu-btn{
       position:fixed;
-      top:calc(20px + env(safe-area-inset-top, 0px));
-      right:20px;
+      top:calc(24px + env(safe-area-inset-top, 0px));
+      right:24px;
       z-index:100;
       border:none;
       background:transparent;
-      width:44px;
-      height:44px;
+      width:40px;
+      height:40px;
       cursor:pointer;
-      font-size:28px;
+      font-size:24px;
       line-height:1;
       touch-action:manipulation;
       display:flex;
@@ -78,6 +81,7 @@
       transition:transform .2s;
       opacity:0;
       animation:fadeIn 0.5s ease forwards 2s;
+      color:var(--ink);
     }
     .menu-btn:hover{
       transform:scale(1.1);
@@ -90,10 +94,10 @@
     .menu{
       position:fixed;
       top:calc(70px + env(safe-area-inset-top, 0px));
-      right:20px;
+      right:24px;
       background:#fff;
       border-radius:12px;
-      box-shadow:0 4px 24px rgba(0,0,0,.12);
+      box-shadow:0 4px 24px rgba(0,0,0,.1);
       opacity:0;
       pointer-events:none;
       transform:translateY(-8px);
@@ -136,39 +140,35 @@
       touch-action:manipulation;
       opacity:0;
       animation:fadeIn 0.8s ease forwards 1.8s;
-      padding:40px 20px;
+      padding:20px;
     }
 
     /* Title */
     .title{
-      font-size:clamp(32px,6vw,56px);
+      font-size:clamp(40px,7vw,64px);
       font-weight:800;
       color:var(--ink);
       text-align:center;
       letter-spacing:-0.03em;
-      margin-bottom:12px;
+      margin-bottom:8px;
     }
 
     /* Subtitle */
     .subtitle{
-      font-size:clamp(15px,3vw,18px);
+      font-size:clamp(16px,3vw,20px);
       font-weight:400;
       color:var(--ink);
-      opacity:0.5;
+      opacity:0.45;
       text-align:center;
-      margin-bottom:48px;
+      margin-bottom:clamp(40px,6vh,60px);
     }
 
     /* Banana Container */
     .banana-wrapper{
       position:relative;
-      width:min(70vmin,500px);
+      width:min(60vmin,450px);
       height:auto;
-      cursor:pointer;
-      transition:transform 0.3s ease;
-    }
-    .banana-wrapper:hover{
-      transform:scale(1.03);
+      margin-bottom:clamp(40px,6vh,60px);
     }
 
     /* Banana SVG */
@@ -176,56 +176,64 @@
       width:100%;
       height:auto;
       display:block;
-      filter:drop-shadow(0 8px 24px rgba(0,0,0,0.06));
+      filter:drop-shadow(0 6px 20px rgba(0,0,0,0.05));
+      animation:float 6s ease-in-out infinite;
+    }
+    @keyframes float{
+      0%,100%{transform:translateY(0)}
+      50%{transform:translateY(-12px)}
     }
 
-    /* Navigation Links */
-    .nav-links{
+    /* Navigation Pills */
+    .nav-pills{
       display:flex;
-      gap:32px;
-      margin-top:56px;
+      gap:clamp(12px,2vw,20px);
       flex-wrap:wrap;
       justify-content:center;
+      max-width:600px;
     }
-    .nav-link{
+    .nav-pill{
       text-decoration:none;
       color:var(--ink);
-      font-size:17px;
-      font-weight:500;
+      font-size:clamp(15px,2.5vw,17px);
+      font-weight:600;
+      padding:12px 24px;
+      background:#fff;
+      border-radius:100px;
+      transition:all 0.3s ease;
+      box-shadow:0 2px 8px rgba(0,0,0,0.06);
       position:relative;
-      transition:opacity 0.2s;
+      overflow:hidden;
     }
-    .nav-link:hover{
-      opacity:0.6;
-    }
-    .nav-link::after{
+    .nav-pill::before{
       content:'';
       position:absolute;
-      bottom:-4px;
-      left:0;
-      width:0;
-      height:1px;
-      background:var(--ink);
-      transition:width 0.3s ease;
+      inset:0;
+      background:var(--accent);
+      transform:translateY(100%);
+      transition:transform 0.3s ease;
+      z-index:-1;
     }
-    .nav-link:hover::after{
-      width:100%;
+    .nav-pill:hover{
+      transform:translateY(-2px);
+      box-shadow:0 4px 16px rgba(0,0,0,0.1);
+      color:var(--ink);
+    }
+    .nav-pill:hover::before{
+      transform:translateY(0);
     }
 
     @media (prefers-reduced-motion: reduce){
-      .loading-banana{animation:none}
-      .banana-wrapper:hover{transform:none}
-      .nav-card:hover{transform:none}
+      .loading-banana, .banana-svg{animation:none}
+      .nav-pill:hover{transform:none}
     }
 
     @media (max-width:600px){
-      .nav-links{
-        gap:24px;
-        margin-top:48px;
-      }
-      .nav-link{
-        font-size:16px;
-      }
+      .title{margin-bottom:6px}
+      .subtitle{margin-bottom:32px}
+      .banana-wrapper{margin-bottom:32px}
+      .nav-pills{gap:10px}
+      .nav-pill{padding:10px 20px;font-size:15px}
     }
   </style>
 </head>
@@ -284,12 +292,12 @@
       </svg>
     </div>
 
-    <!-- Navigation Links -->
-    <div class="nav-links">
-      <a href="#facts" class="nav-link">Fun Facts</a>
-      <a href="#map" class="nav-link">Travel Map</a>
-      <a href="#stories" class="nav-link">Stories</a>
-      <a href="#about" class="nav-link">About</a>
+    <!-- Navigation Pills -->
+    <div class="nav-pills">
+      <a href="#facts" class="nav-pill">Fun Facts</a>
+      <a href="#map" class="nav-pill">Travel Map</a>
+      <a href="#stories" class="nav-pill">Stories</a>
+      <a href="#about" class="nav-pill">About</a>
     </div>
   </div>
 
