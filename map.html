@@ -35,8 +35,6 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes scaleIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
-@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
 
 .header{position:fixed;top:16px;left:16px;right:16px;z-index:1000;display:flex;justify-content:space-between;gap:12px;pointer-events:none}
 .header>*{pointer-events:auto}
@@ -89,7 +87,6 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .stats-item{display:flex;align-items:center;gap:6px;color:var(--muted)}
 .stats-item .banana-mini{width:16px;height:16px}
 .stats-item .count{color:var(--ink);font-size:14px}
-.stats-divider{width:1px;height:16px;background:rgba(0,0,0,0.1)}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;z-index:10000;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:10px 16px;border-radius:var(--radius);box-shadow:var(--shadow-xl);font-size:13px;font-weight:600;max-width:90vw;animation:slideUp 0.25s cubic-bezier(0.4,0,0.2,1);display:flex;align-items:center;gap:8px;border:1px solid rgba(0,0,0,0.06)}
 .toast.success{border-left:3px solid var(--success)}
@@ -97,6 +94,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .toast.info{border-left:3px solid var(--info)}
 .toast .icon{flex-shrink:0;width:16px;height:16px}
 
+/* Bottom sheet */
 .sheet{position:fixed;left:0;right:0;bottom:-100%;z-index:1001;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top-left-radius:18px;border-top-right-radius:18px;box-shadow:0 -8px 40px rgba(0,0,0,.1);padding:18px 18px 28px;transition:bottom 0.3s cubic-bezier(0.4,0,0.2,1);max-height:82vh;overflow-y:auto;border-top:1px solid rgba(0,0,0,0.06)}
 .sheet.show{bottom:0}
 .sheet .grab{width:36px;height:4px;background:rgba(0,0,0,0.15);border-radius:4px;margin:0 auto 14px}
@@ -120,13 +118,15 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .preview-remove:hover{transform:scale(1.1)}
 .sheet-actions{display:flex;gap:10px;margin-top:18px}
 .sheet-actions button{flex:1;padding:12px;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1)}
+.btn{border:1px solid rgba(0,0,0,0.08)}
 .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--ink);border:1px solid var(--accent-dark)}
+.btn-secondary{background:rgba(0,0,0,0.04);color:var(--ink)}
 .btn-primary:hover:not(:disabled){box-shadow:0 4px 16px rgba(255,217,61,0.25);transform:translateY(-1px)}
-.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
-.btn-secondary{background:rgba(0,0,0,0.04);color:var(--ink);border:1px solid rgba(0,0,0,0.08)}
 .btn-secondary:hover{background:rgba(0,0,0,0.08)}
-.sheet .footer{margin-top:16px;color:var(--muted);font-size:10px;text-align:center}
+.btn-danger{background:var(--warn);color:#fff;border:1px solid transparent}
+.btn-ghost{background:rgba(0,0,0,0.04);color:var(--ink)}
 
+/* Popup (legacy styles) */
 .maplibregl-popup-content{border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-xl);max-width:280px;border:1px solid rgba(0,0,0,0.06)}
 .popup-header{display:flex;align-items:start;justify-content:space-between;margin-bottom:8px}
 .maplibregl-popup-content strong{font-size:16px;font-weight:700;letter-spacing:-0.01em}
@@ -135,62 +135,65 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .maplibregl-popup-content img{max-width:100%;border-radius:8px;margin:10px 0;box-shadow:var(--shadow-md)}
 .popup-actions{display:flex;gap:8px;margin-top:10px}
 .popbtn{border:none;padding:8px 14px;border-radius:8px;background:var(--ink);color:#fff;font-weight:600;font-size:12px;cursor:pointer;transition:all 0.2s ease;flex:1}
-.popbtn:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
 .popbtn.danger{background:var(--warn)}
 
+/* Markers */
 .banana-marker{width:36px;height:36px;cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);filter:drop-shadow(0 3px 8px rgba(0,0,0,.12))}
 .banana-marker:hover{transform:translateY(-5px) scale(1.12);filter:drop-shadow(0 6px 16px rgba(0,0,0,.2))}
 .banana-marker.mine{filter:drop-shadow(0 3px 12px rgba(255,217,61,.5))}
 .banana-marker.mine:hover{filter:drop-shadow(0 6px 20px rgba(255,217,61,.7))}
 
-.deck{position:fixed;left:0;right:0;bottom:16px;z-index:997;display:none;justify-content:center;pointer-events:none;animation:slideUp 0.3s cubic-bezier(0.4,0,0.2,1)}
+/* Browse deck (centered) */
+.deck{position:fixed;inset:0;z-index:1090;display:none;align-items:center;justify-content:center;pointer-events:none}
 .deck.show{display:flex}
 .deck>*{pointer-events:auto}
-.card{width:min(500px,calc(100vw - 32px));background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:18px;box-shadow:var(--shadow-xl);padding:20px;border:1px solid rgba(0,0,0,0.06)}
+.deck-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.25);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);border-radius:0;z-index:-1}
+.card{width:min(560px,calc(100vw - 48px));background:var(--surface);backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);border-radius:18px;box-shadow:var(--shadow-xl);padding:22px;
+  border:1px solid rgba(0,0,0,0.06)}
+.card img{border-radius:14px}
 .card-header{display:flex;align-items:start;justify-content:space-between;margin-bottom:10px}
 .card h4{margin:0;font-size:18px;font-weight:700;letter-spacing:-0.01em}
 .card-meta{font-size:11px;color:var(--muted);margin-top:4px;font-weight:500}
 .card p{margin:0 0 10px 0;color:#4b5563;line-height:1.6;font-size:14px}
-.card img{max-width:100%;border-radius:12px;margin:10px 0;box-shadow:var(--shadow-md)}
 .card .actions{display:flex;gap:8px;margin-top:14px}
 .card .actions button{flex:1;padding:11px;border:none;border-radius:10px;font-weight:600;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--ink);cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--accent-dark)}
 .card .actions button:hover{box-shadow:0 4px 16px rgba(255,217,61,0.25);transform:translateY(-1px)}
-.deck-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 10px;pointer-events:none}
-.deck-nav button{pointer-events:auto;border:none;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--shadow-lg);width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);border:1px solid rgba(0,0,0,0.06)}
-.deck-nav button:hover:not(:disabled){box-shadow:var(--shadow-xl);transform:scale(1.08)}
-.deck-nav button:disabled{opacity:0.25;cursor:not-allowed}
-.deckbar{position:absolute;top:-46px;left:0;right:0;height:38px;display:flex;align-items:center;justify-content:center;gap:8px}
-.deckbar strong{font-size:13px;font-weight:700}
+.deckbar{position:absolute;top:18px;left:50%;transform:translateX(-50%);height:auto;display:flex;
+  align-items:center;gap:10px;background:var(--surface);border:1px solid rgba(0,0,0,.06);
+  border-radius:999px;padding:8px 12px;box-shadow:var(--shadow-md)}
+.deckbar .close{position:static;width:36px;height:36px;border:none;background:var(--surface);border-radius:50%;
+  display:grid;place-items:center;box-shadow:var(--shadow-md);cursor:pointer;transition:transform .15s ease}
+.deckbar .close:hover{transform:scale(1.06) rotate(90deg)}
 .deck-counter{font-size:12px;color:var(--muted);font-weight:600}
-.deckbar .close{position:absolute;right:10px;border:none;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--shadow-md);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);border:1px solid rgba(0,0,0,0.06)}
-.deckbar .close:hover{transform:scale(1.05) rotate(90deg);box-shadow:var(--shadow-lg)}
+.deck-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.deck-nav button{width:52px;height:52px;border-radius:999px;border:1px solid rgba(0,0,0,.08);
+  background:var(--surface);box-shadow:var(--shadow-xl);cursor:pointer}
+.deck-nav button:disabled{opacity:.35}
 
-.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
-.empty-state .icon{width:48px;height:48px;margin:0 auto 12px;opacity:0.3}
-.empty-state h4{font-size:16px;font-weight:600;margin-bottom:6px;color:var(--ink)}
-.empty-state p{font-size:13px;line-height:1.5}
+/* Fullscreen detail */
+.detail{position:fixed;inset:0;z-index:1100;display:none}
+.detail.show{display:block}
+.detail-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:fadeIn .18s ease}
+.detail-panel{position:absolute;inset:0;margin:0;padding:24px 18px 28px;background:var(--surface);
+  box-shadow:var(--shadow-xl);animation:scaleIn .18s ease;overflow-y:auto}
+.detail-close{position:fixed;top:14px;right:14px;width:42px;height:42px;border:none;border-radius:999px;
+  background:var(--surface);box-shadow:var(--shadow-lg);display:grid;place-items:center;cursor:pointer;
+  border:1px solid rgba(0,0,0,.06);transition:transform .15s ease}
+.detail-close:hover{transform:scale(1.06) rotate(90deg)}
+.detail-header{display:flex;align-items:center;gap:12px;margin-top:8px}
+.detail-titlewrap h2{font-size:22px;letter-spacing:-.01em}
+.detail-meta{font-size:12px;color:var(--muted);margin-top:4px;font-weight:600}
+.detail-msg{margin:12px 0 0;line-height:1.6;font-size:15px;color:#374151}
+.detail-img{margin:14px 0;border-radius:14px;box-shadow:var(--shadow-md);max-width:100%}
+.detail-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+.detail-actions .btn{padding:12px;border-radius:12px;font-weight:700}
+.detail-actions .btn-ghost{border:1px solid rgba(0,0,0,0.08)}
+.detail-actions .btn-danger{box-shadow:var(--shadow-md)}
+.detail-actions .btn-primary{box-shadow:var(--shadow-md)}
 
-@media (max-width:640px){
-  .header{top:12px;left:12px;right:12px}
-  .search-panel{top:68px;left:12px;right:12px}
-  .menu{right:12px;top:68px}
-  .stats{left:12px;bottom:12px;font-size:11px;padding:8px 12px}
-  .controls{right:12px;bottom:12px}
-  .brand{padding:8px 14px;font-size:14px}
-  .brand-icon{width:22px;height:22px}
-  .iconbtn{width:40px;height:40px}
-  .quick-btn{width:40px;height:40px}
-  .fab{padding:12px 16px;font-size:13px}
-  .stats-item .count{font-size:13px}
-}
-
-@media (max-width:480px){
-  .brand span:not(.brand-icon){display:none}
-  .fab span{display:none}
-  .fab{width:44px;padding:12px}
-  .stats{gap:8px}
-  .stats-item span:not(.count){display:none}
-}
+/* Touch handling */
+#cardContainer{touch-action:pan-y}
 </style>
 </head>
 <body>
@@ -263,6 +266,32 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 <div id="map"></div>
 <div id="toastContainer"></div>
 
+<!-- FULLSCREEN DETAIL -->
+<div class="detail" id="detail">
+  <div class="detail-backdrop" id="detailBackdrop"></div>
+  <div class="detail-panel" id="detailPanel" role="dialog" aria-modal="true">
+    <button class="detail-close" id="detailClose" aria-label="Close">
+      <svg class="icon"><use href="#i-close"/></svg>
+    </button>
+
+    <div class="detail-header">
+      <div class="detail-titlewrap">
+        <h2 id="detailTitle">Banana</h2>
+        <div class="detail-meta" id="detailMeta"></div>
+      </div>
+    </div>
+
+    <p class="detail-msg" id="detailMsg" style="display:none"></p>
+    <img id="detailImg" class="detail-img" alt="" style="display:none"/>
+
+    <div class="detail-actions" id="detailActions" style="display:grid">
+      <button type="button" class="btn btn-ghost" id="detailShow"><svg class="icon"><use href="#i-location"/></svg> Show on Map</button>
+      <button type="button" class="btn btn-ghost" id="detailEdit"><svg class="icon"><use href="#i-eye"/></svg> Edit</button>
+      <button type="button" class="btn btn-danger" id="detailDelete"><svg class="icon"><use href="#i-trash"/></svg> Delete</button>
+    </div>
+  </div>
+</div>
+
 <div class="sheet" id="sheet">
   <div class="grab"></div>
   <h3 id="sheetTitle">Drop a Banana</h3>
@@ -286,17 +315,18 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
     <button class="preview-remove" id="removePhoto">✕</button>
   </div>
   <div class="sheet-actions">
-    <button class="btn-secondary" id="cancelBtn">Cancel</button>
-    <button class="btn-primary" id="saveBtn">Save Banana</button>
+    <button class="btn btn-secondary" id="cancelBtn" type="button">Cancel</button>
+    <button class="btn btn-primary" id="saveBtn" type="button">Save Banana</button>
   </div>
   <div class="footer">Powered by Nominatim • Map © OpenStreetMap & CARTO</div>
 </div>
 
 <div class="deck" id="deck">
+  <div class="deck-backdrop" id="deckBackdrop"></div>
   <div class="deckbar">
     <strong>Browse Bananas</strong>
     <span class="deck-counter" id="deckCounter">1/1</span>
-    <button class="close" id="deckClose"><svg class="icon"><use href="#i-close"/></svg></button>
+    <button class="close" id="deckClose" aria-label="Close browse"><svg class="icon"><use href="#i-close"/></svg></button>
   </div>
   <div class="card" id="cardContainer">
     <div id="cardContent">
@@ -309,7 +339,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
       <p id="cardMsg" style="display:none"></p>
       <img id="cardImg" alt="" style="display:none">
       <div class="actions">
-        <button id="focusBtn"><svg class="icon"><use href="#i-location"/></svg> Show on Map</button>
+        <button id="focusBtn" type="button"><svg class="icon"><use href="#i-location"/></svg> Show on Map</button>
       </div>
     </div>
     <div class="empty-state" id="emptyState" style="display:none">
@@ -319,8 +349,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
     </div>
   </div>
   <div class="deck-nav">
-    <button id="prevBtn" aria-label="Previous"><svg class="icon"><use href="#i-left"/></svg></button>
-    <button id="nextBtn" aria-label="Next"><svg class="icon"><use href="#i-right"/></svg></button>
+    <button id="prevBtn" aria-label="Previous" type="button"><svg class="icon"><use href="#i-left"/></svg></button>
+    <button id="nextBtn" aria-label="Next" type="button"><svg class="icon"><use href="#i-right"/></svg></button>
   </div>
 </div>
 
@@ -341,11 +371,71 @@ const makeStyle=()=>{const sub=['a','b','c','d'],base='https://{s}.basemaps.cart
 const asFeat=b=>({type:'Feature',properties:{deviceId:b.deviceId||'',name:b.name||'',msg:b.msg||'',photo:b.photo||'',ts:b.ts||0},geometry:{type:'Point',coordinates:[b.lng,b.lat]}});
 const clearMarkers=()=>{domMarkers.forEach(m=>m.remove());domMarkers=[]};
 
-const popupHTML=p=>{const title=p.name?esc(p.name):'Anonymous',mine=p.deviceId===deviceId;let h=`<div class="popup-header"><div><strong>${title}</strong>`;if(p.ts)h+=`<div class="popup-meta">${timeAgo(p.ts)}</div>`;h+=`</div></div>`;if(p.msg)h+=`<p>${esc(p.msg)}</p>`;if(p.photo)h+=`<img src="${p.photo}">`;if(mine)h+=`<div class="popup-actions"><button class="popbtn" data-action="edit">Edit</button><button class="popbtn danger" data-action="delete">Delete</button></div>`;return h};
+/* Banana SVG for markers */
+const bananaSVG=`<svg viewBox="0 0 256.85 291.32" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:#34af0e;}.cls-2{fill:#ffc910;}.cls-3{fill:#f8db8f;}.cls-4{fill:#ffeda3;}.cls-5{fill:#ffdb27;}</style></defs><g><path class="cls-3" d="M71.1,141.02c.28,1.47.88,7.33,1.51,8.76,1.93,4.39,14.28,1.42,18.58.95-11.67-38.63-11.64-82.48,8.03-118.8,6.14-11.33,14.88-23.92,27.11-29.82l.25-1.18-4.27-.47c-25.63,3.82-45.46,48.7-50.2,69.81-4.86,21.62-5.22,49.03-1,70.76Z"/><path class="cls-4" d="M122.3.45l4.27.47-.25,1.18c-12.23,5.9-20.97,18.49-27.11,29.82-19.67,36.32-19.7,80.17-8.03,118.8-4.3.48-16.64,3.45-18.58-.95-.63-1.42-1.22-7.29-1.51-8.76l-25.6,2.37c11.12-2.18,20.14.12,27.11,8.76-3.44,1.89-7.15,2.97-10.54,4.97-23.54,13.89-24.41,35.07-30.12,57.27-1.14,17.15,3.46,36,12.55,50.88,6.03,9.87,22.72,28.5,36.15,25.79,1.76-21.88-7.48-39.71-6.02-62.24.91-14.08,10.81-51.24,20.08-62,8.51-9.89,29.8-18.03,36.15-2.13,1.3-5.09,1.66-9.2,5.52-13.25-1.02-2.13,6.58-7.74,6.02-9.23-.07-.19-1.78-.28-2.51-2.84-8.39-29.54-10.59-63.06-5.02-93.24,2.16-11.71,10.88-29.39,3.51-40.23-1.89-2.78-5.1-3.54-7.53-5.44-3.52-.67-5.06-.52-8.53,0Z"/><path class="cls-5" d="M80.64,291.05c15.58-3.14,4.71-25.51,3.01-35.26-3.34-19.23-3.22-36.25,2.01-55.14,2.36-8.51,11.33-33.16,19.33-37.39,5.51-2.92,10.89-2.02,16.82-.95,3.42.62,5.45,2.59,9.04,2.37-6.35-15.9-27.63-7.76-36.15,2.13-9.27,10.76-19.17,47.93-20.08,62-1.45,22.52,7.78,40.35,6.02,62.24Z"/><path class="cls-2" d="M18.89,251.3c6.47-3.93,7.28-19.33,9.04-26.27.88-3.45,3.38-8.16,4.02-10.65,5.71-22.2,6.59-43.38,30.12-57.27.11-2.35,4.35-1.54,3.01-3.55-21.74-19.04-42.85,15.37-49.2,30.29-6.43,15.12-13.02,38.46-11.04,56.32.93,8.39,3.7,17.42,14.06,11.12Z"/><path class="cls-5" d="M45.49,143.38C12.83,149.77-5.18,217.75,1.31,243.96c2.27,9.18,8.63,14.45,17.57,7.34-10.36,6.29-13.13-2.73-14.06-11.12-1.97-17.86,4.62-41.2,11.04-56.32,6.34-14.93,27.46-49.33,49.2-30.29,1.33,2.01-2.91,1.2-3.01,3.55,3.39-2,7.1-3.08,10.54-4.97-6.97-8.64-15.99-10.93-27.11-8.76Z"/><path class="cls-5" d="M226.68,282.86c-29.25,13.86-88.77-31.06-120.23-78.8-3.94-5.99-13.84-37.32,9.8-43.5,1.53-.4,2.62-.5,3.61-.38,1.8.23,2.92.93,4.51,1.76,1.39.73,3.46,1.7,6.18,2.59.19-1.78.84-4.19,1.8-7.01.74-2.17,1.79-4.21,3.72-6.24,50.98-39.77,88.26,30.02,110.95,64.13,2.34,3,5.81,7.55,9.54,8.76.38,4.53-3.49,5.6-7.78,4.73-5.68-1.15-15.85-23.65-19.33-29.11-11.19-17.56-35.92-53.71-59.49-55.14-8.08-.49-13.28,2.2-14.31,10.18-1.71,13.24,30.61,61.14,74.3,98.45,3.01,2.57,10.69,9.03,9.79,16.33-.93,7.5-10.45,12.02-13.05,13.25Z"/><path class="cls-2" d="M227.35,283c-8.08-.83-17.63-2.33-25.6-3.61-28.79-4.62-83.79-52-94.63-77.38-2.57-6.02-9.42-29.07.79-37.25,6.96-5.58,18.77-1.65,22.94-.07-2.37-1.63-6.59-4.07-12.37-5.03-3.5-.58-6.53-.45-8.78-.16,0,0,0,0,0,0,0,0-2.19.37-4.33,1.57-6.53,3.68-11.3,12.65-11.3,12.65-4.63,8.69-6.9,17.53-8.02,24.75,6.18,10.25,15.37,24.34,28.93,39.03,11.07,12,23.42,22.98,36.59,32.91,15.18,11.45,37.24,23.97,61.16,18.46,6.38-1.47,11.36-3.93,14.65-5.85Z"/><path class="cls-4" d="M130.84.45c2.43,1.9,5.64,2.66,7.53,5.44,7.37,10.84-1.35,28.52-3.51,40.23-5.57,30.18-3.37,63.7,5.02,93.24.73,2.56,2.44,2.65,2.51,2.84.55,1.49-7.05,7.1-6.02,9.23,4.75-4.99,17.38-10.2,24.35-10.89,44.57-4.37,65.17,49.12,86.6,75.02,2.42,2.93,5.81,7.55,9.54,8.76-.98-11.53-11.28-36.78-17.57-47.09-18.14-29.76-61.94-63.82-97.9-38.34-7.85-27.87-10.78-56.96-6.53-85.67,1.96-13.26,17.27-48.73-4.02-52.77Z"/></g></svg>`;
 
-const bananaSVG=`<svg viewBox="0 0 256.85 291.32" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:#34af0e;}.cls-2{fill:#ffc910;}.cls-3{fill:#f8db8f;}.cls-4{fill:#ffeda3;}.cls-5{fill:#ffdb27;}</style></defs><g><path class="cls-3" d="M71.1,141.02c.28,1.47.88,7.33,1.51,8.76,1.93,4.39,14.28,1.42,18.58.95-11.67-38.63-11.64-82.48,8.03-118.8,6.14-11.33,14.88-23.92,27.11-29.82l.25-1.18-4.27-.47c-25.63,3.82-45.46,48.7-50.2,69.81-4.86,21.62-5.22,49.03-1,70.76Z"/><path class="cls-4" d="M122.3.45l4.27.47-.25,1.18c-12.23,5.9-20.97,18.49-27.11,29.82-19.67,36.32-19.7,80.17-8.03,118.8-4.3.48-16.64,3.45-18.58-.95-.63-1.42-1.22-7.29-1.51-8.76l-25.6,2.37c11.12-2.18,20.14.12,27.11,8.76-3.44,1.89-7.15,2.97-10.54,4.97-23.54,13.89-24.41,35.07-30.12,57.27-1.14,17.15,3.46,36,12.55,50.88,6.03,9.87,22.72,28.5,36.15,25.79,1.76-21.88-7.48-39.71-6.02-62.24.91-14.08,10.81-51.24,20.08-62,8.51-9.89,29.8-18.03,36.15-2.13,1.3-5.09,1.66-9.2,5.52-13.25-1.02-2.13,6.58-7.74,6.02-9.23-.07-.19-1.78-.28-2.51-2.84-8.39-29.54-10.59-63.06-5.02-93.24,2.16-11.71,10.88-29.39,3.51-40.23-1.89-2.78-5.1-3.54-7.53-5.44-3.52-.67-5.06-.52-8.53,0Z"/><path class="cls-5" d="M80.64,291.05c15.58-3.14,4.71-25.51,3.01-35.26-3.34-19.23-3.22-36.25,2.01-55.14,2.36-8.51,11.33-33.16,19.33-37.39,5.51-2.92,10.89-2.02,16.82-.95,3.42.62,5.45,2.59,9.04,2.37-6.35-15.9-27.63-7.76-36.15,2.13-9.27,10.76-19.17,47.93-20.08,62-1.45,22.52,7.78,40.35,6.02,62.24Z"/><path class="cls-2" d="M18.89,251.3c6.47-3.93,7.28-19.33,9.04-26.27.88-3.45,3.38-8.16,4.02-10.65,5.71-22.2,6.59-43.38,30.12-57.27.11-2.35,4.35-1.54,3.01-3.55-21.74-19.04-42.85,15.37-49.2,30.29-6.43,15.12-13.02,38.46-11.04,56.32.93,8.39,3.7,17.42,14.06,11.12Z"/><path class="cls-5" d="M45.49,143.38C12.83,149.77-5.18,217.75,1.31,243.96c2.27,9.18,8.63,14.45,17.57,7.34-10.36,6.29-13.13-2.73-14.06-11.12-1.97-17.86,4.62-41.2,11.04-56.32,6.34-14.93,27.46-49.33,49.2-30.29,1.33,2.01-2.91,1.2-3.01,3.55,3.39-2,7.1-3.08,10.54-4.97-6.97-8.64-15.99-10.93-27.11-8.76Z"/><path class="cls-5" d="M226.68,282.86c-29.25,13.86-88.77-31.06-120.23-78.8-3.94-5.99-13.84-37.32,9.8-43.5,1.53-.4,2.62-.5,3.61-.38,1.8.23,2.92.93,4.51,1.76,1.39.73,3.46,1.7,6.18,2.59.19-1.78.84-4.19,1.8-7.01.74-2.17,1.79-4.21,3.72-6.24,50.98-39.77,88.26,30.02,110.95,64.13,2.34,3,5.81,7.55,9.54,8.76.38,4.53-3.49,5.6-7.78,4.73-5.68-1.15-15.85-23.65-19.33-29.11-11.19-17.56-35.92-53.71-59.49-55.14-8.08-.49-13.28,2.2-14.31,10.18-1.71,13.24,30.61,61.14,74.3,98.45,3.01,2.57,10.69,9.03,9.79,16.33-.93,7.5-10.45,12.02-13.05,13.25Z"/><path class="cls-2" d="M227.35,283c-8.08-.83-17.63-2.33-25.6-3.61-28.79-4.62-83.79-52-94.63-77.38-2.57-6.02-9.42-29.07.79-37.25,6.96-5.58,18.77-1.65,22.94-.07-2.37-1.63-6.59-4.07-12.37-5.03-3.5-.58-6.53-.45-8.78-.16,0,0,0,0,0,0,0,0-2.19.37-4.33,1.57-6.53,3.68-11.3,12.65-11.3,12.65-4.63,8.69-6.9,17.53-8.02,24.75,6.18,10.25,15.37,24.34,28.93,39.03,11.07,12,23.42,22.98,36.59,32.91,15.18,11.45,37.24,23.97,61.16,18.46,6.38-1.47,11.36-3.93,14.65-5.85Z"/><path class="cls-4" d="M130.84.45c2.43,1.9,5.64,2.66,7.53,5.44,7.37,10.84-1.35,28.52-3.51,40.23-5.57,30.18-3.37,63.7,5.02,93.24.73,2.56,2.44,2.65,2.51,2.84.55,1.49-7.05,7.1-6.02,9.23,4.75-4.99,17.38-10.2,24.35-10.89,44.57-4.37,65.17,49.12,86.6,75.02,2.42,2.93,5.81,7.55,9.54,8.76-.98-11.53-11.28-36.78-17.57-47.09-18.14-29.76-61.94-63.82-97.9-38.34-7.85-27.87-10.78-56.96-6.53-85.67,1.96-13.26,17.27-48.73-4.02-52.77Z"/><path class="cls-1" d="M232.29,255.34c.65,2.52,2.01,9.24-.91,16.82-4.04,10.51-16.83,15.88-18.68,16.69,2.72.6,12.47.42,19.22-2.27,2.52-1,12.08-4.84,13.35-13.11,1.15-7.51-4.18-15.66-12.98-18.14Z"/></g></svg>`;
+/* ---------- Detail UI refs ---------- */
+const detail = document.getElementById('detail');
+const detailTitle = document.getElementById('detailTitle');
+const detailMeta  = document.getElementById('detailMeta');
+const detailMsg   = document.getElementById('detailMsg');
+const detailImg   = document.getElementById('detailImg');
+const detailClose = document.getElementById('detailClose');
+const detailBackdrop = document.getElementById('detailBackdrop');
+const detailShow = document.getElementById('detailShow');
+const detailEdit = document.getElementById('detailEdit');
+const detailDelete = document.getElementById('detailDelete');
 
-const createMarker=feat=>{const el=document.createElement('div');el.className='banana-marker';if(feat.properties.deviceId===deviceId)el.className+=' mine';el.innerHTML=bananaSVG;const openPopup=ev=>{ev.preventDefault();ev.stopPropagation();const p=feat.properties,coords=feat.geometry.coordinates,popup=new maplibregl.Popup({offset:12}).setLngLat(coords).setHTML(popupHTML(p)).addTo(map);const content=popup.getElement().querySelector('.maplibregl-popup-content');if(content)content.addEventListener('click',e=>{const btn=e.target.closest('.popbtn');if(!btn)return;e.preventDefault();const action=btn.dataset.action;if(action==='edit'){popup.remove();openSheet('edit',{lat:coords[1],lng:coords[0],...p})}else if(action==='delete'){popup.remove();deleteMyBanana()}})};['pointerdown','touchstart','mousedown'].forEach(type=>el.addEventListener(type,e=>e.stopPropagation(),{passive:true}));el.addEventListener('pointerup',openPopup);el.addEventListener('touchend',openPopup);el.addEventListener('click',openPopup);return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(feat.geometry.coordinates)};
+let detailCoords = null;
+let detailBanana = null;
+
+/* ---------- Open/close detail ---------- */
+function openDetail(b, coords){
+  detailBanana = b;
+  detailCoords = coords || [b.lng, b.lat];
+
+  detailTitle.textContent = b.name || 'Anonymous';
+  detailMeta.textContent  = b.ts ? timeAgo(b.ts) : '';
+  if(b.msg){ detailMsg.style.display='block'; detailMsg.textContent=b.msg; }
+  else { detailMsg.style.display='none'; detailMsg.textContent=''; }
+  if(b.photo){ detailImg.style.display='block'; detailImg.src=b.photo; }
+  else { detailImg.style.display='none'; detailImg.removeAttribute('src'); }
+
+  // Only show edit/delete if it's mine
+  const mine = b.deviceId === deviceId;
+  detailEdit.style.display = mine ? 'inline-flex' : 'none';
+  detailDelete.style.display = mine ? 'inline-flex' : 'none';
+
+  detail.classList.add('show');
+}
+function closeDetail(){
+  detail.classList.remove('show');
+  detailImg.removeAttribute('src');
+  detailBanana = null;
+  detailCoords = null;
+}
+
+detailClose.onclick = closeDetail;
+detailBackdrop.onclick = closeDetail;
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ closeDetail(); closeDeck(); }});
+
+/* ---------- Marker creation -> opens detail ---------- */
+const createMarker=feat=>{
+  const el=document.createElement('div');
+  el.className='banana-marker';
+  if(feat.properties.deviceId===deviceId)el.className+=' mine';
+  el.innerHTML=bananaSVG;
+  const open = ev=>{
+    ev.preventDefault();ev.stopPropagation();
+    const p=feat.properties, coords=feat.geometry.coordinates;
+    openDetail(p, coords);
+  };
+  ['pointerdown','touchstart','mousedown'].forEach(type=>el.addEventListener(type,e=>e.stopPropagation(),{passive:true}));
+  el.addEventListener('pointerup',open,{passive:false});
+  el.addEventListener('touchend',open,{passive:false});
+  el.addEventListener('click',open);
+  return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(feat.geometry.coordinates)
+};
 
 const renderMarkers=geojson=>{clearMarkers();geojson.features.forEach(f=>{if(f.properties.point_count)return;const m=createMarker(f).addTo(map);domMarkers.push(m)})};
 
@@ -358,19 +448,138 @@ const loadBananas=async()=>{try{const data=await fetchLatest();bananasCache=data
 
 const wireSearch=()=>{const panel=document.getElementById('searchPanel'),input=document.getElementById('searchInput'),results=document.getElementById('searchResults'),toggle=document.getElementById('toggleSearch');toggle.onclick=()=>{const open=panel.classList.toggle('show');toggle.classList.toggle('active',open);if(open)input.focus();else{input.value='';results.classList.remove('show')}};document.addEventListener('click',e=>{if(!panel.contains(e.target)&&e.target!==toggle){panel.classList.remove('show');toggle.classList.remove('active');input.value='';results.classList.remove('show')}});const searchLoc=async q=>{if(!q.trim()){results.classList.remove('show');return}try{const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8`);const data=await res.json();results.innerHTML='';if(!data||!data.length){results.innerHTML='<div class="search-result-item"><small>No results</small></div>'}else{data.forEach(r=>{const item=document.createElement('div');item.className='search-result-item';const name=r.display_name.split(',')[0];item.innerHTML=`<div class="icon-wrapper"><svg class="icon"><use href="#i-location"/></svg></div><div class="text"><strong>${esc(name)}</strong><small>${esc(r.display_name)}</small></div>`;item.onclick=()=>{map.easeTo({center:[+r.lon,+r.lat],zoom:14,duration:800});panel.classList.remove('show');toggle.classList.remove('active');input.value='';results.classList.remove('show');toast(name,'info',2000)};results.appendChild(item)})}results.classList.add('show')}catch(e){console.error(e)}};input.addEventListener('input',debounce(()=>searchLoc(input.value),400));input.addEventListener('keydown',e=>{if(e.key==='Enter')searchLoc(input.value)})};
 
-const wireUI=()=>{wireSearch();const menu=document.getElementById('menu'),toggleMenu=document.getElementById('toggleMenu');toggleMenu.onclick=()=>{const open=menu.classList.toggle('show');toggleMenu.classList.toggle('active',open)};document.addEventListener('click',e=>{if(!menu.contains(e.target)&&e.target!==toggleMenu){menu.classList.remove('show');toggleMenu.classList.remove('active')}});document.getElementById('brandBtn').onclick=()=>{map.easeTo({center:[0,20],zoom:2,duration:1000});toast('World view','info',1500)};document.getElementById('homeBtn').onclick=()=>{map.easeTo({center:[0,20],zoom:2,duration:1000});toast('World view','info',1500)};const dropBtn=document.getElementById('dropBtn');dropBtn.onclick=()=>{if(dropBtn.disabled){toast('Already dropped','info',2000);return}const openForm=(lat,lng)=>{map.easeTo({center:[lng,lat],zoom:17,duration:800});setTimeout(()=>openSheet('add',{lat,lng}),400)};if(navigator.geolocation){navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>openForm(latitude,longitude),()=>{const c=map.getCenter();openForm(c.lat,c.lng)},{enableHighAccuracy:true,timeout:6000})}else{const c=map.getCenter();openForm(c.lat,c.lng)}};document.getElementById('locateBtn').onclick=()=>{if(!navigator.geolocation)return;toast('Locating...','info',1500);navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>{map.easeTo({center:[longitude,latitude],zoom:14,duration:800});toast('You are here','success',2000)},()=>toast('Location unavailable','error',2000),{enableHighAccuracy:true,timeout:8000})};document.getElementById('seeMine').onclick=async()=>{if(document.getElementById('seeMine').classList.contains('disabled')){toast("No banana yet",'info',2000);return}try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===deviceId);if(!b){toast("No banana yet",'info',2000);return}map.easeTo({center:[b.lng,b.lat],zoom:17,duration:1000});toast("Your banana",'success',2000);menu.classList.remove('show');toggleMenu.classList.remove('active')}catch(e){toast('Error','error',2000)}};document.getElementById('shareMine').onclick=async()=>{if(document.getElementById('shareMine').classList.contains('disabled')){toast("Drop first",'info',2000);return}try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===deviceId);if(!b){toast("Drop first",'info',2000);return}const url=new URL(location.href);url.searchParams.set('id',deviceId);await navigator.clipboard.writeText(url.toString());toast("Link copied!",'success',2000);menu.classList.remove('show');toggleMenu.classList.remove('active')}catch(e){toast('Copy failed','error',2000)}};document.getElementById('deleteMine').onclick=()=>{if(document.getElementById('deleteMine').classList.contains('disabled')){toast("No banana",'info',2000);return}menu.classList.remove('show');toggleMenu.classList.remove('active');deleteMyBanana()};document.getElementById('randomBanana').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');goRandomBanana()};document.getElementById('browseBananas').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');openDeck()}};
+const wireUI=()=>{wireSearch();const menu=document.getElementById('menu'),toggleMenu=document.getElementById('toggleMenu');toggleMenu.onclick=()=>{const open=menu.classList.toggle('show');toggleMenu.classList.toggle('active',open)};document.addEventListener('click',e=>{if(!menu.contains(e.target)&&e.target!==toggleMenu){menu.classList.remove('show');toggleMenu.classList.remove('active')}});document.getElementById('brandBtn').onclick=()=>{map.easeTo({center:[0,20],zoom:2,duration:1000});toast('World view','info',1500)};document.getElementById('homeBtn').onclick=()=>{map.easeTo({center:[0,20],zoom:2,duration:1000});toast('World view','info',1500)};const dropBtn=document.getElementById('dropBtn');dropBtn.onclick=()=>{if(dropBtn.disabled){toast('Already dropped','info',2000);return}const openForm=(lat,lng)=>{map.easeTo({center:[lng,lat],zoom:17,duration:800});setTimeout(()=>openSheet('add',{lat,lng}),400)};if(navigator.geolocation){navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>openForm(latitude,longitude),()=>{const c=map.getCenter();openForm(c.lat,c.lng)},{enableHighAccuracy:true,timeout:6000})}else{const c=map.getCenter();openForm(c.lat,c.lng)}};document.getElementById('locateBtn').onclick=()=>{if(!navigator.geolocation)return;toast('Locating...','info',1500);navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>{map.easeTo({center:[longitude,latitude],zoom:14,duration:800});toast('You are here','success',2000)},()=>toast('Location unavailable','error',2000),{enableHighAccuracy:true,timeout:8000})};document.getElementById('seeMine').onclick=async()=>{if(document.getElementById('seeMine').classList.contains('disabled')){toast("No banana yet",'info',2000);return}try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===deviceId);if(!b){toast("No banana yet",'info',2000);return}map.easeTo({center:[b.lng,b.lat],zoom:17,duration:1000});toast("Your banana",'success',2000);menu.classList.remove('show');toggleMenu.classList.remove('active')}catch(e){toast('Error','error',2000)}};document.getElementById('shareMine').onclick=async()=>{if(document.getElementById('shareMine').classList.contains('disabled')){toast("Drop first",'info',2000);return}try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===deviceId);if(!b){toast("Drop first",'info',2000);return}const url=new URL(location.href);url.searchParams.set('id',deviceId);await navigator.clipboard.writeText(url.toString());toast("Link copied!",'success',2000);menu.classList.remove('show');toggleMenu.classList.remove('active')}catch(e){toast('Copy failed','error',2000)}};document.getElementById('deleteMine').onclick=()=>{if(document.getElementById('deleteMine').classList.contains('disabled')){toast("No banana",'info',2000);return}menu.classList.remove('show');toggleMenu.classList.remove('active');deleteMyBanana()};document.getElementById('randomBanana').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');goRandomBanana()};document.getElementById('browseBananas').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');closeDetail();openDeck()}};
 
-const sheet=document.getElementById('sheet'),sheetTitle=document.getElementById('sheetTitle'),sheetSubtitle=document.getElementById('sheetSubtitle'),nameEl=document.getElementById('name'),msgEl=document.getElementById('msg'),photoEl=document.getElementById('photo'),preview=document.getElementById('preview'),previewImg=preview.querySelector('img'),removePhotoBtn=document.getElementById('removePhoto'),cancelBtn=document.getElementById('cancelBtn'),saveBtn=document.getElementById('saveBtn'),charCount=document.getElementById('charCount');let sheetMode='add',sheetTarget={lat:null,lng:null,existingPhoto:''};msgEl.addEventListener('input',()=>charCount.textContent=`${msgEl.value.length}/500`);photoEl.addEventListener('change',async()=>{const f=photoEl.files[0];if(!f){preview.classList.remove('show');previewImg.src='';return}try{const d=await fileToDataURL(f);previewImg.src=d;preview.classList.add('show')}catch(e){toast('Photo load failed','error',2000)}});removePhotoBtn.onclick=()=>{photoEl.value='';preview.classList.remove('show');previewImg.src='';sheetTarget.existingPhoto=''};const openSheet=(mode,p)=>{sheetMode=mode;if(mode==='add'){sheetTitle.textContent='Drop a Banana';sheetSubtitle.textContent='Share your moment with the world';nameEl.value='';msgEl.value='';photoEl.value='';preview.classList.remove('show');previewImg.src='';charCount.textContent='0/500';sheetTarget={lat:p.lat,lng:p.lng,existingPhoto:''};saveBtn.textContent='Save Banana'}else{sheetTitle.textContent='Edit Banana';sheetSubtitle.textContent='Update your moment';nameEl.value=p.name||'';msgEl.value=p.msg||'';photoEl.value='';charCount.textContent=`${(p.msg||'').length}/500`;if(p.photo){previewImg.src=p.photo;preview.classList.add('show')}else{preview.classList.remove('show');previewImg.src=''}sheetTarget={lat:p.lat,lng:p.lng,existingPhoto:p.photo||''};saveBtn.textContent='Update Banana'}sheet.classList.add('show');setTimeout(()=>nameEl.focus(),300)};const closeSheet=()=>sheet.classList.remove('show');cancelBtn.onclick=closeSheet;saveBtn.onclick=async()=>{try{const name=nameEl.value.trim(),msg=msgEl.value.trim();if(!name){toast('Enter name','error',2000);nameEl.focus();return}saveBtn.disabled=true;saveBtn.textContent='Saving...';const f=photoEl.files[0];let photo=sheetMode==='edit'?(sheetTarget.existingPhoto||''):'';if(f)photo=await fileToDataURL(f);if(sheetMode==='add')await saveBanana(sheetTarget.lat,sheetTarget.lng,msg,photo,name);else await updateBanana(msg,photo,name);closeSheet();saveBtn.disabled=false;saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'}catch(e){console.error(e);toast(e.message||'Failed','error',3000);saveBtn.disabled=false;saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'}};const saveBanana=async(lat,lng,msg,photo,name)=>{const data=await fetchLatest();const arr=data.record?.bananas||[];if(arr.some(b=>b.deviceId===deviceId))throw new Error('Already dropped');arr.push({lat,lng,msg,photo,name,ts:Date.now(),deviceId});await putBananas(arr);localStorage.setItem(DROPPED_KEY,'true');await loadBananas();map.easeTo({center:[lng,lat],zoom:17,duration:800});toast('Banana dropped!','success',2500)};const updateBanana=async(msg,photo,name)=>{const latest=await fetchLatest();const arr=latest.record?.bananas||[];const idx=arr.findIndex(x=>x.deviceId===deviceId);if(idx===-1)throw new Error("Not found");arr[idx]={...arr[idx],msg,photo,name};await putBananas(arr);await loadBananas();toast('Updated!','success',2000)};const deleteMyBanana=async()=>{if(!confirm('Delete your banana? This cannot be undone.'))return;try{const latest=await fetchLatest();const arr=latest.record?.bananas||[];const idx=arr.findIndex(x=>x.deviceId===deviceId);if(idx===-1){toast("No banana",'info',2000);return}arr.splice(idx,1);await putBananas(arr);localStorage.removeItem(DROPPED_KEY);await loadBananas();toast('Deleted','success',2000)}catch(e){console.error(e);toast('Delete failed','error',2000)}};
+const sheet=document.getElementById('sheet'),sheetTitle=document.getElementById('sheetTitle'),sheetSubtitle=document.getElementById('sheetSubtitle'),nameEl=document.getElementById('name'),msgEl=document.getElementById('msg'),photoEl=document.getElementById('photo'),preview=document.getElementById('preview'),previewImg=preview.querySelector('img'),removePhotoBtn=document.getElementById('removePhoto'),cancelBtn=document.getElementById('cancelBtn'),saveBtn=document.getElementById('saveBtn'),charCount=document.getElementById('charCount');let sheetMode='add',sheetTarget={lat:null,lng:null,existingPhoto:''};msgEl.addEventListener('input',()=>charCount.textContent=`${msgEl.value.length}/500`);photoEl.addEventListener('change',async()=>{const f=photoEl.files[0];if(!f){preview.classList.remove('show');previewImg.src='';return}try{const d=await fileToDataURL(f);previewImg.src=d;preview.classList.add('show')}catch(e){toast('Photo load failed','error',2000)}});removePhotoBtn.onclick=()=>{photoEl.value='';preview.classList.remove('show');previewImg.src='';sheetTarget.existingPhoto=''};const openSheet=(mode,p)=>{sheetMode=mode;if(mode==='add'){sheetTitle.textContent='Drop a Banana';sheetSubtitle.textContent='Share your moment with the world';nameEl.value='';msgEl.value='';photoEl.value='';preview.classList.remove('show');previewImg.src='';charCount.textContent='0/500';sheetTarget={lat:p.lat,lng:p.lng,existingPhoto:''};saveBtn.textContent='Save Banana'}else{sheetTitle.textContent='Edit Banana';sheetSubtitle.textContent='Update your moment';nameEl.value=p.name||'';msgEl.value=p.msg||'';photoEl.value='';charCount.textContent=`${(p.msg||'').length}/500`;if(p.photo){previewImg.src=p.photo;preview.classList.add('show')}else{preview.classList.remove('show');previewImg.src=''}sheetTarget={lat:p.lat,lng:p.lng,existingPhoto:p.photo||''};saveBtn.textContent='Update Banana'}sheet.classList.add('show');setTimeout(()=>nameEl.focus(),300)};const closeSheet=()=>sheet.classList.remove('show');cancelBtn.onclick=closeSheet;saveBtn.onclick=async()=>{try{const name=nameEl.value.trim(),msg=msgEl.value.trim();if(!name){toast('Enter name','error',2000);nameEl.focus();return}saveBtn.disabled=true;saveBtn.textContent='Saving...';const f=photoEl.files[0];let photo=sheetMode==='edit'?(sheetTarget.existingPhoto||''):'';if(f)photo=await fileToDataURL(f);if(sheetMode==='add')await saveBanana(sheetTarget.lat,sheetTarget.lng,msg,photo,name);else await updateBanana(msg,photo,name);closeSheet();saveBtn.disabled=false;saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'}catch(e){console.error(e);toast(e.message||'Failed','error',3000);saveBtn.disabled=false;saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'}};const saveBanana=async(lat,lng,msg,photo,name)=>{const data=await fetchLatest();const arr=data.record?.bananas||[];if(arr.some(b=>b.deviceId===deviceId))throw new Error('Already dropped');arr.push({lat,lng,msg,photo,name,ts:Date.now(),deviceId});await putBananas(arr);localStorage.setItem(DROPPED_KEY,'true');await loadBananas();map.easeTo({center:[lng,lat],zoom:17,duration:800});toast('Banana dropped!','success',2500)};const updateBanana=async(msg,photo,name)=>{const latest=await fetchLatest();const arr=latest.record?.bananas||[];const idx=arr.findIndex(x=>x.deviceId===deviceId);if(idx===-1)throw new Error("Not found");arr[idx]={...arr[idx],msg,photo,name};await putBananas(arr);await loadBananas();toast('Updated!','success',2000)};const deleteMyBanana=async()=>{if(!confirm('Delete your banana? This cannot be undone.'))return;try{const latest=await fetchLatest();const arr=latest.record?.bananas||[];const idx=arr.findIndex(x=>x.deviceId===deviceId);if(idx===-1){toast("No banana",'info',2000);return}arr.splice(idx,1);await putBananas(arr);localStorage.removeItem(DROPPED_KEY);await loadBananas();toast('Deleted','success',2000);closeDetail();}catch(e){console.error(e);toast('Delete failed','error',2000)}};
 
-const goRandomBanana=()=>{const list=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number');if(!list.length){toast("No bananas yet",'info',2000);return}const pick=list[Math.floor(Math.random()*list.length)];map.easeTo({center:[pick.lng,pick.lat],zoom:17,duration:900});setTimeout(()=>{new maplibregl.Popup({offset:12}).setLngLat([pick.lng,pick.lat]).setHTML(popupHTML(pick)).addTo(map)},500);toast('Random!','success',2000)};
+/* Detail actions */
+detailShow.onclick = ()=>{
+  if(!detailCoords||!detailBanana) return;
+  map.easeTo({center:[detailCoords[0],detailCoords[1]],zoom:17,duration:800});
+  closeDetail();
+};
+detailEdit.onclick = ()=>{
+  if(!detailBanana) return;
+  const p = detailBanana;
+  openSheet('edit', {lat:p.lat, lng:p.lng, ...p});
+};
+detailDelete.onclick = ()=>{ deleteMyBanana(); };
 
-const deck=document.getElementById('deck'),deckClose=document.getElementById('deckClose'),deckCounter=document.getElementById('deckCounter'),cardContent=document.getElementById('cardContent'),emptyState=document.getElementById('emptyState'),cardTitle=document.getElementById('cardTitle'),cardMeta=document.getElementById('cardMeta'),cardMsg=document.getElementById('cardMsg'),cardImg=document.getElementById('cardImg'),focusBtn=document.getElementById('focusBtn'),prevBtn=document.getElementById('prevBtn'),nextBtn=document.getElementById('nextBtn');let deckOpen=false,deckList=[],deckIndex=0;const refreshDeck=()=>{deckList=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number').sort((a,b)=>(b.ts||0)-(a.ts||0));if(deckList.length&&deckIndex>=deckList.length)deckIndex=deckList.length-1;if(deckOpen)renderCard()};const openDeck=()=>{refreshDeck();deckIndex=0;deckOpen=true;deck.classList.add('show');if(!deckList.length){cardContent.style.display='none';emptyState.style.display='block';deckCounter.textContent='0/0';prevBtn.disabled=true;nextBtn.disabled=true}else{cardContent.style.display='block';emptyState.style.display='none';renderCard()}};const closeDeck=()=>{deckOpen=false;deck.classList.remove('show')};deckClose.onclick=closeDeck;const renderCard=()=>{const b=deckList[deckIndex];if(!b){closeDeck();return}cardTitle.textContent=b.name||'Anonymous';cardMeta.textContent=b.ts?timeAgo(b.ts):'';if(b.msg){cardMsg.style.display='block';cardMsg.textContent=b.msg}else{cardMsg.style.display='none'}if(b.photo){cardImg.style.display='block';cardImg.src=b.photo}else{cardImg.style.display='none';cardImg.removeAttribute('src')}deckCounter.textContent=`${deckIndex+1}/${deckList.length}`;prevBtn.disabled=deckIndex===0;nextBtn.disabled=deckIndex===deckList.length-1;focusBtn.onclick=()=>{map.easeTo({center:[b.lng,b.lat],zoom:17,duration:800});setTimeout(()=>{new maplibregl.Popup({offset:12}).setLngLat([b.lng,b.lat]).setHTML(popupHTML(b)).addTo(map)},400);closeDeck()}};prevBtn.onclick=()=>{if(!deckList.length||deckIndex===0)return;deckIndex--;renderCard()};nextBtn.onclick=()=>{if(!deckList.length||deckIndex===deckList.length-1)return;deckIndex++;renderCard()};document.addEventListener('keydown',e=>{if(!deckOpen)return;if(e.key==='ArrowLeft'&&deckIndex>0){deckIndex--;renderCard()}else if(e.key==='ArrowRight'&&deckIndex<deckList.length-1){deckIndex++;renderCard()}else if(e.key==='Escape'){closeDeck()}});
+const goRandomBanana=()=>{
+  const list=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number');
+  if(!list.length){toast("No bananas yet",'info',2000);return}
+  const pick=list[Math.floor(Math.random()*list.length)];
+  map.easeTo({center:[pick.lng,pick.lat],zoom:17,duration:900});
+  setTimeout(()=>{ openDetail(pick,[pick.lng,pick.lat]); },500);
+  toast('Random!','success',2000)
+};
+
+const deck=document.getElementById('deck'),
+  deckBackdrop=document.getElementById('deckBackdrop'),
+  deckClose=document.getElementById('deckClose'),
+  deckCounter=document.getElementById('deckCounter'),
+  cardContent=document.getElementById('cardContent'),
+  emptyState=document.getElementById('emptyState'),
+  cardTitle=document.getElementById('cardTitle'),
+  cardMeta=document.getElementById('cardMeta'),
+  cardMsg=document.getElementById('cardMsg'),
+  cardImg=document.getElementById('cardImg'),
+  focusBtn=document.getElementById('focusBtn'),
+  prevBtn=document.getElementById('prevBtn'),
+  nextBtn=document.getElementById('nextBtn');
+
+let deckOpen=false,deckList=[],deckIndex=0;
+
+const refreshDeck=()=>{
+  deckList=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number').sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(deckList.length&&deckIndex>=deckList.length)deckIndex=deckList.length-1;
+  if(deckOpen)renderCard()
+};
+const openDeck=()=>{
+  refreshDeck();deckIndex=0;deckOpen=true;deck.classList.add('show');
+  if(!deckList.length){
+    cardContent.style.display='none';emptyState.style.display='block';deckCounter.textContent='0/0';
+    prevBtn.disabled=true;nextBtn.disabled=true;
+  }else{
+    cardContent.style.display='block';emptyState.style.display='none';renderCard()
+  }
+};
+const closeDeck=()=>{deckOpen=false;deck.classList.remove('show')};
+deckClose.onclick=closeDeck;
+deckBackdrop.onclick=closeDeck;
+
+const renderCard=()=>{
+  const b=deckList[deckIndex];
+  if(!b){closeDeck();return}
+  cardTitle.textContent=b.name||'Anonymous';
+  cardMeta.textContent=b.ts?timeAgo(b.ts):'';
+  if(b.msg){cardMsg.style.display='block';cardMsg.textContent=b.msg}else{cardMsg.style.display='none'}
+  if(b.photo){cardImg.style.display='block';cardImg.src=b.photo}else{cardImg.style.display='none';cardImg.removeAttribute('src')}
+  deckCounter.textContent=`${deckIndex+1}/${deckList.length}`;
+  prevBtn.disabled=deckIndex===0;nextBtn.disabled=deckIndex===deckList.length-1;
+  focusBtn.onclick=()=>{
+    map.easeTo({center:[b.lng,b.lat],zoom:17,duration:800});
+    setTimeout(()=>{ openDetail(b,[b.lng,b.lat]); },400);
+    closeDeck()
+  }
+};
+prevBtn.onclick=()=>{if(!deckList.length||deckIndex===0)return;deckIndex--;renderCard()};
+nextBtn.onclick=()=>{if(!deckList.length||deckIndex===deckList.length-1)return;deckIndex++;renderCard()};
+document.addEventListener('keydown',e=>{
+  if(deckOpen){
+    if(e.key==='ArrowLeft'&&deckIndex>0){deckIndex--;renderCard()}
+    else if(e.key==='ArrowRight'&&deckIndex<deckList.length-1){deckIndex++;renderCard()}
+    else if(e.key==='Escape'){closeDeck()}
+  }
+});
+
+/* Tinder-like swipe (safe on touch) */
+(function addDeckSwipe(){
+  const target = document.getElementById('cardContainer');
+  let startX=0, currentX=0, dragging=false, pointerId=null;
+  const reset = ()=>{
+    target.style.transition='transform .18s ease, opacity .18s ease';
+    target.style.transform='translateX(0) rotate(0deg)'; target.style.opacity='1';
+    setTimeout(()=>{target.style.transition='';},180);
+  };
+  target.addEventListener('pointerdown', (e)=>{
+    dragging=true; startX=e.clientX; currentX=startX; pointerId=e.pointerId;
+    target.setPointerCapture(pointerId);
+  }, {passive:true});
+  target.addEventListener('pointermove', (e)=>{
+    if(!dragging) return;
+    currentX=e.clientX; const dx = currentX - startX;
+    target.style.transform = `translateX(${dx}px) rotate(${dx/25}deg)`;
+    target.style.opacity = `${Math.max(0.7, 1 - Math.abs(dx)/600)}`;
+  }, {passive:true});
+  const end = ()=>{
+    if(!dragging) return; dragging=false;
+    const dx = currentX - startX; const threshold = 120;
+    if(dx > threshold && deckIndex>0){ prevBtn.click(); reset(); }
+    else if(dx < -threshold && deckIndex < deckList.length-1){ nextBtn.click(); reset(); }
+    else { reset(); }
+  };
+  target.addEventListener('pointerup', end, {passive:true});
+  target.addEventListener('pointercancel', end, {passive:true});
+})();
 
 const startAuto=()=>{if(refreshHandle)clearInterval(refreshHandle);refreshHandle=setInterval(async()=>{await loadBananas();if(deckOpen)refreshDeck()},30000)};
 
-const checkURL=()=>{const params=new URLSearchParams(location.search),sharedId=params.get('id');if(sharedId){setTimeout(async()=>{try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===sharedId);if(b){map.easeTo({center:[b.lng,b.lat],zoom:17,duration:1500});setTimeout(()=>{new maplibregl.Popup({offset:12}).setLngLat([b.lng,b.lat]).setHTML(popupHTML(b)).addTo(map)},1000);toast('Shared banana','success',2000)}else{toast('Not found','error',2000)}}catch(e){console.error(e)}},1500)}};
+const checkURL=()=>{const params=new URLSearchParams(location.search),sharedId=params.get('id');if(sharedId){setTimeout(async()=>{try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===sharedId);if(b){map.easeTo({center:[b.lng,b.lat],zoom:17,duration:1500});setTimeout(()=>{ openDetail(b,[b.lng,b.lat]); },1000);toast('Shared banana','success',2000)}else{toast('Not found','error',2000)}}catch(e){console.error(e)}},1500)}};
 
-(async()=>{try{map=new maplibregl.Map({container:'map',style:makeStyle(),center:[0,20],zoom:2});map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');map.on('load',async()=>{await loadBananas();startAuto();if(navigator.geolocation){navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>{map.easeTo({center:[longitude,latitude],zoom:11,duration:1200})},()=>{},{enableHighAccuracy:true,timeout:8000})}checkURL()});wireUI()}catch(e){console.error(e);toast('Map failed','error',0)}})();
+(async()=>{try{
+  map=new maplibregl.Map({container:'map',style:makeStyle(),center:[0,20],zoom:2});
+  map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');
+  map.on('load',async()=>{await loadBananas();startAuto();
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>{
+        map.easeTo({center:[longitude,latitude],zoom:11,duration:1200})
+      },()=>{},{enableHighAccuracy:true,timeout:8000})
+    }
+    checkURL()
+  });
+  wireUI()
+}catch(e){console.error(e);toast('Map failed','error',0)}})();
 </script>
 </body>
 </html>
