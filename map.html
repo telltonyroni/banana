@@ -143,6 +143,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .banana-marker.mine{filter:drop-shadow(0 3px 12px rgba(255,217,61,.5))}
 .banana-marker.mine:hover{filter:drop-shadow(0 6px 20px rgba(255,217,61,.7))}
 
+/* Original deck styles (kept for reference/overridden below) */
 .deck{position:fixed;left:0;right:0;bottom:16px;z-index:997;display:none;justify-content:center;pointer-events:none;animation:slideUp 0.3s cubic-bezier(0.4,0,0.2,1)}
 .deck.show{display:flex}
 .deck>*{pointer-events:auto}
@@ -191,6 +192,68 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
   .stats{gap:8px}
   .stats-item span:not(.count){display:none}
 }
+
+/* ==============================
+   FULLSCREEN BROWSE DECK OVERRIDES
+   - Center the card in the viewport
+   - Keep header at the very top
+   - Center nav arrows vertically
+   ============================== */
+.deck{
+  position:fixed;
+  inset:0;                 /* full screen */
+  bottom:auto;             /* override prior bottom:16px */
+  z-index:1001;            /* above other UI */
+  display:none;
+  align-items:center;      /* center the card vertically */
+  justify-content:center;  /* center the card horizontally */
+  padding:16px;            /* breathing room */
+  pointer-events:none;     /* children re-enable */
+}
+.deck.show{ display:flex; }
+
+.card{
+  width:min(720px, calc(100vw - 64px));
+  max-height:min(80vh, 820px);
+  overflow:auto;
+  pointer-events:auto;
+}
+
+/* Header bar fixed to top */
+.deckbar{
+  position:fixed;
+  top:16px;
+  left:0;
+  right:0;
+  height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  pointer-events:auto;
+}
+
+/* Arrows vertically centered */
+.deck-nav{
+  position:fixed;
+  left:0;
+  right:0;
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 16px;
+  pointer-events:none;     /* buttons re-enable */
+  z-index:1002;
+}
+.deck-nav button{
+  pointer-events:auto;
+  width:48px; height:48px; /* larger hit target */
+}
+
+/* Optional: keep map controls above edges */
+.maplibregl-ctrl-bottom-right{ margin-bottom:12px; }
 </style>
 </head>
 <body>
@@ -328,7 +391,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 const BIN_ID="68f0265443b1c97be96a4ad5",API_KEY="$2a$10$RCnUKDWytC/ysiMgbX6/q.QRSKrLrAOPSOsZVPFYaaW06lur2V5X6",BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`,DEVICE_KEY='banana_device_id',DROPPED_KEY='banana_already_dropped';
 let deviceId=localStorage.getItem(DEVICE_KEY);if(!deviceId){deviceId=([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));localStorage.setItem(DEVICE_KEY,deviceId)}
 
-const esc=s=>s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const esc=s=>s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
 const fileToDataURL=f=>new Promise((r,e)=>{const reader=new FileReader();reader.onload=ev=>r(ev.target.result);reader.onerror=e;reader.readAsDataURL(f)});
 const timeAgo=t=>{const s=Math.floor((Date.now()-t)/1000);if(s<60)return'just now';const m=Math.floor(s/60);if(m<60)return`${m}m ago`;const h=Math.floor(m/60);if(h<24)return`${h}h ago`;const d=Math.floor(h/24);if(d<30)return`${d}d ago`;const mo=Math.floor(d/30);if(mo<12)return`${mo}mo ago`;return`${Math.floor(mo/12)}y ago`};
 const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}};
