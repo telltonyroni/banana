@@ -232,35 +232,52 @@ function popupHTML(p){
 }
 
 function createBananaMarker(feature){
-  const el=document.createElement('div');
-  el.className='banana-pin';
-  el.textContent='🍌';
-  el.title=feature.properties.name||'Banana';
+  const el = document.createElement('div');
+  el.className = 'banana-pin';
+  el.textContent = '🍌';
+  el.title = feature.properties.name || 'Banana';
 
-  const openDetails=(ev)=>{
+  const openDetails = (ev)=>{
     ev.preventDefault(); ev.stopPropagation();
-    const p=feature.properties, coords=feature.geometry.coordinates;
-    const popup=new maplibregl.Popup({offset:12,closeOnClick:true}).setLngLat(coords).setHTML(popupHTML(p)).addTo(map);
-    popup.on('open', ()=>{
-      const root=popup.getElement();
-      root.addEventListener('click', (e)=>{
-        const btn=e.target.closest('.popbtn');
-        if(!btn) return;
+    const p = feature.properties;
+    const coords = feature.geometry.coordinates;
+
+    // Build & show popup
+    const popup = new maplibregl.Popup({ offset: 12, closeOnClick: true })
+      .setLngLat(coords)
+      .setHTML(popupHTML(p))
+      .addTo(map);
+
+    // ✅ Bind AFTER addTo — no 'open' event dependency
+    const root = popup.getElement();              // outer popup container
+    const content = root.querySelector('.maplibregl-popup-content');
+    if (content) {
+      content.addEventListener('click', (e)=>{
+        const btn = e.target.closest('.popbtn');
+        if (!btn) return;
         e.preventDefault(); e.stopPropagation();
-        if(btn.dataset.action==='edit'){
-          openSheet('edit',{lat:coords[1],lng:coords[0],...p});
-        }else{
+
+        const action = btn.dataset.action;
+        if (action === 'edit') {
+          // open edit sheet prefilled
+          openSheet('edit', { lat: coords[1], lng: coords[0], ...p });
+        } else if (action === 'delete') {
           deleteMyBanana();
         }
-      });
-    });
+      }, { passive: false });
+    }
   };
-  ['pointerdown','touchstart','mousedown'].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
-  el.addEventListener('pointerup',openDetails);
-  el.addEventListener('touchend',openDetails);
-  el.addEventListener('click',openDetails);
 
-  return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(feature.geometry.coordinates);
+  // Make sure the map doesn't eat the tap/click
+  ['pointerdown','touchstart','mousedown'].forEach(type=>{
+    el.addEventListener(type,(e)=>{ e.stopPropagation(); }, { passive: true });
+  });
+  el.addEventListener('pointerup', openDetails, { passive: false });
+  el.addEventListener('touchend',  openDetails, { passive: false });
+  el.addEventListener('click',     openDetails, { passive: false });
+
+  return new maplibregl.Marker({ element: el, anchor: 'bottom' })
+    .setLngLat(feature.geometry.coordinates);
 }
 
 function renderDomMarkers(geojson){
