@@ -75,10 +75,18 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 .maplibregl-popup{max-width:300px}
 .maplibregl-popup-content img{max-width:140px;border-radius:8px;display:block;margin-top:6px}
 
-/* Emoji marker (DOM) */
+/* Emoji marker (DOM) — iOS-friendly tap target */
 .banana-pin{
-  font-size:28px; line-height:1; filter: drop-shadow(0 2px 4px rgba(0,0,0,.25));
-  user-select:none; -webkit-user-select:none; cursor:pointer; transform: translateY(-4px);
+  font-size:28px; line-height:1;
+  padding:10px;            /* bigger hit area for touch */
+  margin: -10px 0 0 -10px; /* keep visual centered while padding adds hitbox */
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.25));
+  user-select:none; -webkit-user-select:none;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  touch-action: manipulation;
+  cursor:pointer;
+  transform: translateY(-4px);
+  background: transparent; border-radius:14px;
 }
 
 /* Swipe deck */
@@ -100,6 +108,17 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 .card .actions button{flex:1;padding:10px;border:none;border-radius:12px;font-weight:700;cursor:pointer;background:#111;color:#fff}
 .deck-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
 .deck-nav button{pointer-events:auto;border:none;background:rgba(255,255,255,.9);box-shadow:var(--shadow);width:38px;height:38px;border-radius:999px;display:grid;place-items:center;cursor:pointer}
+
+/* Deck top bar (title + close) */
+.deckbar{
+  position:absolute; top:-42px; left:0; right:0; height:36px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.deckbar .close{
+  position:absolute; right:6px; top:0;
+  border:none; background:rgba(255,255,255,.9); box-shadow:var(--shadow);
+  width:36px; height:36px; border-radius:999px; display:grid; place-items:center; cursor:pointer;
+}
 
 /* Watermark */
 .watermark{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:2}
@@ -126,6 +145,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
   <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M3 8c5 0 6 8 12 8h6M3 16c5 0 6-8 12-8h6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
   <symbol id="i-browse" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
 </svg>
 
 <!-- Header -->
@@ -195,6 +215,10 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 
 <!-- Swipe deck -->
 <div class="deck" id="deck">
+  <div class="deckbar">
+    <strong style="font-size:13px;color:#444;">Browse bananas</strong>
+    <button class="close" id="deckClose" aria-label="Close"><svg class="icon"><use href="#i-close"/></svg></button>
+  </div>
   <div class="card" id="card">
     <h4 id="cardTitle">Banana</h4>
     <p id="cardMsg" style="display:none"></p>
@@ -247,7 +271,7 @@ function makeStyle(){
       {id:'cluster-count',type:'symbol',source:'bananas',filter:['has','point_count'],
         layout:{'text-field':['get','point_count_abbreviated'],'text-size':12,'text-font':['Open Sans Bold','Noto Sans Regular','Arial Unicode MS Bold']},
         paint:{'text-color':'#222'}}
-      /* unclustered pins = DOM emoji markers */
+      /* unclustered pins use DOM markers */
     ]};
 }
 const map=new maplibregl.Map({container:'map',style:makeStyle(),center:[0,20],zoom:2});
@@ -257,7 +281,7 @@ map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-rig
 let bananasCache=[]; let lastGeoJSON={type:'FeatureCollection',features:[]};
 const asFeature=b=>({type:'Feature',properties:{deviceId:b.deviceId||'',name:b.name||'',msg:b.msg||'',photo:b.photo||'',ts:b.ts||0},geometry:{type:'Point',coordinates:[b.lng,b.lat]}});
 
-/* DOM emoji markers for unclustered points */
+/* DOM emoji markers (iOS-tap friendly) */
 let domMarkers=[];
 function clearDomMarkers(){ domMarkers.forEach(m=>m.remove()); domMarkers=[]; }
 
@@ -275,26 +299,45 @@ function popupHTML(p){
   return h+`</div>`;
 }
 
+/* Create one marker with robust pointer handling for iOS */
+function createBananaMarker(feature){
+  const el=document.createElement('div');
+  el.className='banana-pin';
+  el.textContent='🍌';
+  el.title = feature.properties.name || 'Banana';
+
+  const openDetails = (ev)=>{
+    ev.preventDefault(); ev.stopPropagation();
+    const p=feature.properties, coords=feature.geometry.coordinates;
+    const html = popupHTML(p);
+    new maplibregl.Popup({offset:12}).setLngLat(coords).setHTML(html).addTo(map);
+    // wire edit/delete if it's mine
+    setTimeout(()=>{
+      const edit=document.getElementById('editBan');
+      const del =document.getElementById('delBan');
+      if(edit) edit.onclick=(e)=>{e.preventDefault(); e.stopPropagation(); openSheet('edit',{lat:coords[1],lng:coords[0],...p});};
+      if(del)  del.onclick =(e)=>{e.preventDefault(); e.stopPropagation(); deleteMyBanana();};
+    },0);
+  };
+
+  // Support click, touch and pointer (Safari/iOS)
+  el.addEventListener('pointerup', openDetails, {passive:false});
+  el.addEventListener('touchend',  openDetails, {passive:false});
+  el.addEventListener('click',     openDetails, {passive:false});
+
+  // Prevent map from also handling the tap
+  ['pointerdown','touchstart','mousedown'].forEach(type=>{
+    el.addEventListener(type,(e)=>{ e.stopPropagation(); }, {passive:true});
+  });
+
+  return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(feature.geometry.coordinates);
+}
+
 function renderDomMarkers(geojson){
   clearDomMarkers();
   geojson.features.forEach(f=>{
     if (f.properties.point_count) return;
-    const el=document.createElement('div');
-    el.className='banana-pin';
-    el.textContent='🍌';
-    el.title = f.properties.name || 'Banana';
-    el.addEventListener('click',()=>{
-      const p=f.properties, coords=f.geometry.coordinates;
-      const html = popupHTML(p);
-      new maplibregl.Popup({offset:12}).setLngLat(coords).setHTML(html).addTo(map);
-      setTimeout(()=>{
-        const edit=document.getElementById('editBan');
-        const del =document.getElementById('delBan');
-        if(edit) edit.onclick=(ev)=>{ev.preventDefault(); openSheet('edit',{lat:coords[1],lng:coords[0],...p});};
-        if(del)  del.onclick =(ev)=>{ev.preventDefault(); deleteMyBanana();};
-      },0);
-    });
-    const marker=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(f.geometry.coordinates).addTo(map);
+    const marker=createBananaMarker(f).addTo(map);
     domMarkers.push(marker);
   });
 }
@@ -424,7 +467,7 @@ dropBtn.onclick=()=>{
   } else { const c=map.getCenter(); openForm(c.lat,c.lng); }
 };
 
-/* Menu: See/Share/Delete */
+/* Menu: See/Share/Delete/Random/Browse */
 document.getElementById('seeMine').onclick=async()=>{
   try{
     const latest=await fetchLatest();
@@ -450,7 +493,6 @@ document.getElementById('shareMine').onclick=async()=>{
 };
 document.getElementById('deleteMine').onclick=()=>{ menu.classList.remove('show'); deleteMyBanana(); };
 
-/* Menu: Random & Browse (swipe) */
 document.getElementById('randomBanana').onclick=()=>{ menu.classList.remove('show'); goRandomBanana(); };
 document.getElementById('browseBananas').onclick=()=>{ menu.classList.remove('show'); openDeck(); };
 
@@ -501,16 +543,11 @@ function goRandomBanana(){
   map.easeTo({center:[pick.lng,pick.lat],zoom:18,duration:900});
   const html = popupHTML(pick);
   new maplibregl.Popup({offset:12}).setLngLat([pick.lng,pick.lat]).setHTML(html).addTo(map);
-  setTimeout(()=>{
-    const edit=document.getElementById('editBan');
-    const del =document.getElementById('delBan');
-    if(edit && pick.deviceId===deviceId) edit.onclick=(ev)=>{ev.preventDefault(); openSheet('edit',{lat:pick.lat,lng:pick.lng,...pick});};
-    if(del && pick.deviceId===deviceId)  del.onclick =(ev)=>{ev.preventDefault(); deleteMyBanana();};
-  },0);
 }
 
 /* ===== Swipe Deck (Tinder-like) ===== */
 const deck = document.getElementById('deck');
+const deckClose = document.getElementById('deckClose');
 const card = document.getElementById('card');
 const cardTitle = document.getElementById('cardTitle');
 const cardMsg = document.getElementById('cardMsg');
@@ -519,14 +556,11 @@ const focusBtn = document.getElementById('focusBtn');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 
-let deckOpen=false;
-let deckList=[];   // array of bananas (raw objects from bananasCache)
-let deckIndex=0;
+let deckOpen=false, deckList=[], deckIndex=0;
 
 function refreshDeckList(){
   deckList = bananasCache
     .filter(b=>typeof b.lat==='number'&&typeof b.lng==='number')
-    // Optional: sort newest first
     .sort((a,b)=> (b.ts||0)-(a.ts||0));
   if(deckList.length && deckIndex>=deckList.length) deckIndex=deckList.length-1;
   if(deckOpen) renderCard();
@@ -534,10 +568,11 @@ function refreshDeckList(){
 function openDeck(){
   refreshDeckList();
   if(!deckList.length){ setStatus("No bananas to browse yet.",false); return; }
-  deckOpen=true; deck.style.display='flex';
+  deckOpen=true; deck.classList.add('show');
   renderCard();
 }
-function closeDeck(){ deckOpen=false; deck.style.display='none'; }
+function closeDeck(){ deckOpen=false; deck.classList.remove('show'); }
+deckClose.onclick=closeDeck;
 
 function renderCard(){
   const b = deckList[deckIndex];
@@ -551,33 +586,36 @@ function renderCard(){
     new maplibregl.Popup({offset:12}).setLngLat([b.lng,b.lat]).setHTML(html).addTo(map);
   };
 }
-
 prevBtn.onclick=()=>{ if(!deckList.length) return; deckIndex = (deckIndex-1+deckList.length)%deckList.length; animateSnap(-1); renderCard(); };
 nextBtn.onclick=()=>{ if(!deckList.length) return; deckIndex = (deckIndex+1)%deckList.length; animateSnap(1); renderCard(); };
-
 function animateSnap(dir){
-  // simple slide animation feedback
   card.style.transition='transform .18s ease, opacity .18s ease';
   card.style.transform=`translateX(${dir*40}px)`;
   card.style.opacity='0.7';
   setTimeout(()=>{ card.style.transform='translateX(0)'; card.style.opacity='1'; }, 180);
   setTimeout(()=>{ card.style.transition=''; }, 200);
 }
-
-/* Swipe gestures */
-let startX=0, dragging=false;
-function onStart(e){ dragging=true; startX=(e.touches?e.touches[0].clientX:e.clientX); card.style.transition=''; }
-function onMove(e){ if(!dragging) return; const x=(e.touches?e.touches[0].clientX:e.clientX); const dx=x-startX; card.style.transform=`translateX(${dx}px) rotate(${dx*0.02}deg)`; card.style.opacity=String(Math.max(0.6, 1-Math.abs(dx)/400)); }
-function onEnd(e){ if(!dragging) return; dragging=false; const endX=(e.changedTouches?e.changedTouches[0].clientX:e.clientX); const dx=endX-startX; const TH=80; card.style.transition='transform .2s ease, opacity .2s ease';
-  if(dx>TH){ // next
-    card.style.transform='translateX(120px) rotate(6deg)'; card.style.opacity='0.6';
-    setTimeout(()=>{ nextBtn.click(); card.style.transform='translateX(0)'; card.style.opacity='1'; },180);
-  }else if(dx<-TH){ // prev
-    card.style.transform='translateX(-120px) rotate(-6deg)'; card.style.opacity='0.6';
-    setTimeout(()=>{ prevBtn.click(); card.style.transform='translateX(0)'; card.style.opacity='1'; },180);
-  }else{
-    card.style.transform='translateX(0) rotate(0)'; card.style.opacity='1';
+/* Swipe gestures + swipe-down-to-close */
+let startX=0, startY=0, dragging=false;
+function onStart(e){ dragging=true; const t=e.touches?e.touches[0]:e; startX=t.clientX; startY=t.clientY; card.style.transition=''; }
+function onMove(e){
+  if(!dragging) return;
+  const t=e.touches?e.touches[0]:e; const dx=t.clientX-startX; const dy=t.clientY-startY;
+  // horizontal swipe for next/prev; allow slight vertical to close
+  card.style.transform=`translate(${dx}px, ${Math.max(0,dy)}px) rotate(${dx*0.02}deg)`;
+  card.style.opacity=String(Math.max(0.6, 1-Math.abs(dx)/400));
+}
+function onEnd(e){
+  if(!dragging) return; dragging=false;
+  const t=e.changedTouches?e.changedTouches[0]:e; const dx=t.clientX-startX; const dy=t.clientY-startY;
+  const TH=80, CLOSE=120;
+  card.style.transition='transform .2s ease, opacity .2s ease';
+  if(dy>CLOSE){ // swipe down to close
+    card.style.transform='translateY(160px)'; card.style.opacity='0.6'; setTimeout(closeDeck,180); return;
   }
+  if(dx>TH){ card.style.transform='translateX(120px) rotate(6deg)'; card.style.opacity='0.6'; setTimeout(()=>{ nextBtn.click(); card.style.transform='translateX(0)'; card.style.opacity='1'; },180); }
+  else if(dx<-TH){ card.style.transform='translateX(-120px) rotate(-6deg)'; card.style.opacity='0.6'; setTimeout(()=>{ prevBtn.click(); card.style.transform='translateX(0)'; card.style.opacity='1'; },180); }
+  else{ card.style.transform='translate(0,0) rotate(0)'; card.style.opacity='1'; }
 }
 card.addEventListener('touchstart',onStart,{passive:true});
 card.addEventListener('touchmove',onMove,{passive:true});
@@ -585,7 +623,6 @@ card.addEventListener('touchend',onEnd);
 card.addEventListener('mousedown',onStart);
 window.addEventListener('mousemove',onMove);
 window.addEventListener('mouseup',onEnd);
-
 /* Close deck on ESC */
 window.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDeck(); });
 
