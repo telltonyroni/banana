@@ -61,7 +61,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 .sheet.show{bottom:0}
 .sheet .grab{width:44px;height:4px;background:#ddd;border-radius:4px;margin:6px auto 10px}
 .sheet h3{margin:0 0 8px 0;font-size:18px}
-.sheet label{font-size:13px;color:#444}
+.sheet label{font-size:13px;color:var(--ink)}
 .sheet input[type="text"], .sheet textarea{width:100%;margin:8px 0 10px;padding:12px;border:1px solid #e5e5e5;border-radius:12px;font:inherit}
 .sheet input[type="file"]{width:100%;margin:6px 0 10px}
 .preview{display:none;margin-top:6px}
@@ -71,14 +71,20 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 .sheet .save{background:var(--accent);color:#fff}
 .sheet .cancel{background:#f2f2f2;color:#111}
 
-/* Popup */
+/* Popup + buttons */
 .maplibregl-popup{max-width:300px}
 .maplibregl-popup-content img{max-width:140px;border-radius:8px;display:block;margin-top:6px}
+.popbtn{
+  appearance:none;border:none;padding:8px 12px;border-radius:10px;
+  background:#111;color:#fff;font-weight:700;cursor:pointer
+}
+.popbtn + .popbtn{ margin-left:10px }
+.popbtn.danger{ background:#b00020 }
 
 /* Emoji marker (DOM) — iOS-friendly tap target */
 .banana-pin{
   font-size:28px; line-height:1;
-  padding:10px;            /* bigger hit area for touch */
+  padding:10px;            /* bigger hit area */
   margin: -10px 0 0 -10px; /* keep visual centered while padding adds hitbox */
   filter: drop-shadow(0 2px 4px rgba(0,0,0,.25));
   user-select:none; -webkit-user-select:none;
@@ -281,10 +287,11 @@ map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-rig
 let bananasCache=[]; let lastGeoJSON={type:'FeatureCollection',features:[]};
 const asFeature=b=>({type:'Feature',properties:{deviceId:b.deviceId||'',name:b.name||'',msg:b.msg||'',photo:b.photo||'',ts:b.ts||0},geometry:{type:'Point',coordinates:[b.lng,b.lat]}});
 
-/* DOM emoji markers (iOS-tap friendly) */
+/* DOM emoji markers with iOS-tap fixes */
 let domMarkers=[];
 function clearDomMarkers(){ domMarkers.forEach(m=>m.remove()); domMarkers=[]; }
 
+/* Popup HTML renders real buttons, wired after popup opens */
 function popupHTML(p){
   const title=p.name?escapeHTML(p.name):'Banana';
   let h=`<div><strong>${title}</strong>`;
@@ -292,14 +299,14 @@ function popupHTML(p){
   if(p.photo) h+=`<img src="${p.photo}" alt="banana photo"/>`;
   if(p.deviceId===deviceId){
     h+=`<div style="display:flex;gap:12px;margin-top:8px">
-          <a href="#" id="editBan">Edit</a>
-          <a href="#" id="delBan" style="color:${getComputedStyle(document.documentElement).getPropertyValue('--warn')||'#b00020'}">Delete</a>
+          <button class="popbtn" data-action="edit">Edit</button>
+          <button class="popbtn danger" data-action="delete">Delete</button>
         </div>`;
   }
   return h+`</div>`;
 }
 
-/* Create one marker with robust pointer handling for iOS */
+/* Build a marker element and robust handlers */
 function createBananaMarker(feature){
   const el=document.createElement('div');
   el.className='banana-pin';
@@ -309,26 +316,36 @@ function createBananaMarker(feature){
   const openDetails = (ev)=>{
     ev.preventDefault(); ev.stopPropagation();
     const p=feature.properties, coords=feature.geometry.coordinates;
-    const html = popupHTML(p);
-    new maplibregl.Popup({offset:12}).setLngLat(coords).setHTML(html).addTo(map);
-    // wire edit/delete if it's mine
-    setTimeout(()=>{
-      const edit=document.getElementById('editBan');
-      const del =document.getElementById('delBan');
-      if(edit) edit.onclick=(e)=>{e.preventDefault(); e.stopPropagation(); openSheet('edit',{lat:coords[1],lng:coords[0],...p});};
-      if(del)  del.onclick =(e)=>{e.preventDefault(); e.stopPropagation(); deleteMyBanana();};
-    },0);
+
+    const popup = new maplibregl.Popup({offset:12, closeOnClick:true})
+      .setLngLat(coords)
+      .setHTML(popupHTML(p))
+      .addTo(map);
+
+    // Bind after DOM exists
+    popup.on('open', ()=>{
+      const root = popup.getElement();
+      root.addEventListener('click', (e)=>{
+        const btn = e.target.closest('.popbtn');
+        if(!btn) return;
+        e.preventDefault(); e.stopPropagation();
+        const action = btn.dataset.action;
+        if(action==='edit'){
+          openSheet('edit', { lat:coords[1], lng:coords[0], ...p });
+        }else if(action==='delete'){
+          deleteMyBanana();
+        }
+      }, { passive:false });
+    });
   };
 
-  // Support click, touch and pointer (Safari/iOS)
-  el.addEventListener('pointerup', openDetails, {passive:false});
-  el.addEventListener('touchend',  openDetails, {passive:false});
-  el.addEventListener('click',     openDetails, {passive:false});
-
-  // Prevent map from also handling the tap
+  // Make sure map doesn't swallow taps
   ['pointerdown','touchstart','mousedown'].forEach(type=>{
     el.addEventListener(type,(e)=>{ e.stopPropagation(); }, {passive:true});
   });
+  el.addEventListener('pointerup', openDetails, {passive:false});
+  el.addEventListener('touchend',  openDetails, {passive:false});
+  el.addEventListener('click',     openDetails, {passive:false});
 
   return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(feature.geometry.coordinates);
 }
@@ -364,7 +381,7 @@ async function loadBananas(skipToast=false){
   if(!skipToast) setStatus("🍌 Loading bananas…");
   try{
     const data=await fetchLatest();
-    bananasCache=data.record?.bananas||[];
+    bananasCache=data.record?.bananas||=[];
     const feats=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number').map(asFeature);
     drawBananas({type:'FeatureCollection',features:feats});
     const already=bananasCache.some(b=>b.deviceId===deviceId)||localStorage.getItem(DROPPED_KEY)==='true';
@@ -514,7 +531,7 @@ if(navigator.geolocation){
   );
 }
 
-/* Cluster click → zoom into cluster */
+/* Cluster click → zoom into cluster + boot */
 map.on('load', async ()=>{
   map.on('click','clusters', e=>{
     const f = map.queryRenderedFeatures(e.point,{layers:['clusters']})[0];
@@ -601,7 +618,6 @@ function onStart(e){ dragging=true; const t=e.touches?e.touches[0]:e; startX=t.c
 function onMove(e){
   if(!dragging) return;
   const t=e.touches?e.touches[0]:e; const dx=t.clientX-startX; const dy=t.clientY-startY;
-  // horizontal swipe for next/prev; allow slight vertical to close
   card.style.transform=`translate(${dx}px, ${Math.max(0,dy)}px) rotate(${dx*0.02}deg)`;
   card.style.opacity=String(Math.max(0.6, 1-Math.abs(dx)/400));
 }
@@ -610,9 +626,7 @@ function onEnd(e){
   const t=e.changedTouches?e.changedTouches[0]:e; const dx=t.clientX-startX; const dy=t.clientY-startY;
   const TH=80, CLOSE=120;
   card.style.transition='transform .2s ease, opacity .2s ease';
-  if(dy>CLOSE){ // swipe down to close
-    card.style.transform='translateY(160px)'; card.style.opacity='0.6'; setTimeout(closeDeck,180); return;
-  }
+  if(dy>CLOSE){ card.style.transform='translateY(160px)'; card.style.opacity='0.6'; setTimeout(closeDeck,180); return; }
   if(dx>TH){ card.style.transform='translateX(120px) rotate(6deg)'; card.style.opacity='0.6'; setTimeout(()=>{ nextBtn.click(); card.style.transform='translateX(0)'; card.style.opacity='1'; },180); }
   else if(dx<-TH){ card.style.transform='translateX(-120px) rotate(-6deg)'; card.style.opacity='0.6'; setTimeout(()=>{ prevBtn.click(); card.style.transform='translateX(0)'; card.style.opacity='1'; },180); }
   else{ card.style.transform='translate(0,0) rotate(0)'; card.style.opacity='1'; }
