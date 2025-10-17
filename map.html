@@ -434,7 +434,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
     <label for="photo" class="file-upload-label">
       <svg class="icon-lg"><use href="#i-camera"/></svg>
       <span class="file-upload-text">Add Photos</span>
-      <span class="file-upload-hint">JPG or PNG, up to 5 photos, 3MB each</span>
+      <span class="file-upload-hint">JPG or PNG, up to 5 photos</span>
     </label>
     <input id="photo" type="file" accept="image/*" multiple>
   </div>
@@ -457,6 +457,89 @@ const BIN_ID="68f0265443b1c97be96a4ad5",API_KEY="$2a$10$RCnUKDWytC/ysiMgbX6/q.QR
 let deviceId=localStorage.getItem(DEVICE_KEY);if(!deviceId){deviceId=([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));localStorage.setItem(DEVICE_KEY,deviceId)}
 const esc=s=>s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const fileToDataURL=f=>new Promise((r,e)=>{const reader=new FileReader();reader.onload=ev=>r(ev.target.result);reader.onerror=e;reader.readAsDataURL(f)});
+const blobToDataURL = (blob) => new Promise((resolve, reject) => {
+  const r = new FileReader();
+  r.onload = e => resolve(e.target.result);
+  r.onerror = reject;
+  r.readAsDataURL(blob);
+});
+
+const loadImageBitmap = async (file) => {
+  // Try createImageBitmap so EXIF orientation is applied automatically
+  try {
+    return await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch {
+    // Fallback for older Safari, etc.
+    return await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+};
+
+/**
+ * Resize + recompress image until it fits constraints.
+ * Returns a Blob (JPEG by default).
+ */
+async function resizeImageToLimit(file, {
+  maxEdge = 1600,          // max width/height
+  maxBytes = 800 * 1024,   // per-photo size cap (bytes)
+  mime = 'image/jpeg',     // 'image/jpeg' keeps sizes small
+  minQuality = 0.6,        // don't go below this
+  startQuality = 0.9       // try this quality first
+} = {}) {
+  const bmp = await loadImageBitmap(file);
+
+  // Initial scale (down only)
+  const initialScale = Math.min(1, maxEdge / Math.max(bmp.width, bmp.height));
+  let w = Math.max(1, Math.round(bmp.width * initialScale));
+  let h = Math.max(1, Math.round(bmp.height * initialScale));
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d', { alpha: false });
+
+  let quality = startQuality;
+  let blob;
+
+  // Try a few times: lower quality first, then shrink dimensions
+  for (let attempt = 0; attempt < 8; attempt++) {
+    canvas.width = w;
+    canvas.height = h;
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(bmp, 0, 0, w, h);
+
+    blob = await new Promise(res => canvas.toBlob(res, mime, quality));
+    if (!blob) throw new Error('Image encode failed');
+
+    if (blob.size <= maxBytes || (quality <= minQuality && Math.max(w, h) <= 800)) {
+      break; // good enough
+    }
+
+    // Tighten: first reduce quality, then reduce dimensions
+    if (quality > minQuality) {
+      quality = Math.max(minQuality, quality - 0.1);
+    } else {
+      w = Math.max(1, Math.round(w * 0.85));
+      h = Math.max(1, Math.round(h * 0.85));
+    }
+  }
+
+  return blob;
+}
+
+const isSupportedImage = (file) => /^image\/(png|jpe?g|webp)$/i.test(file.type);
+
+// --- Config: tweak these to change your rules ---
+const PHOTO_RULES = {
+  maxFiles: 5,
+  // Hard cap per saved photo (what gets stored). Make this bigger/smaller as you like:
+  maxBytesPerPhoto: 3 * 1024 * 1024, // 3 MB
+  // Always resize to keep dimensions sane & save bandwidth, even if file is small:
+  alwaysResize: true,
+  maxEdge: 1600 // long edge px
+};
 const timeAgo=t=>{const s=Math.floor((Date.now()-t)/1000);if(s<60)return'just now';const m=Math.floor(s/60);if(m<60)return`${m}m ago`;const h=Math.floor(m/60);if(h<24)return`${h}h ago`;const d=Math.floor(h/24);if(d<30)return`${d}d ago`;const mo=Math.floor(d/30);if(mo<12)return`${mo}mo ago`;return`${Math.floor(mo/12)}y ago`};
 const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}};
 const getVagueLocation=addr=>{if(!addr)return'Unknown';const parts=addr.split(',').map(p=>p.trim());if(parts.length>=2){const city=parts[parts.length-3]||parts[0];const region=parts[parts.length-2];return`Near ${city}, ${region}`}return`Near ${parts[0]}`};
@@ -553,7 +636,44 @@ photoEl.addEventListener('change',async()=>{const files=Array.from(photoEl.files
 const openSheet=(mode,p)=>{sheetMode=mode;if(mode==='add'){sheetTitle.textContent='Drop a Banana';sheetSubtitle.textContent='Share your moment with the world';nameEl.value='';msgEl.value='';photoEl.value='';previews.innerHTML='';charCount.textContent='0/500';sheetTarget={lat:p.lat,lng:p.lng,existingPhotos:[]};saveBtn.textContent='Save Banana';document.getElementById('approxLocation').checked=false}else{sheetTitle.textContent='Edit Banana';sheetSubtitle.textContent='Update your moment';nameEl.value=p.name||'';msgEl.value=p.msg||'';photoEl.value='';charCount.textContent=`${(p.msg||'').length}/500`;const existingPhotos=p.photos||[p.photo]||[];sheetTarget={lat:p.lat,lng:p.lng,existingPhotos:existingPhotos.filter(ph=>ph)};previews.innerHTML='';sheetTarget.existingPhotos.forEach((ph,idx)=>{const wrap=document.createElement('div');wrap.style.cssText='position:relative';const img=document.createElement('img');img.src=ph;img.style.cssText='width:100%;height:100px;object-fit:cover;border-radius:10px;box-shadow:var(--shadow-md)';const btn=document.createElement('button');btn.textContent='✕';btn.style.cssText='position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:var(--warn);color:#fff;border:none;cursor:pointer;font-size:12px;box-shadow:var(--shadow-md)';btn.onclick=()=>{wrap.remove();sheetTarget.existingPhotos.splice(idx,1)};wrap.appendChild(img);wrap.appendChild(btn);previews.appendChild(wrap)});saveBtn.textContent='Update Banana';document.getElementById('approxLocation').parentElement.style.display='none'}sheet.classList.add('show');setTimeout(()=>nameEl.focus(),150)};
 const closeSheet=()=>sheet.classList.remove('show');
 cancelBtn.onclick=closeSheet;
-saveBtn.onclick=async()=>{try{const name=nameEl.value.trim(),msg=msgEl.value.trim();if(!name){toast('Enter name','error',2000);nameEl.focus();return}saveBtn.disabled=true;saveBtn.textContent='Saving...';const newFiles=Array.from(photoEl.files);const photos=[...sheetTarget.existingPhotos];for(const f of newFiles){if(photos.length>=5)break;try{photos.push(await fileToDataURL(f))}catch(e){console.error('Photo error:',e)}}if(sheetMode==='add'){const useApprox=document.getElementById('approxLocation').checked;await saveBanana(sheetTarget.lat,sheetTarget.lng,msg,photos,name,useApprox)}else await updateBanana(msg,photos,name);closeSheet();saveBtn.disabled=false;saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'}catch(e){console.error(e);toast(e.message||'Failed','error',3000);saveBtn.disabled=false;saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'}};
+saveBtn.onclick=async()=>{try{const name=nameEl.value.trim(),msg=msgEl.value.trim();if(!name){toast('Enter name','error',2000);nameEl.focus();return}saveBtn.disabled=true;saveBtn.textContent='Saving...';const newFiles = Array.from(photoEl.files);
+const photos = [...sheetTarget.existingPhotos];
+
+for (const f of newFiles) {
+  if (photos.length >= PHOTO_RULES.maxFiles) break;
+
+  if (!isSupportedImage(f)) {
+    toast('Only JPG/PNG/WebP are supported', 'error', 2500);
+    continue;
+  }
+
+  try {
+    // Decide whether to resize. You can set alwaysResize=false to only resize if too big.
+    const mustResize = PHOTO_RULES.alwaysResize || f.size > PHOTO_RULES.maxBytesPerPhoto;
+
+    let blob;
+    if (mustResize) {
+      blob = await resizeImageToLimit(f, {
+        maxEdge: PHOTO_RULES.maxEdge,
+        maxBytes: PHOTO_RULES.maxBytesPerPhoto,
+        mime: 'image/jpeg'
+      });
+      // If even after attempts it’s still too big (very rare), refuse it.
+      if (blob.size > PHOTO_RULES.maxBytesPerPhoto) {
+        toast(`Photo still too large after compressing (${(blob.size/1024/1024).toFixed(2)}MB)`, 'error', 3000);
+        continue;
+      }
+    } else {
+      // Small enough as-is; still normalize to JPEG if you want consistent format:
+      blob = f;
+    }
+
+    photos.push(await blobToDataURL(blob));
+  } catch (e) {
+    console.error('Photo error:', e);
+    toast('Photo processing failed', 'error', 2500);
+  }
+}if(sheetMode==='add'){const useApprox=document.getElementById('approxLocation').checked;await saveBanana(sheetTarget.lat,sheetTarget.lng,msg,photos,name,useApprox)}else await updateBanana(msg,photos,name);closeSheet();saveBtn.disabled=false;saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'}catch(e){console.error(e);toast(e.message||'Failed','error',3000);saveBtn.disabled=false;saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'}};
 const getAddress=async(lat,lng)=>{try{const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);const data=await res.json();return data.display_name||`${lat.toFixed(4)}, ${lng.toFixed(4)}`}catch(e){return`${lat.toFixed(4)}, ${lng.toFixed(4)}`}};
 const saveBanana=async(lat,lng,msg,photos,name,useApprox)=>{const data=await fetchLatest();const arr=data.record?.bananas||[];if(arr.some(b=>b.deviceId===deviceId))throw new Error('Already dropped');let finalLat=lat,finalLng=lng;if(useApprox){const approx=approximateCoords(lat,lng);finalLat=approx.lat;finalLng=approx.lng}const address=await getAddress(lat,lng);arr.push({lat:finalLat,lng:finalLng,msg,photos:photos||[],name,ts:Date.now(),deviceId,locationHistory:[{lat:finalLat,lng:finalLng,ts:Date.now(),address}]});await putBananas(arr);localStorage.setItem(DROPPED_KEY,'true');await loadBananas();map.easeTo({center:[finalLng,finalLat],zoom:17,duration:800});pulseAt(finalLng,finalLat);toast('Banana dropped!','success',2500)};
 const updateBanana=async(msg,photos,name)=>{const latest=await fetchLatest();const arr=latest.record?.bananas||[];const idx=arr.findIndex(x=>x.deviceId===deviceId);if(idx===-1)throw new Error("Not found");arr[idx]={...arr[idx],msg,photos:photos||arr[idx].photos||[],name};await putBananas(arr);await loadBananas();toast('Updated!','success',2000)};
