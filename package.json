@@ -1,0 +1,13 @@
+{
+  "name": "banana-place",
+  "version": "1.0.0",
+  "description": "Banana.place interactive map and API proxy",
+  "main": "index.js",
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "type": "module"
+}
