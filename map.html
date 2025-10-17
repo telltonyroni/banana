@@ -146,7 +146,35 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .swipe-indicator.right{right:40px}
 .iconbtn:active, .quick-btn:active, .fab:active{transform:translateY(0);filter:brightness(.98)}
 .iconbtn:focus-visible, .quick-btn:focus-visible, .fab:focus-visible, .menu .row:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tutorial-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:3000;display:none;animation:fadeIn 0.3s ease}
+.tutorial-overlay.show{display:block}
+.tutorial-modal{position:fixed;inset:0;z-index:3001;display:none;align-items:center;justify-content:center;padding:20px}
+.tutorial-modal.show{display:flex}
+.tutorial-content{width:min(480px,100%);max-height:90vh;background:var(--surface);border-radius:20px;box-shadow:var(--shadow-xl);overflow:hidden;animation:slideInUp 0.4s cubic-bezier(0.4,0,0.2,1);position:relative;display:flex;flex-direction:column}
+.tutorial-body{flex:1;padding:48px 32px 24px;overflow-y:auto;min-height:320px}
+.tutorial-step{text-align:center;animation:fadeIn 0.4s ease}
+.tutorial-icon{font-size:72px;margin-bottom:20px;animation:slideDown 0.5s cubic-bezier(0.4,0,0.2,1)}
+.tutorial-step h2{font-size:28px;font-weight:700;margin-bottom:16px;letter-spacing:-0.02em;color:var(--ink)}
+.tutorial-step p{font-size:16px;line-height:1.6;color:#4b5563;margin-bottom:8px}
+.tutorial-note{margin-top:20px;padding:14px 18px;background:rgba(255,217,61,0.1);border-left:3px solid var(--accent);border-radius:8px;font-size:14px;color:var(--ink);text-align:left}
+.tutorial-progress{padding:20px 32px;display:flex;justify-content:center}
+.tutorial-dots{display:flex;gap:8px}
+.tutorial-dot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.2);transition:all 0.3s ease;cursor:pointer}
+.tutorial-dot:hover{background:rgba(0,0,0,0.3);transform:scale(1.2)}
+.tutorial-dot.active{background:var(--accent);width:24px;border-radius:4px}
+.tutorial-actions{display:flex;gap:12px;padding:0 32px 32px}
+.tutorial-btn{flex:1;padding:14px 24px;border:none;border-radius:12px;font-weight:600;font-size:15px;cursor:pointer;transition:all 0.2s ease}
+.tutorial-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--ink);border:1px solid var(--accent-dark)}
+.tutorial-btn.primary:hover{box-shadow:0 4px 16px rgba(255,217,61,0.3);transform:translateY(-1px)}
+.tutorial-btn.secondary{background:rgba(0,0,0,0.04);color:var(--ink);border:1px solid rgba(0,0,0,0.08)}
+.tutorial-btn.secondary:hover{background:rgba(0,0,0,0.08)}
 @media (max-width:640px){
+  .tutorial-body{padding:40px 24px 20px;min-height:280px}
+  .tutorial-icon{font-size:60px;margin-bottom:16px}
+  .tutorial-step h2{font-size:24px;margin-bottom:12px}
+  .tutorial-step p{font-size:15px}
+  .tutorial-progress{padding:16px 24px}
+  .tutorial-actions{padding:0 24px 24px}
   .header{top:12px;left:12px;right:12px}
   .search-panel{top:68px;left:12px;right:12px}
   .menu{right:12px;top:68px}
@@ -172,6 +200,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 </head>
 <body>
 
+<!-- SVG Icons -->
 <svg style="position:absolute;width:0;height:0" aria-hidden="true">
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
@@ -231,6 +260,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
   <div class="split"></div>
   <div class="row" id="randomBanana"><svg class="icon"><use href="#i-dice"/></svg><span>Random Banana</span></div>
   <div class="row" id="browseBananas"><svg class="icon"><use href="#i-globe"/></svg><span>Browse All</span></div>
+  <div class="split"></div>
+  <div class="row" id="showTutorial"><svg class="icon"><use href="#i-info"/></svg><span>How It Works</span></div>
 </div>
 
 <div class="stats">
@@ -250,6 +281,63 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 <div id="map"></div>
 <div id="toastContainer"></div>
 
+<!-- Tutorial Modal -->
+<div class="tutorial-overlay" id="tutorialOverlay"></div>
+<div class="tutorial-modal" id="tutorialModal">
+  <div class="tutorial-content">
+    <button class="modal-close" id="tutorialClose"><svg class="icon"><use href="#i-close"/></svg></button>
+    <div class="tutorial-body">
+      <div class="tutorial-step" data-step="0">
+        <div class="tutorial-icon">🍌</div>
+        <h2>Welcome to banana.place!</h2>
+        <p>Drop virtual bananas anywhere in the world and discover what others have shared.</p>
+        <p style="font-size:13px;color:var(--muted);margin-top:12px">Let's take a quick tour of what you can do!</p>
+      </div>
+      <div class="tutorial-step" data-step="1" style="display:none">
+        <div class="tutorial-icon">📍</div>
+        <h2>Drop Your Banana</h2>
+        <p>Click the <strong>"Drop Banana"</strong> button to place your banana on the map.</p>
+        <p style="margin-top:12px">Share a message, add photos, and leave your mark on the world!</p>
+        <div class="tutorial-note">💡 You can only drop one banana, but you can move or edit it anytime.</div>
+      </div>
+      <div class="tutorial-step" data-step="2" style="display:none">
+        <div class="tutorial-icon">🗺️</div>
+        <h2>Explore the Map</h2>
+        <p>Click on any banana to see what others have shared.</p>
+        <p style="margin-top:12px">Use the <strong>search bar</strong> to find specific locations, or tap <strong>"Random Banana"</strong> to discover something unexpected!</p>
+      </div>
+      <div class="tutorial-step" data-step="3" style="display:none">
+        <div class="tutorial-icon">🚶</div>
+        <h2>Banana Trails</h2>
+        <p>Move your banana to new locations and create a trail of your journey.</p>
+        <p style="margin-top:12px">Your banana's location history will be visible to everyone, showing where you've been!</p>
+        <div class="tutorial-note">🗺️ Trails appear as yellow dotted lines on the map.</div>
+      </div>
+      <div class="tutorial-step" data-step="4" style="display:none">
+        <div class="tutorial-icon">👆</div>
+        <h2>Browse & Swipe</h2>
+        <p>Use <strong>"Browse All"</strong> to swipe through all bananas, or find yours instantly with <strong>"View My Banana"</strong>.</p>
+        <p style="margin-top:12px">Share your banana's unique link with friends!</p>
+      </div>
+      <div class="tutorial-step" data-step="5" style="display:none">
+        <div class="tutorial-icon">🎉</div>
+        <h2>Ready to Go!</h2>
+        <p>You're all set to start your banana adventure.</p>
+        <p style="margin-top:12px">Drop your first banana and join our global community!</p>
+        <div class="tutorial-note">💬 Access this guide anytime from the menu.</div>
+      </div>
+    </div>
+    <div class="tutorial-progress">
+      <div class="tutorial-dots" id="tutorialDots"></div>
+    </div>
+    <div class="tutorial-actions">
+      <button class="tutorial-btn secondary" id="tutorialSkip">Skip</button>
+      <button class="tutorial-btn primary" id="tutorialNext">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- Banana Modal -->
 <div class="modal-overlay" id="modalOverlay"></div>
 <div class="modal" id="modal">
   <div class="modal-content">
@@ -271,6 +359,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
   </div>
 </div>
 
+<!-- Swipe Modal -->
 <div class="modal-overlay" id="swipeOverlay"></div>
 <div class="swipe-modal" id="swipeModal">
   <div class="swipe-container" id="swipeContainer">
@@ -297,6 +386,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
   </div>
 </div>
 
+<!-- Bottom Sheet -->
 <div class="sheet" id="sheet">
   <div class="grab"></div>
   <h3 id="sheetTitle">Drop a Banana</h3>
@@ -324,7 +414,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 </div>
 
 <script>
-const BIN_ID="68f0265443b1c97be96a4ad5",API_KEY="$2a$10$RCnUKDWytC/ysiMgbX6/q.QRSKrLrAOPSOsZVPFYaaW06lur2V5X6",BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`,DEVICE_KEY='banana_device_id',DROPPED_KEY='banana_already_dropped';
+const BIN_ID="68f0265443b1c97be96a4ad5",API_KEY="$2a$10$RCnUKDWytC/ysiMgbX6/q.QRSKrLrAOPSOsZVPFYaaW06lur2V5X6",BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`,DEVICE_KEY='banana_device_id',DROPPED_KEY='banana_already_dropped',TUTORIAL_KEY='banana_tutorial_seen';
 let deviceId=localStorage.getItem(DEVICE_KEY);if(!deviceId){deviceId=([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));localStorage.setItem(DEVICE_KEY,deviceId)}
 const esc=s=>s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const fileToDataURL=f=>new Promise((r,e)=>{const reader=new FileReader();reader.onload=ev=>r(ev.target.result);reader.onerror=e;reader.readAsDataURL(f)});
@@ -360,6 +450,12 @@ document.getElementById('swipeOverlay').onclick=closeSwipeModal;document.getElem
 document.addEventListener('keydown',e=>{const swipeOpen=document.getElementById('swipeModal').classList.contains('show');if(swipeOpen){if(e.key==='ArrowLeft')swipeToIndex(swipeIndex-1);else if(e.key==='ArrowRight')swipeToIndex(swipeIndex+1);else if(e.key==='Escape')closeSwipeModal()}});
 const wireSearch=()=>{const panel=document.getElementById('searchPanel'),input=document.getElementById('searchInput'),results=document.getElementById('searchResults'),toggle=document.getElementById('toggleSearch');toggle.onclick=()=>{const open=panel.classList.toggle('show');toggle.classList.toggle('active',open);if(open)input.focus();else{input.value='';results.classList.remove('show')}};document.addEventListener('click',e=>{if(!panel.contains(e.target)&&e.target!==toggle){panel.classList.remove('show');toggle.classList.remove('active');input.value='';results.classList.remove('show')}});const searchLoc=async q=>{if(!q.trim()){results.classList.remove('show');return}try{const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8`);const data=await res.json();results.innerHTML='';if(!data||!data.length){results.innerHTML='<div class="search-result-item"><small>No results</small></div>'}else{data.forEach(r=>{const item=document.createElement('div');item.className='search-result-item';const name=r.display_name.split(',')[0];item.innerHTML=`<div class="icon-wrapper"><svg class="icon"><use href="#i-location"/></svg></div><div class="text"><strong>${esc(name)}</strong><small>${esc(r.display_name)}</small></div>`;item.onclick=()=>{map.easeTo({center:[+r.lon,+r.lat],zoom:14,duration:800});panel.classList.remove('show');toggle.classList.remove('active');input.value='';results.classList.remove('show');toast(name,'info',2000)};results.appendChild(item)})}results.classList.add('show')}catch(e){console.error(e)}};input.addEventListener('input',debounce(()=>searchLoc(input.value),400));input.addEventListener('keydown',e=>{if(e.key==='Enter')searchLoc(input.value)})};
 const goWorld=()=>{map.easeTo({center:[0,20],zoom:2,duration:900});toast('World view','info',1200)};
+let currentTutorialStep=0;
+const totalTutorialSteps=6;
+const openTutorial=()=>{currentTutorialStep=0;document.getElementById('tutorialOverlay').classList.add('show');document.getElementById('tutorialModal').classList.add('show');renderTutorialStep()};
+const closeTutorial=()=>{document.getElementById('tutorialOverlay').classList.remove('show');document.getElementById('tutorialModal').classList.remove('show');localStorage.setItem(TUTORIAL_KEY,'true')};
+const renderTutorialStep=()=>{document.querySelectorAll('.tutorial-step').forEach((step,i)=>{step.style.display=i===currentTutorialStep?'block':'none'});const dots=document.getElementById('tutorialDots');dots.innerHTML='';for(let i=0;i<totalTutorialSteps;i++){const dot=document.createElement('div');dot.className='tutorial-dot'+(i===currentTutorialStep?' active':'');dot.onclick=()=>{currentTutorialStep=i;renderTutorialStep()};dots.appendChild(dot)}const nextBtn=document.getElementById('tutorialNext');const skipBtn=document.getElementById('tutorialSkip');if(currentTutorialStep===totalTutorialSteps-1){nextBtn.textContent='Get Started';skipBtn.style.display='none'}else{nextBtn.textContent='Next';skipBtn.style.display='block'}};
+const wireTutorial=()=>{document.getElementById('tutorialClose').onclick=closeTutorial;document.getElementById('tutorialOverlay').onclick=closeTutorial;document.getElementById('tutorialModal').onclick=e=>{if(e.target===e.currentTarget)closeTutorial()};document.getElementById('tutorialSkip').onclick=closeTutorial;document.getElementById('tutorialNext').onclick=()=>{if(currentTutorialStep<totalTutorialSteps-1){currentTutorialStep++;renderTutorialStep()}else{closeTutorial()}};document.getElementById('showTutorial').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');openTutorial()};document.addEventListener('keydown',e=>{const tutorialOpen=document.getElementById('tutorialModal').classList.contains('show');if(tutorialOpen){if(e.key==='ArrowRight'||e.key==='Enter'){if(currentTutorialStep<totalTutorialSteps-1){currentTutorialStep++;renderTutorialStep()}else{closeTutorial()}}else if(e.key==='ArrowLeft'&&currentTutorialStep>0){currentTutorialStep--;renderTutorialStep()}else if(e.key==='Escape'){closeTutorial()}}});if(!localStorage.getItem(TUTORIAL_KEY)){setTimeout(()=>openTutorial(),1000)}};
 const wireUI=()=>{wireSearch();const menu=document.getElementById('menu'),toggleMenu=document.getElementById('toggleMenu');toggleMenu.onclick=()=>{const open=menu.classList.toggle('show');toggleMenu.classList.toggle('active',open)};document.addEventListener('click',e=>{if(!menu.contains(e.target)&&e.target!==toggleMenu){menu.classList.remove('show');toggleMenu.classList.remove('active')}});document.getElementById('brandBtn').onclick=goWorld;document.getElementById('homeBtn').onclick=goWorld;const dropBtn=document.getElementById('dropBtn');dropBtn.onclick=()=>{if(dropBtn.disabled){toast('Already dropped','info',2000);return}const openForm=(lat,lng)=>{map.easeTo({center:[lng,lat],zoom:17,duration:800});setTimeout(()=>openSheet('add',{lat,lng}),400)};if(navigator.geolocation){navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>openForm(latitude,longitude),()=>{const c=map.getCenter();openForm(c.lat,c.lng)},{enableHighAccuracy:true,timeout:6000})}else{const c=map.getCenter();openForm(c.lat,c.lng)}};document.getElementById('locateBtn').onclick=()=>{if(!navigator.geolocation)return;toast('Locating...','info',1500);navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>{map.easeTo({center:[longitude,latitude],zoom:14,duration:800});toast('You are here','success',2000)},()=>toast('Location unavailable','error',2000),{enableHighAccuracy:true,timeout:8000})};document.getElementById('seeMine').onclick=async()=>{if(document.getElementById('seeMine').classList.contains('disabled')){toast("No banana yet",'info',2000);return}try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===deviceId);if(!b){toast("No banana yet",'info',2000);return}map.easeTo({center:[b.lng,b.lat],zoom:17,duration:1000});pulseAt(b.lng,b.lat);toast("Your banana",'success',2000);menu.classList.remove('show');toggleMenu.classList.remove('active')}catch(e){toast('Error','error',2000)}};document.getElementById('shareMine').onclick=async()=>{if(document.getElementById('shareMine').classList.contains('disabled')){toast("Drop first",'info',2000);return}try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===deviceId);if(!b){toast("Drop first",'info',2000);return}const url=new URL(location.href);url.searchParams.set('id',deviceId);await navigator.clipboard.writeText(url.toString());toast("Link copied!",'success',2000);menu.classList.remove('show');toggleMenu.classList.remove('active')}catch(e){toast('Copy failed','error',2000)}};document.getElementById('deleteMine').onclick=()=>{if(document.getElementById('deleteMine').classList.contains('disabled')){toast("No banana",'info',2000);return}menu.classList.remove('show');toggleMenu.classList.remove('active');deleteMyBanana()};document.getElementById('randomBanana').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');goRandomBanana()};document.getElementById('browseBananas').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');openSwipeModal()}};
 document.querySelectorAll('.modal, .swipe-modal').forEach(el=>{el.addEventListener('click',e=>{if(e.target===e.currentTarget){el.classList.remove('show');document.getElementById(el.id==='swipeModal'?'swipeOverlay':'modalOverlay').classList.remove('show')}})});
 const sheet=document.getElementById('sheet'),sheetTitle=document.getElementById('sheetTitle'),sheetSubtitle=document.getElementById('sheetSubtitle'),nameEl=document.getElementById('name'),msgEl=document.getElementById('msg'),photoEl=document.getElementById('photo'),previews=document.getElementById('previews'),cancelBtn=document.getElementById('cancelBtn'),saveBtn=document.getElementById('saveBtn'),charCount=document.getElementById('charCount');
@@ -378,7 +474,7 @@ const deleteMyBanana=async()=>{if(!confirm('Delete your banana? This cannot be u
 const goRandomBanana=()=>{const list=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number');if(!list.length){toast("No bananas yet",'info',2000);return}const pick=list[Math.floor(Math.random()*list.length)];map.easeTo({center:[pick.lng,pick.lat],zoom:17,duration:900});pulseAt(pick.lng,pick.lat);toast('Random!','success',2000);setTimeout(()=>showBananaModal(pick),500)};
 const startAuto=()=>{if(refreshHandle)clearInterval(refreshHandle);refreshHandle=setInterval(async()=>{await loadBananas()},30000)};
 const checkURL=()=>{const params=new URLSearchParams(location.search),sharedId=params.get('id');if(sharedId){setTimeout(async()=>{try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===sharedId);if(b){map.easeTo({center:[b.lng,b.lat],zoom:17,duration:1500});pulseAt(b.lng,b.lat);toast('Shared banana','success',2000);setTimeout(()=>showBananaModal(b),1000)}else{toast('Not found','error',2000)}}catch(e){console.error(e)}},1500)}};
-(async()=>{try{map=new maplibregl.Map({container:'map',style:makeStyle(),center:[0,20],zoom:2});map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');map.on('load',async()=>{await loadBananas();startAuto();if(navigator.geolocation){navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>{map.easeTo({center:[longitude,latitude],zoom:11,duration:1200})},()=>{},{enableHighAccuracy:true,timeout:8000})}checkURL()});wireUI()}catch(e){console.error(e);toast('Map failed','error',0)}})();
+(async()=>{try{map=new maplibregl.Map({container:'map',style:makeStyle(),center:[0,20],zoom:2});map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');map.on('load',async()=>{await loadBananas();startAuto();if(navigator.geolocation){navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>{map.easeTo({center:[longitude,latitude],zoom:11,duration:1200})},()=>{},{enableHighAccuracy:true,timeout:8000})}checkURL()});wireUI();wireTutorial()}catch(e){console.error(e);toast('Map failed','error',0)}})();
 </script>
 </body>
 </html>
