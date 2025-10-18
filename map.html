@@ -987,7 +987,7 @@ const showBananaModal=p=>{
   const history=document.getElementById('modalHistory');
   const trail=p.locationHistory||[];
   if(trail.length>1){
-    const isOwner=p.deviceId===deviceId;
+    const isOwner=p.deviceId===deviceId;x
     history.innerHTML='<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--ink)">🗺️ Banana Trail</h4>'+trail.map((loc,i)=>{
       const title=i===trail.length-1?'📍 Current Location':(loc.customName||`🚩 Stop ${i+1}`);
       return`<div class="trail-item"><div class="trail-item-content"><div class="trail-item-title">${esc(title)}</div><div class="trail-item-address">${esc(getVagueLocation(loc.address||''))}</div><div class="trail-item-time">${timeAgo(loc.ts)}</div></div><div class="trail-item-actions"><button class="trail-map-btn" onclick="viewTrailOnMap(${loc.lat},${loc.lng},'${esc(title).replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-location"/></svg></button>${isOwner&&trail.length>1?`<button class="trail-delete-btn" onclick="deleteTrailPoint(${i})"><svg class="icon"><use href="#i-trash"/></svg></button>`:''}</div></div>`
@@ -996,6 +996,9 @@ const showBananaModal=p=>{
   }else{
     history.style.display='none'
   }
+  const existingComments=document.querySelector('.modal-body .comment-section');
+if(existingComments)existingComments.remove();
+
   const comments=p.comments||[];
   const commentSection=renderComments(comments,p.deviceId);
   document.querySelector('.modal-body').appendChild(commentSection);
