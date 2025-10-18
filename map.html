@@ -117,11 +117,18 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 #modalPhotoGallery{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 #modalPhotoGallery img{width:100%;max-width:48%;height:180px;object-fit:cover;border-radius:12px;box-shadow:var(--shadow-md)}
 #modalPhotoGallery img:only-child{max-width:100%}
-.trail-item{padding:10px;border-bottom:1px solid rgba(0,0,0,0.04);font-size:13px;display:flex;align-items:center;gap:10px;transition:background 0.15s ease}
+.reactions-bar{display:flex;gap:8px;padding:12px;background:rgba(0,0,0,0.02);border-radius:10px;margin-bottom:16px;flex-wrap:wrap}
+.reaction-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid rgba(0,0,0,0.1);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s ease}
+.reaction-btn:hover{background:rgba(255,217,61,0.08);transform:translateY(-1px)}
+.reaction-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent-dark));border-color:var(--accent-dark)}
+.reaction-emoji{font-size:18px}
+.reaction-count{color:var(--muted);font-size:12px}
+.trail-item{padding:12px;border-bottom:1px solid rgba(0,0,0,0.04);font-size:13px;display:flex;align-items:center;gap:10px;transition:background 0.15s ease}
 .trail-item:hover{background:rgba(0,0,0,0.02)}
 .trail-item-content{flex:1;min-width:0}
 .trail-item-title{font-weight:600;color:var(--ink);margin-bottom:2px}
 .trail-item-address{color:var(--muted);margin-top:2px;font-size:12px}
+.trail-item-notes{color:#4b5563;margin-top:4px;font-size:12px;font-style:italic}
 .trail-item-time{font-size:11px;color:var(--muted);margin-top:2px}
 .trail-item-actions{display:flex;gap:6px;flex-shrink:0}
 .trail-map-btn{width:32px;height:32px;border-radius:8px;border:none;background:rgba(59,130,246,0.1);color:var(--info);cursor:pointer;display:grid;place-items:center;transition:all 0.2s ease}
@@ -189,8 +196,9 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .prompt-dialog.show{display:block}
 .prompt-dialog h3{font-size:20px;font-weight:700;margin-bottom:8px;color:var(--ink)}
 .prompt-dialog p{font-size:14px;color:var(--muted);margin-bottom:16px}
-.prompt-dialog input{width:100%;padding:12px;border:1px solid rgba(0,0,0,0.1);border-radius:10px;font:inherit;font-size:14px;margin-bottom:16px}
-.prompt-dialog input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,217,61,0.08)}
+.prompt-dialog input,.prompt-dialog textarea{width:100%;padding:12px;border:1px solid rgba(0,0,0,0.1);border-radius:10px;font:inherit;font-size:14px;margin-bottom:16px}
+.prompt-dialog textarea{min-height:80px;resize:vertical}
+.prompt-dialog input:focus,.prompt-dialog textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,217,61,0.08)}
 .prompt-actions{display:flex;gap:10px}
 .prompt-actions button{flex:1;padding:12px;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.2s ease}
 .feed-tab{flex:1;padding:8px 16px;border:none;border-radius:8px;background:rgba(0,0,0,0.04);font-weight:600;font-size:13px;cursor:pointer;transition:all 0.2s ease}
@@ -202,6 +210,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .feed-item-time{font-size:11px;color:var(--muted)}
 .feed-item-message{color:#4b5563;margin-bottom:4px}
 .feed-item-action{color:var(--info);font-weight:600}
+.feed-item-edit{font-size:11px;color:var(--info);cursor:pointer;margin-left:8px}
+.feed-item-edit:hover{text-decoration:underline}
 .admin-action-btn{padding:8px 16px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));font-weight:600;font-size:12px;cursor:pointer;transition:all 0.2s ease}
 .admin-action-btn:hover{box-shadow:0 4px 12px rgba(255,217,61,0.3);transform:translateY(-1px)}
 .comment-section{margin-top:16px;padding-top:16px;border-top:1px solid rgba(0,0,0,0.06)}
@@ -210,6 +220,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .comment-name{font-weight:700;color:var(--ink)}
 .comment-time{font-size:11px;color:var(--muted)}
 .comment-text{color:#4b5563;line-height:1.4}
+.comment-edit-btn{font-size:11px;color:var(--info);cursor:pointer;margin-left:8px}
+.comment-edit-btn:hover{text-decoration:underline}
 .comment-compose{margin-top:12px}
 .comment-compose input{width:100%;padding:8px;border:1px solid rgba(0,0,0,0.1);border-radius:6px;font:inherit;font-size:13px;margin-bottom:6px}
 .comment-compose textarea{width:100%;padding:8px;border:1px solid rgba(0,0,0,0.1);border-radius:6px;font:inherit;font-size:13px;min-height:60px;resize:vertical;margin-bottom:6px}
@@ -335,7 +347,8 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 <div class="prompt-dialog" id="promptDialog">
   <h3 id="promptTitle">Name this stop</h3>
   <p id="promptMessage">Give this location a memorable name</p>
-  <input type="text" id="promptInput" placeholder="e.g., Coffee shop visit" maxlength="50">
+  <input type="text" id="promptInput" placeholder="e.g., Coffee shop visit" maxlength="50" style="display:block">
+  <textarea id="promptTextarea" placeholder="Add notes about this stop..." maxlength="200" style="display:none"></textarea>
   <div class="prompt-actions">
     <button class="btn-secondary" id="promptCancel">Cancel</button>
     <button class="btn-primary" id="promptConfirm">Confirm</button>
@@ -406,6 +419,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
         <h3 id="modalTitle">Banana</h3>
         <div class="modal-meta" id="modalMeta"></div>
       </div>
+      <div id="modalReactions"></div>
       <p class="modal-message" id="modalMessage" style="display:none"></p>
       <div id="modalPhotoGallery" style="display:none"></div>
       <div id="modalHistory" style="display:none"></div>
@@ -430,6 +444,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
         <button id="swipeMapBtn" class="quick-btn" title="View on map" style="position:absolute;top:18px;right:18px;width:40px;height:40px"><svg class="icon"><use href="#i-location"/></svg></button>
       </div>
       <div class="swipe-card-body">
+        <div id="swipeReactions"></div>
         <p class="swipe-card-message" id="swipeMessage" style="display:none"></p>
         <div id="swipePhotoGallery" style="display:none"></div>
         <div id="swipeHistory" style="display:none"></div>
@@ -536,16 +551,26 @@ const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f
 const getVagueLocation=addr=>{if(!addr)return'Unknown';const parts=addr.split(',').map(p=>p.trim());if(parts.length>=2){const city=parts[parts.length-3]||parts[0];const region=parts[parts.length-2];return`Near ${city}, ${region}`}return`Near ${parts[0]}`};
 const approximateCoords=(lat,lng)=>{const offset=0.01;return{lat:lat+(Math.random()-0.5)*offset,lng:lng+(Math.random()-0.5)*offset}};
 
-let promptResolve=null;
-const showPrompt=(title,message,defaultValue='')=>{
+let promptResolve=null,promptMode='input';
+const showPrompt=(title,message,defaultValue='',mode='input')=>{
   return new Promise((resolve)=>{
     promptResolve=resolve;
+    promptMode=mode;
     document.getElementById('promptTitle').textContent=title;
     document.getElementById('promptMessage').textContent=message;
-    document.getElementById('promptInput').value=defaultValue;
+    if(mode==='textarea'){
+      document.getElementById('promptInput').style.display='none';
+      document.getElementById('promptTextarea').style.display='block';
+      document.getElementById('promptTextarea').value=defaultValue;
+      setTimeout(()=>document.getElementById('promptTextarea').focus(),100);
+    }else{
+      document.getElementById('promptInput').style.display='block';
+      document.getElementById('promptTextarea').style.display='none';
+      document.getElementById('promptInput').value=defaultValue;
+      setTimeout(()=>document.getElementById('promptInput').focus(),100);
+    }
     document.getElementById('promptOverlay').classList.add('show');
     document.getElementById('promptDialog').classList.add('show');
-    setTimeout(()=>document.getElementById('promptInput').focus(),100);
   });
 };
 const closePrompt=(value=null)=>{
@@ -558,7 +583,7 @@ const closePrompt=(value=null)=>{
 };
 document.getElementById('promptCancel').onclick=()=>closePrompt(null);
 document.getElementById('promptConfirm').onclick=()=>{
-  const value=document.getElementById('promptInput').value.trim();
+  const value=promptMode==='textarea'?document.getElementById('promptTextarea').value.trim():document.getElementById('promptInput').value.trim();
   closePrompt(value||null);
 };
 document.getElementById('promptInput').addEventListener('keydown',e=>{
@@ -608,7 +633,7 @@ const makeStyle=()=>{
   }
 };
 
-const asFeat=b=>({type:'Feature',properties:{deviceId:b.deviceId||'',name:b.name||'',msg:b.msg||'',photos:b.photos||[b.photo]||[],ts:b.ts||0,locationHistory:b.locationHistory||[],comments:b.comments||[]},geometry:{type:'Point',coordinates:[b.lng,b.lat]}});
+const asFeat=b=>({type:'Feature',properties:{deviceId:b.deviceId||'',name:b.name||'',msg:b.msg||'',photos:b.photos||[b.photo]||[],ts:b.ts||0,locationHistory:b.locationHistory||[],comments:b.comments||[],reactions:b.reactions||[]},geometry:{type:'Point',coordinates:[b.lng,b.lat]}});
 const clearMarkers=()=>{domMarkers.forEach(m=>m.remove());domMarkers=[]};
 const bananaSVG=`<svg viewBox="0 0 256.85 291.32" xmlns="http://www.w3.org/2000/svg"><g><path fill="#f8db8f" d="M71.1,141.02c.28,1.47.88,7.33,1.51,8.76,1.93,4.39,14.28,1.42,18.58.95-11.67-38.63-11.64-82.48,8.03-118.8,6.14-11.33,14.88-23.92,27.11-29.82l.25-1.18-4.27-.47c-25.63,3.82-45.46,48.7-50.2,69.81-4.86,21.62-5.22,49.03-1,70.76Z"/><path fill="#ffeda3" d="M122.3.45l4.27.47-.25,1.18c-12.23,5.9-20.97,18.49-27.11,29.82-19.67,36.32-19.7,80.17-8.03,118.8-4.3.48-16.64,3.45-18.58-.95-.63-1.42-1.22-7.29-1.51-8.76l-25.6,2.37c11.12-2.18,20.14.12,27.11,8.76-3.44,1.89-7.15,2.97-10.54,4.97-23.54,13.89-24.41,35.07-30.12,57.27-1.14,17.15,3.46,36,12.55,50.88,6.03,9.87,22.72,28.5,36.15,25.79,1.76-21.88-7.48-39.71-6.02-62.24.91-14.08,10.81-51.24,20.08-62,8.51-9.89,29.8-18.03,36.15-2.13,1.3-5.09,1.66-9.2,5.52-13.25-1.02-2.13,6.58-7.74,6.02-9.23-.07-.19-1.78-.28-2.51-2.84-8.39-29.54-10.59-63.06-5.02-93.24,2.16-11.71,10.88-29.39,3.51-40.23-1.89-2.78-5.1-3.54-7.53-5.44-3.52-.67-5.06-.52-8.53,0Z"/><path fill="#ffdb27" d="M80.64,291.05c15.58-3.14,4.71-25.51,3.01-35.26-3.34-19.23-3.22-36.25,2.01-55.14,2.36-8.51,11.33-33.16,19.33-37.39,5.51-2.92,10.89-2.02,16.82-.95,3.42.62,5.45,2.59,9.04,2.37-6.35-15.9-27.63-7.76-36.15,2.13-9.27,10.76-19.17,47.93-20.08,62-1.45,22.52,7.78,40.35,6.02,62.24Z"/><path fill="#ffc910" d="M18.89,251.3c6.47-3.93,7.28-19.33,9.04-26.27.88-3.45,3.38-8.16,4.02-10.65,5.71-22.2,6.59-43.38,30.12-57.27.11-2.35,4.35-1.54,3.01-3.55-21.74-19.04-42.85,15.37-49.2,30.29-6.43,15.12-13.02,38.46-11.04,56.32.93,8.39,3.7,17.42,14.06,11.12Z"/><path fill="#ffdb27" d="M45.49,143.38C12.83,149.77-5.18,217.75,1.31,243.96c2.27,9.18,8.63,14.45,17.57,7.34-10.36,6.29-13.13-2.73-14.06-11.12-1.97-17.86,4.62-41.2,11.04-56.32,6.34-14.93,27.46-49.33,49.2-30.29,1.33,2.01-2.91,1.2-3.01,3.55,3.39-2,7.1-3.08,10.54-4.97-6.97-8.64-15.99-10.93-27.11-8.76Z"/><path fill="#ffdb27" d="M226.68,282.86c-29.25,13.86-88.77-31.06-120.23-78.8-3.94-5.99-13.84-37.32,9.8-43.5,1.53-.4,2.62-.5,3.61-.38,1.8.23,2.92.93,4.51,1.76,1.39.73,3.46,1.7,6.18,2.59.19-1.78.84-4.19,1.8-7.01.74-2.17,1.79-4.21,3.72-6.24,50.98-39.77,88.26,30.02,110.95,64.13,2.34,3,5.81,7.55,9.54,8.76.38,4.53-3.49,5.6-7.78,4.73-5.68-1.15-15.85-23.65-19.33-29.11-11.19-17.56-35.92-53.71-59.49-55.14-8.08-.49-13.28,2.2-14.31,10.18-1.71,13.24,30.61,61.14,74.3,98.45,3.01,2.57,10.69,9.03,9.79,16.33-.93,7.5-10.45,12.02-13.05,13.25Z"/><path fill="#ffc910" d="M227.35,283c-8.08-.83-17.63-2.33-25.6-3.61-28.79-4.62-83.79-52-94.63-77.38-2.57-6.02-9.42-29.07.79-37.25,6.96-5.58,18.77-1.65,22.94-.07-2.37-1.63-6.59-4.07-12.37-5.03-3.5-.58-6.53-.45-8.78-.16,0,0,0,0,0,0,0,0-2.19.37-4.33,1.57-6.53,3.68-11.3,12.65-11.3,12.65-4.63,8.69-6.9,17.53-8.02,24.75,6.18,10.25,15.37,24.34,28.93,39.03,11.07,12,23.42,22.98,36.59,32.91,15.18,11.45,37.24,23.97,61.16,18.46,6.38-1.47,11.36-3.93,14.65-5.85Z"/><path fill="#34af0e" d="M232.29,255.34c.65,2.52,2.01,9.24-.91,16.82-4.04,10.51-16.83,15.88-18.68,16.69,2.72.6,12.47.42,19.22-2.27,2.52-1,12.08-4.84,13.35-13.11,1.15-7.51-4.18-15.66-12.98-18.14Z"/></g></svg>`;
 
@@ -687,6 +712,61 @@ const loadBananas=async()=>{
     console.error(e);
     toast('Load failed','error',3000)
   }
+};
+
+const reactToBanana=async(bananaDeviceId,reactionType)=>{
+  try{
+    const data=await fetchLatest();
+    const bananas=data.record?.bananas||[];
+    const idx=bananas.findIndex(b=>b.deviceId===bananaDeviceId);
+    if(idx===-1){toast('Banana not found','error',2000);return}
+    if(!bananas[idx].reactions)bananas[idx].reactions=[];
+    const existingIdx=bananas[idx].reactions.findIndex(r=>r.deviceId===deviceId);
+    if(existingIdx!==-1){
+      if(bananas[idx].reactions[existingIdx].type===reactionType){
+        bananas[idx].reactions.splice(existingIdx,1);
+      }else{
+        bananas[idx].reactions[existingIdx].type=reactionType;
+      }
+    }else{
+      bananas[idx].reactions.push({deviceId,type:reactionType,ts:Date.now()});
+    }
+    await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,bananas})});
+    await loadBananas();
+    const updatedBanana=bananasCache.find(b=>b.deviceId===bananaDeviceId);
+    if(updatedBanana){
+      renderReactions(bananaDeviceId,updatedBanana.reactions||[],document.getElementById('modalReactions'));
+      renderReactions(bananaDeviceId,updatedBanana.reactions||[],document.getElementById('swipeReactions'));
+    }
+  }catch(e){
+    console.error(e);
+    toast('Reaction failed','error',2000);
+  }
+};
+
+const renderReactions=(bananaDeviceId,reactions,container)=>{
+  if(!container)return;
+  const reactionTypes=[
+    {type:'like',emoji:'👍',label:'Like'},
+    {type:'love',emoji:'❤️',label:'Love'},
+    {type:'fire',emoji:'🔥',label:'Fire'}
+  ];
+  const counts={};
+  reactionTypes.forEach(r=>counts[r.type]=0);
+  reactions.forEach(r=>{
+    if(counts[r.type]!==undefined)counts[r.type]++;
+  });
+  const myReaction=reactions.find(r=>r.deviceId===deviceId);
+  container.innerHTML=`<div class="reactions-bar">${reactionTypes.map(r=>{
+    const isActive=myReaction&&myReaction.type===r.type;
+    return`<button class="reaction-btn ${isActive?'active':''}" data-type="${r.type}" data-banana="${bananaDeviceId}">
+      <span class="reaction-emoji">${r.emoji}</span>
+      ${counts[r.type]>0?`<span class="reaction-count">${counts[r.type]}</span>`:''}
+    </button>`;
+  }).join('')}</div>`;
+  container.querySelectorAll('.reaction-btn').forEach(btn=>{
+    btn.onclick=()=>reactToBanana(btn.dataset.banana,btn.dataset.type);
+  });
 };
 
 let currentFeedTab='updates';
@@ -772,19 +852,43 @@ const renderFeedTab=async()=>{
         };
       }
       
-      content.innerHTML=boardMessages.sort((a,b)=>b.ts-a.ts).slice(0,50).map(m=>`<div class="feed-item">
-        <div class="feed-item-header">
-          <span class="feed-item-name">${esc(m.name||'Anonymous')}</span>
-          <span class="feed-item-time">${timeAgo(m.ts)}</span>
-        </div>
-        <div class="feed-item-message">${esc(m.message)}</div>
-      </div>`).join('');
+      content.innerHTML=boardMessages.sort((a,b)=>b.ts-a.ts).slice(0,50).map(m=>{
+        const isOwn=m.deviceId===deviceId;
+        return`<div class="feed-item">
+          <div class="feed-item-header">
+            <span class="feed-item-name">${esc(m.name||'Anonymous')}
+              ${isOwn?`<span class="feed-item-edit" onclick="editBoardMessage(${m.ts})">edit</span>`:''}
+            </span>
+            <span class="feed-item-time">${timeAgo(m.ts)}</span>
+          </div>
+          <div class="feed-item-message">${esc(m.message)}</div>
+        </div>`;
+      }).join('');
     }
   }catch(e){
     console.error(e);
     toast('Load failed','error',2000);
   }
 };
+
+window.editBoardMessage=async(ts)=>{
+  try{
+    const data=await fetchLatest();
+    const boardMessages=data.record?.boardMessages||[];
+    const msg=boardMessages.find(m=>m.ts===ts&&m.deviceId===deviceId);
+    if(!msg){toast('Message not found','error',2000);return}
+    const newText=await showPrompt('Edit Message','Update your message',msg.message,'textarea');
+    if(!newText)return;
+    msg.message=newText;
+    await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,boardMessages})});
+    toast('Updated!','success',2000);
+    renderFeedTab();
+  }catch(e){
+    console.error(e);
+    toast('Edit failed','error',2000);
+  }
+};
+
 document.getElementById('feedOverlay').onclick=closeFeed;
 document.getElementById('feedClose').onclick=closeFeed;
 document.querySelectorAll('.feed-tab').forEach(tab=>{
@@ -802,11 +906,14 @@ const renderComments=(comments,bananaDeviceId)=>{
   section.innerHTML=`<h4 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--ink)">💬 Comments (${comments.length})</h4>`;
   const list=document.createElement('div');
   comments.sort((a,b)=>b.ts-a.ts).forEach(c=>{
+    const isOwn=c.commenterDevice===deviceId;
     const item=document.createElement('div');
     item.className='comment-item';
     item.innerHTML=`
       <div class="comment-header">
-        <span class="comment-name">${esc(c.name||'Anonymous')}</span>
+        <span class="comment-name">${esc(c.name||'Anonymous')}
+          ${isOwn?`<span class="comment-edit-btn" data-ts="${c.ts}" data-banana="${bananaDeviceId}">edit</span>`:''}
+        </span>
         <span class="comment-time">${timeAgo(c.ts)}</span>
       </div>
       <div class="comment-text">${esc(c.text)}</div>
@@ -814,6 +921,35 @@ const renderComments=(comments,bananaDeviceId)=>{
     list.appendChild(item);
   });
   section.appendChild(list);
+  
+  section.querySelectorAll('.comment-edit-btn').forEach(btn=>{
+    btn.onclick=async()=>{
+      const ts=parseInt(btn.dataset.ts);
+      const bananaId=btn.dataset.banana;
+      try{
+        const data=await fetchLatest();
+        const bananas=data.record?.bananas||[];
+        const idx=bananas.findIndex(b=>b.deviceId===bananaId);
+        if(idx===-1){toast('Banana not found','error',2000);return}
+        const comment=bananas[idx].comments.find(c=>c.ts===ts&&c.commenterDevice===deviceId);
+        if(!comment){toast('Comment not found','error',2000);return}
+        const newText=await showPrompt('Edit Comment','Update your comment',comment.text,'textarea');
+        if(!newText)return;
+        comment.text=newText;
+        await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,bananas})});
+        toast('Updated!','success',2000);
+        closeModal();
+        await loadBananas();
+        const updatedBanana=bananasCache.find(b=>b.deviceId===bananaId);
+        if(updatedBanana){
+          setTimeout(()=>showBananaModal(updatedBanana),300);
+        }
+      }catch(e){
+        console.error(e);
+        toast('Edit failed','error',2000);
+      }
+    };
+  });
   
   const myBanana = bananasCache.find(b=>b.deviceId===deviceId);
   
@@ -846,10 +982,10 @@ const renderComments=(comments,bananaDeviceId)=>{
         toast('Comment posted!','success',2000);
         closeModal();
         await loadBananas();
-const updatedBanana = bananasCache.find(b=>b.deviceId===bananaDeviceId);
-if(updatedBanana){
-  setTimeout(()=>showBananaModal(updatedBanana),300);
-}
+        const updatedBanana = bananasCache.find(b=>b.deviceId===bananaDeviceId);
+        if(updatedBanana){
+          setTimeout(()=>showBananaModal(updatedBanana),300);
+        }
       }catch(e){
         console.error(e);
         toast('Comment failed','error',2000);
@@ -973,6 +1109,9 @@ const deleteTrailPoint=async(trailIndex)=>{
 const showBananaModal=p=>{
   document.getElementById('modalTitle').textContent=p.name||'Anonymous';
   document.getElementById('modalMeta').textContent=p.ts?timeAgo(p.ts):'';
+  
+  renderReactions(p.deviceId,p.reactions||[],document.getElementById('modalReactions'));
+  
   const msg=document.getElementById('modalMessage');
   if(p.msg){msg.textContent=p.msg;msg.style.display='block'}else{msg.style.display='none'}
   const gallery=document.getElementById('modalPhotoGallery');
@@ -990,17 +1129,18 @@ const showBananaModal=p=>{
   const history=document.getElementById('modalHistory');
   const trail=p.locationHistory||[];
   if(trail.length>1){
-    const isOwner=p.deviceId===deviceId;x
+    const isOwner=p.deviceId===deviceId;
     history.innerHTML='<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--ink)">🗺️ Banana Trail</h4>'+trail.map((loc,i)=>{
       const title=i===trail.length-1?'📍 Current Location':(loc.customName||`🚩 Stop ${i+1}`);
-      return`<div class="trail-item"><div class="trail-item-content"><div class="trail-item-title">${esc(title)}</div><div class="trail-item-address">${esc(getVagueLocation(loc.address||''))}</div><div class="trail-item-time">${timeAgo(loc.ts)}</div></div><div class="trail-item-actions"><button class="trail-map-btn" onclick="viewTrailOnMap(${loc.lat},${loc.lng},'${esc(title).replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-location"/></svg></button>${isOwner&&trail.length>1?`<button class="trail-delete-btn" onclick="deleteTrailPoint(${i})"><svg class="icon"><use href="#i-trash"/></svg></button>`:''}</div></div>`
+      const notes=loc.notes?`<div class="trail-item-notes">"${esc(loc.notes)}"</div>`:'';
+      return`<div class="trail-item"><div class="trail-item-content"><div class="trail-item-title">${esc(title)}</div><div class="trail-item-address">${esc(getVagueLocation(loc.address||''))}</div>${notes}<div class="trail-item-time">${timeAgo(loc.ts)}</div></div><div class="trail-item-actions"><button class="trail-map-btn" onclick="viewTrailOnMap(${loc.lat},${loc.lng},'${esc(title).replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-location"/></svg></button>${isOwner&&trail.length>1?`<button class="trail-delete-btn" onclick="deleteTrailPoint(${i})"><svg class="icon"><use href="#i-trash"/></svg></button>`:''}</div></div>`
     }).reverse().join('');
     history.style.display='block'
   }else{
     history.style.display='none'
   }
   const existingComments=document.querySelector('.modal-body .comment-section');
-if(existingComments)existingComments.remove();
+  if(existingComments)existingComments.remove();
 
   const comments=p.comments||[];
   const commentSection=renderComments(comments,p.deviceId);
@@ -1068,6 +1208,9 @@ const renderSwipeCard=()=>{
   if(!b){closeSwipeModal();return}
   document.getElementById('swipeTitle').textContent=b.name||'Anonymous';
   document.getElementById('swipeMeta').textContent=b.ts?timeAgo(b.ts):'';
+  
+  renderReactions(b.deviceId,b.reactions||[],document.getElementById('swipeReactions'));
+  
   const msg=document.getElementById('swipeMessage');
   if(b.msg){msg.textContent=b.msg;msg.style.display='block'}else{msg.style.display='none'}
   const gallery=document.getElementById('swipePhotoGallery');
@@ -1087,7 +1230,8 @@ const renderSwipeCard=()=>{
   if(trail.length>1){
     history.innerHTML='<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--ink)">🗺️ Banana Trail</h4>'+trail.map((loc,i)=>{
       const title=i===trail.length-1?'📍 Current Location':(loc.customName||`🚩 Stop ${i+1}`);
-      return`<div class="trail-item"><div class="trail-item-content"><div class="trail-item-title">${esc(title)}</div><div class="trail-item-address">${esc(getVagueLocation(loc.address||''))}</div><div class="trail-item-time">${timeAgo(loc.ts)}</div></div><div class="trail-item-actions"><button class="trail-map-btn" onclick="viewTrailOnMap(${loc.lat},${loc.lng},'${esc(title).replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-location"/></svg></button></div></div>`
+      const notes=loc.notes?`<div class="trail-item-notes">"${esc(loc.notes)}"</div>`:'';
+      return`<div class="trail-item"><div class="trail-item-content"><div class="trail-item-title">${esc(title)}</div><div class="trail-item-address">${esc(getVagueLocation(loc.address||''))}</div>${notes}<div class="trail-item-time">${timeAgo(loc.ts)}</div></div><div class="trail-item-actions"><button class="trail-map-btn" onclick="viewTrailOnMap(${loc.lat},${loc.lng},'${esc(title).replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-location"/></svg></button></div></div>`
     }).reverse().join('');
     history.style.display='block'
   }else{
@@ -1562,7 +1706,7 @@ const saveBanana=async(lat,lng,msg,photos,name,useApprox)=>{
     finalLng=approx.lng
   }
   const address=await getAddress(lat,lng);
-  arr.push({lat:finalLat,lng:finalLng,msg,photos:photos||[],name,ts:Date.now(),deviceId,locationHistory:[{lat:finalLat,lng:finalLng,ts:Date.now(),address}]});
+  arr.push({lat:finalLat,lng:finalLng,msg,photos:photos||[],name,ts:Date.now(),deviceId,locationHistory:[{lat:finalLat,lng:finalLng,ts:Date.now(),address}],reactions:[]});
   await putBananas(arr);
   localStorage.setItem(DROPPED_KEY,'true');
   await loadBananas();
@@ -1583,16 +1727,19 @@ const updateBanana=async(msg,photos,name)=>{
 };
 
 const moveBanana=async(lat,lng)=>{
-  if(!confirm('Move your banana to this location?'))return;
+  const result=await showPrompt('Move Banana','Name this stop and add optional notes','');
+  if(result===null)return;
+  
+  const notes=await showPrompt('Trail Notes (Optional)','Add details about this location','','textarea');
+  
   try{
     const latest=await fetchLatest();
     const arr=latest.record?.bananas||[];
     const idx=arr.findIndex(x=>x.deviceId===deviceId);
     if(idx===-1){toast("No banana",'info',2000);return}
     const address=await getAddress(lat,lng);
-    const customName=await showPrompt('Name this stop','Give this location a memorable name (optional)','');
     const history=arr[idx].locationHistory||[];
-    history.push({lat,lng,ts:Date.now(),address,customName:customName||''});
+    history.push({lat,lng,ts:Date.now(),address,customName:result||'',notes:notes||''});
     arr[idx]={...arr[idx],lat,lng,locationHistory:history};
     await putBananas(arr);
     await loadBananas();
