@@ -846,7 +846,10 @@ const renderComments=(comments,bananaDeviceId)=>{
         toast('Comment posted!','success',2000);
         closeModal();
         await loadBananas();
-        setTimeout(()=>showBananaModal(bananas[idx]),300);
+const updatedBanana = bananasCache.find(b=>b.deviceId===bananaDeviceId);
+if(updatedBanana){
+  setTimeout(()=>showBananaModal(updatedBanana),300);
+}
       }catch(e){
         console.error(e);
         toast('Comment failed','error',2000);
