@@ -1,0 +1,1855 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>tony's banana.place</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><text y='0.9em' font-size='90'>🍌</text></svg>'"/>
+<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<style>
+:root{--bg:#FFF9E5;--surface:rgba(255,255,255,0.96);--ink:#0A0A0A;--muted:#737373;--accent:#FFD93D;--accent-dark:#E0C24B;--success:#10b981;--warn:#ef4444;--info:#3b82f6;--shadow:0 2px 8px rgba(0,0,0,.04);--shadow-md:0 4px 16px rgba(0,0,0,.06);--shadow-lg:0 8px 24px rgba(0,0,0,.08);--shadow-xl:0 12px 32px rgba(0,0,0,.12);--radius:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+#map{position:relative;height:100vh;width:100%}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideInUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.header{position:fixed;top:16px;left:16px;right:16px;z-index:1000;display:flex;justify-content:space-between;gap:12px;pointer-events:none}
+.header>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:10px;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:999px;padding:10px 18px;box-shadow:var(--shadow-md);font-weight:600;font-size:15px;cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);border:1px solid rgba(0,0,0,0.06)}
+.brand:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.brand-icon{width:26px;height:26px;flex-shrink:0;display:block;overflow:visible}
+.hgroup{display:flex;gap:8px}
+.iconbtn{width:44px;height:44px;border:none;border-radius:var(--radius);background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:grid;place-items:center;box-shadow:var(--shadow-md);cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);border:1px solid rgba(0,0,0,0.06)}
+.iconbtn:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.iconbtn.active{background:var(--accent);border-color:var(--accent-dark)}
+.icon{width:18px;height:18px}
+.icon-lg{width:22px;height:22px}
+.search-panel{position:fixed;top:76px;left:16px;right:16px;z-index:999;display:none;animation:slideDown 0.2s cubic-bezier(0.4,0,0.2,1)}
+.search-panel.show{display:block}
+.search-input-wrapper{position:relative}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search-panel input{width:100%;padding:14px 14px 14px 44px;border:1px solid rgba(0,0,0,0.08);border-radius:var(--radius);background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--shadow-lg);font:inherit;font-size:14px;transition:all 0.2s ease}
+.search-panel input:focus{outline:none;border-color:var(--accent);box-shadow:var(--shadow-xl),0 0 0 3px rgba(255,217,61,0.08)}
+.search-panel input::placeholder{color:var(--muted)}
+.search-results{margin-top:8px;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:var(--radius);box-shadow:var(--shadow-lg);max-height:60vh;overflow-y:auto;display:none;border:1px solid rgba(0,0,0,0.06)}
+.search-results.show{display:block;animation:slideDown 0.2s ease}
+.search-result-item{padding:12px 14px;cursor:pointer;transition:all 0.15s ease;border-bottom:1px solid rgba(0,0,0,0.04);display:flex;align-items:center;gap:10px}
+.search-result-item:last-child{border-bottom:none}
+.search-result-item:hover{background:rgba(255,217,61,0.08);padding-left:18px}
+.search-result-item .icon-wrapper{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));border-radius:10px;display:grid;place-items:center;flex-shrink:0}
+.search-result-item .text{flex:1;min-width:0}
+.search-result-item strong{display:block;font-size:14px;font-weight:600;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search-result-item small{display:block;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.menu{position:fixed;right:16px;top:76px;z-index:999;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:6px;min-width:220px;display:none;animation:slideDown 0.2s cubic-bezier(0.4,0,0.2,1);border:1px solid rgba(0,0,0,0.06)}
+.menu.show{display:block}
+.menu .row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all 0.15s ease;font-size:13px;font-weight:500}
+.menu .row:hover{background:rgba(255,217,61,0.08);padding-left:16px}
+.menu .row.disabled{opacity:0.35;cursor:not-allowed}
+.menu .row.disabled:hover{background:transparent;padding-left:12px}
+.menu .split{height:1px;background:rgba(0,0,0,0.06);margin:6px 8px}
+.controls{position:fixed;right:16px;bottom:16px;z-index:998;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.controls>*{pointer-events:auto}
+.fab{border:none;border-radius:var(--radius);background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--ink);font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;box-shadow:var(--shadow-lg);cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;border:1px solid var(--accent-dark)}
+.fab:hover:not(:disabled){box-shadow:var(--shadow-xl),0 8px 20px rgba(255,217,61,0.3);transform:translateY(-2px)}
+.fab:active:not(:disabled){transform:translateY(0)}
+.fab:disabled{opacity:0.5;cursor:not-allowed;transform:none!important}
+.quick-btn{width:44px;height:44px;border:none;border-radius:var(--radius);background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:grid;place-items:center;box-shadow:var(--shadow-md);cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);border:1px solid rgba(0,0,0,0.06)}
+.quick-btn:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.quick-btn.active{background:var(--accent);border-color:var(--accent-dark)}
+.stats{position:fixed;left:16px;bottom:16px;z-index:998;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:var(--radius);padding:10px 14px;box-shadow:var(--shadow-md);display:flex;align-items:center;gap:12px;font-size:12px;font-weight:600;border:1px solid rgba(0,0,0,0.06);animation:slideUp 0.3s ease}
+.stats-item{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.stats-item .banana-mini{width:16px;height:16px;display:block;overflow:visible}
+.stats-item .count{color:var(--ink);font-size:14px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;z-index:10000;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:10px 16px;border-radius:var(--radius);box-shadow:var(--shadow-xl);font-size:13px;font-weight:600;max-width:90vw;animation:slideUp 0.25s cubic-bezier(0.4,0,0.2,1);display:flex;align-items:center;gap:8px;border:1px solid rgba(0,0,0,0.06)}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--warn)}
+.toast.info{border-left:3px solid var(--info)}
+.toast .icon{flex-shrink:0;width:16px;height:16px}
+.sheet{position:fixed;left:0;right:0;bottom:-100%;z-index:1001;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top-left-radius:18px;border-top-right-radius:18px;box-shadow:0 -8px 40px rgba(0,0,0,.1);padding:18px 18px 28px;transition:bottom 0.3s cubic-bezier(0.4,0,0.2,1);max-height:82vh;overflow-y:auto;border-top:1px solid rgba(0,0,0,0.06)}
+.sheet.show{bottom:0}
+.sheet .grab{width:36px;height:4px;background:rgba(0,0,0,0.15);border-radius:4px;margin:0 auto 14px}
+.sheet h3{margin:0 0 6px 0;font-size:20px;font-weight:700;letter-spacing:-0.01em}
+.sheet .subtitle{color:var(--muted);font-size:13px;margin-bottom:18px;font-weight:500}
+.sheet label{font-size:11px;font-weight:700;color:var(--ink);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em}
+.sheet input[type="text"],.sheet textarea{width:100%;padding:12px;border:1px solid rgba(0,0,0,0.1);border-radius:10px;font:inherit;font-size:14px;transition:all 0.2s ease;background:#fff;margin-bottom:14px}
+.sheet input[type="text"]:focus,.sheet textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,217,61,0.08)}
+.sheet textarea{resize:vertical;min-height:80px;line-height:1.5}
+.char-count{font-size:11px;color:var(--muted);text-align:right;margin-top:-10px;margin-bottom:14px}
+.file-upload{position:relative;margin-bottom:14px}
+.file-upload-label{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;padding:18px;border:2px dashed rgba(0,0,0,0.12);border-radius:10px;cursor:pointer;transition:all 0.2s ease;background:rgba(255,217,61,0.03)}
+.file-upload-label:hover{border-color:var(--accent-dark);background:rgba(255,217,61,0.08)}
+.file-upload input[type="file"]{position:absolute;opacity:0;width:0;height:0}
+.file-upload-text{font-size:13px;font-weight:600;color:var(--ink)}
+.file-upload-hint{font-size:11px;color:var(--muted)}
+.previews{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:14px}
+.preview img,.previews img{width:100%;height:100px;object-fit:cover;border-radius:10px;box-shadow:var(--shadow-md)}
+.sheet-actions{display:flex;gap:10px;margin-top:18px}
+.sheet-actions button{flex:1;padding:12px;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--ink);border:1px solid var(--accent-dark)}
+.btn-primary:hover:not(:disabled){box-shadow:0 4px 16px rgba(255,217,61,0.25);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-secondary{background:rgba(0,0,0,0.04);color:var(--ink);border:1px solid rgba(0,0,0,0.08)}
+.btn-secondary:hover{background:rgba(0,0,0,0.08)}
+.sheet .footer{margin-top:16px;color:var(--muted);font-size:10px;text-align:center}
+.privacy-option{display:flex;align-items:center;gap:8px;padding:12px;background:rgba(255,217,61,0.08);border:1px solid rgba(255,217,61,0.3);border-radius:10px;margin-bottom:14px;cursor:pointer;transition:all 0.2s ease}
+.privacy-option:hover{background:rgba(255,217,61,0.12)}
+.privacy-option input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:var(--accent-dark)}
+.privacy-option label{font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;text-transform:none;letter-spacing:normal;margin:0;flex:1}
+.banana-marker{width:36px;height:36px;cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);filter:drop-shadow(0 3px 8px rgba(0,0,0,.12))}
+.banana-marker:hover{transform:translateY(-5px) scale(1.12);filter:drop-shadow(0 6px 16px rgba(0,0,0,.2))}
+.banana-marker.mine{filter:drop-shadow(0 3px 12px rgba(255,217,61,.5))}
+.banana-marker.mine:hover{filter:drop-shadow(0 6px 20px rgba(255,217,61,.7))}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:2000;display:none;animation:fadeIn 0.25s ease}
+.modal-overlay.show{display:block}
+.modal{position:fixed;inset:0;z-index:2001;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal-content{width:min(500px,100%);max-height:90vh;background:var(--surface);border-radius:20px;box-shadow:var(--shadow-xl);overflow:hidden;animation:slideInUp 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;display:flex;flex-direction:column}
+.modal-close{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;border:none;cursor:pointer;display:grid;place-items:center;z-index:10;transition:all 0.2s ease;box-shadow:var(--shadow-md)}
+.modal-close:hover{background:rgba(0,0,0,0.8);transform:scale(1.1) rotate(90deg)}
+.modal-body{padding:24px;overflow-y:auto;flex:1}
+.modal-header{margin-bottom:16px}
+.modal-header h3{font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px}
+.modal-meta{font-size:13px;color:var(--muted);font-weight:500}
+.modal-message{font-size:15px;line-height:1.7;color:#4b5563;margin-bottom:16px}
+#modalPhotoGallery{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+#modalPhotoGallery img{width:100%;max-width:48%;height:180px;object-fit:cover;border-radius:12px;box-shadow:var(--shadow-md)}
+#modalPhotoGallery img:only-child{max-width:100%}
+.reactions-bar{display:flex;gap:8px;padding:12px;background:rgba(0,0,0,0.02);border-radius:10px;margin-bottom:16px;flex-wrap:wrap}
+.reaction-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid rgba(0,0,0,0.1);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s ease}
+.reaction-btn:hover{background:rgba(255,217,61,0.08);transform:translateY(-1px)}
+.reaction-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent-dark));border-color:var(--accent-dark)}
+.reaction-emoji{font-size:18px}
+.reaction-count{color:var(--muted);font-size:12px}
+.trail-item{padding:12px;border-bottom:1px solid rgba(0,0,0,0.04);font-size:13px;display:flex;align-items:center;gap:10px;transition:background 0.15s ease}
+.trail-item:hover{background:rgba(0,0,0,0.02)}
+.trail-item-content{flex:1;min-width:0}
+.trail-item-title{font-weight:600;color:var(--ink);margin-bottom:2px}
+.trail-item-address{color:var(--muted);margin-top:2px;font-size:12px}
+.trail-item-notes{color:#4b5563;margin-top:4px;font-size:12px;font-style:italic}
+.trail-item-time{font-size:11px;color:var(--muted);margin-top:2px}
+.trail-item-actions{display:flex;gap:6px;flex-shrink:0}
+.trail-map-btn{width:32px;height:32px;border-radius:8px;border:none;background:rgba(59,130,246,0.1);color:var(--info);cursor:pointer;display:grid;place-items:center;transition:all 0.2s ease}
+.trail-map-btn:hover{background:var(--info);color:#fff;transform:scale(1.05)}
+.trail-map-btn svg{width:16px;height:16px}
+.trail-delete-btn{width:32px;height:32px;border-radius:8px;border:none;background:rgba(239,68,68,0.1);color:var(--warn);cursor:pointer;display:grid;place-items:center;transition:all 0.2s ease}
+.trail-delete-btn:hover{background:var(--warn);color:#fff;transform:scale(1.05)}
+.trail-delete-btn svg{width:16px;height:16px}
+.modal-actions{display:flex;gap:10px;padding:0 24px 24px;flex-wrap:wrap}
+.modal-actions button{flex:1;min-width:120px;padding:14px;border:none;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;gap:8px}
+.action-edit{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--ink);border:1px solid var(--accent-dark)}
+.action-edit:hover{box-shadow:0 4px 16px rgba(255,217,61,0.25);transform:translateY(-1px)}
+.action-move{background:var(--info);color:#fff;border:1px solid var(--info)}
+.action-move:hover{background:#2563eb;transform:translateY(-1px);box-shadow:0 4px 16px rgba(59,130,246,0.25)}
+.action-delete{background:var(--warn);color:#fff;border:1px solid var(--warn)}
+.action-delete:hover{background:#dc2626;transform:translateY(-1px);box-shadow:0 4px 16px rgba(239,68,68,0.25)}
+.swipe-modal{position:fixed;inset:0;z-index:2001;display:none;align-items:center;justify-content:center}
+.swipe-modal.show{display:flex}
+.swipe-container{position:relative;width:min(500px,calc(100% - 40px));height:min(600px,80vh);perspective:1000px}
+.swipe-card{position:absolute;inset:0;background:var(--surface);border-radius:20px;box-shadow:var(--shadow-xl);display:flex;flex-direction:column;overflow:hidden;touch-action:pan-y;transition:transform 0.3s ease,opacity 0.3s ease;animation:slideInUp 0.3s cubic-bezier(0.4,0,0.2,1)}
+.swipe-card.swiping{transition:none}
+.swipe-card-header{padding:24px 24px 16px;position:relative}
+.swipe-card-header h3{font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px;padding-right:48px}
+.swipe-card-meta{font-size:13px;color:var(--muted);font-weight:500}
+.swipe-card-body{flex:1;overflow-y:auto;padding:0 24px 24px}
+.swipe-card-message{font-size:15px;line-height:1.7;color:#4b5563;margin-bottom:16px}
+#swipePhotoGallery{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+#swipePhotoGallery img{width:100%;max-width:48%;height:180px;object-fit:cover;border-radius:12px;box-shadow:var(--shadow-md)}
+#swipePhotoGallery img:only-child{max-width:100%}
+.swipe-nav{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:16px;z-index:10}
+.swipe-nav button{width:56px;height:56px;border-radius:50%;border:none;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--shadow-lg);cursor:pointer;display:grid;place-items:center;transition:all 0.2s ease}
+.swipe-nav button:hover{box-shadow:var(--shadow-xl);transform:scale(1.1)}
+.swipe-nav button:disabled{opacity:0.3;cursor:not-allowed;transform:none}
+.swipe-counter{position:absolute;top:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;z-index:10}
+.swipe-indicator{position:absolute;top:50%;transform:translateY(-50%);font-size:48px;opacity:0;transition:opacity 0.2s ease;pointer-events:none;z-index:5}
+.swipe-indicator.left{left:40px}
+.swipe-indicator.right{right:40px}
+.iconbtn:active, .quick-btn:active, .fab:active{transform:translateY(0);filter:brightness(.98)}
+.iconbtn:focus-visible, .quick-btn:focus-visible, .fab:focus-visible, .menu .row:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tutorial-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:3000;display:none;animation:fadeIn 0.3s ease}
+.tutorial-overlay.show{display:block}
+.tutorial-modal{position:fixed;inset:0;z-index:3001;display:none;align-items:center;justify-content:center;padding:20px}
+.tutorial-modal.show{display:flex}
+.tutorial-content{width:min(480px,100%);max-height:90vh;background:var(--surface);border-radius:20px;box-shadow:var(--shadow-xl);overflow:hidden;animation:slideInUp 0.4s cubic-bezier(0.4,0,0.2,1);position:relative;display:flex;flex-direction:column}
+.tutorial-body{flex:1;padding:48px 32px 24px;overflow-y:auto;min-height:320px}
+.tutorial-step{text-align:center;animation:fadeIn 0.4s ease}
+.tutorial-icon{font-size:72px;margin-bottom:20px;animation:slideDown 0.5s cubic-bezier(0.4,0,0.2,1)}
+.tutorial-step h2{font-size:28px;font-weight:700;margin-bottom:16px;letter-spacing:-0.02em;color:var(--ink)}
+.tutorial-step p{font-size:16px;line-height:1.6;color:#4b5563;margin-bottom:8px}
+.tutorial-note{margin-top:20px;padding:14px 18px;background:rgba(255,217,61,0.1);border-left:3px solid var(--accent);border-radius:8px;font-size:14px;color:var(--ink);text-align:left}
+.tutorial-progress{padding:20px 32px;display:flex;justify-content:center}
+.tutorial-dots{display:flex;gap:8px}
+.tutorial-dot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.2);transition:all 0.3s ease;cursor:pointer}
+.tutorial-dot:hover{background:rgba(0,0,0,0.3);transform:scale(1.2)}
+.tutorial-dot.active{background:var(--accent);width:24px;border-radius:4px}
+.tutorial-actions{display:flex;gap:12px;padding:0 32px 32px}
+.tutorial-btn{flex:1;padding:14px 24px;border:none;border-radius:12px;font-weight:600;font-size:15px;cursor:pointer;transition:all 0.2s ease}
+.tutorial-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--ink);border:1px solid var(--accent-dark)}
+.tutorial-btn.primary:hover{box-shadow:0 4px 16px rgba(255,217,61,0.3);transform:translateY(-1px)}
+.tutorial-btn.secondary{background:rgba(0,0,0,0.04);color:var(--ink);border:1px solid rgba(0,0,0,0.08)}
+.tutorial-btn.secondary:hover{background:rgba(0,0,0,0.08)}
+.prompt-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:3500;display:none;animation:fadeIn 0.2s ease}
+.prompt-overlay.show{display:block}
+.prompt-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(400px,90%);background:var(--surface);border-radius:16px;box-shadow:var(--shadow-xl);z-index:3501;display:none;animation:slideInUp 0.3s cubic-bezier(0.4,0,0.2,1);padding:24px}
+.prompt-dialog.show{display:block}
+.prompt-dialog h3{font-size:20px;font-weight:700;margin-bottom:8px;color:var(--ink)}
+.prompt-dialog p{font-size:14px;color:var(--muted);margin-bottom:16px}
+.prompt-dialog input,.prompt-dialog textarea{width:100%;padding:12px;border:1px solid rgba(0,0,0,0.1);border-radius:10px;font:inherit;font-size:14px;margin-bottom:16px}
+.prompt-dialog textarea{min-height:80px;resize:vertical}
+.prompt-dialog input:focus,.prompt-dialog textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,217,61,0.08)}
+.prompt-actions{display:flex;gap:10px}
+.prompt-actions button{flex:1;padding:12px;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.2s ease}
+.feed-tab{flex:1;padding:8px 16px;border:none;border-radius:8px;background:rgba(0,0,0,0.04);font-weight:600;font-size:13px;cursor:pointer;transition:all 0.2s ease}
+.feed-tab.active{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--ink)}
+.feed-item{padding:12px;border-bottom:1px solid rgba(0,0,0,0.06);font-size:13px;line-height:1.5}
+.feed-item:last-child{border-bottom:none}
+.feed-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.feed-item-name{font-weight:700;color:var(--ink)}
+.feed-item-time{font-size:11px;color:var(--muted)}
+.feed-item-message{color:#4b5563;margin-bottom:4px}
+.feed-item-action{color:var(--info);font-weight:600}
+.feed-item-edit{font-size:11px;color:var(--info);cursor:pointer;margin-left:8px}
+.feed-item-edit:hover{text-decoration:underline}
+.admin-action-btn{padding:8px 16px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));font-weight:600;font-size:12px;cursor:pointer;transition:all 0.2s ease}
+.admin-action-btn:hover{box-shadow:0 4px 12px rgba(255,217,61,0.3);transform:translateY(-1px)}
+.comment-section{margin-top:16px;padding-top:16px;border-top:1px solid rgba(0,0,0,0.06)}
+.comment-item{padding:10px;background:rgba(0,0,0,0.02);border-radius:8px;margin-bottom:8px;font-size:13px}
+.comment-header{display:flex;justify-content:space-between;margin-bottom:4px}
+.comment-name{font-weight:700;color:var(--ink)}
+.comment-time{font-size:11px;color:var(--muted)}
+.comment-text{color:#4b5563;line-height:1.4}
+.comment-edit-btn{font-size:11px;color:var(--info);cursor:pointer;margin-left:8px}
+.comment-edit-btn:hover{text-decoration:underline}
+.comment-compose{margin-top:12px}
+.comment-compose input{width:100%;padding:8px;border:1px solid rgba(0,0,0,0.1);border-radius:6px;font:inherit;font-size:13px;margin-bottom:6px}
+.comment-compose textarea{width:100%;padding:8px;border:1px solid rgba(0,0,0,0.1);border-radius:6px;font:inherit;font-size:13px;min-height:60px;resize:vertical;margin-bottom:6px}
+.comment-compose button{padding:8px 16px;border:none;border-radius:6px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));font-weight:600;font-size:13px;cursor:pointer}
+@media (max-width:640px){
+  .tutorial-body{padding:40px 24px 20px;min-height:280px}
+  .tutorial-icon{font-size:60px;margin-bottom:16px}
+  .tutorial-step h2{font-size:24px;margin-bottom:12px}
+  .tutorial-step p{font-size:15px}
+  .tutorial-progress{padding:16px 24px}
+  .tutorial-actions{padding:0 24px 24px}
+  .header{top:12px;left:12px;right:12px}
+  .search-panel{top:68px;left:12px;right:12px}
+  .menu{right:12px;top:68px}
+  .stats{left:12px;bottom:12px;font-size:11px;padding:8px 12px}
+  .controls{right:12px;bottom:12px}
+  .brand{padding:8px 14px;font-size:14px}
+  .brand-icon{width:22px;height:22px}
+  .iconbtn{width:40px;height:40px}
+  .quick-btn{width:40px;height:40px}
+  .fab{padding:12px 16px;font-size:13px}
+  .stats-item .count{font-size:13px}
+  .modal{padding:10px}
+  .swipe-container{width:calc(100% - 20px);height:min(600px,85vh)}
+}
+@media (max-width:480px){
+  .brand span:not(.brand-icon){display:none}
+  .fab span{display:none}
+  .fab{width:44px;padding:12px}
+  .stats{gap:8px}
+  .stats-item span:not(.count){display:none}
+}
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0" aria-hidden="true">
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M12 3v14M7 8l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="i-location" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1" fill="currentColor"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="13" r="4" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1" fill="currentColor"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="16" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-feed" viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="5" cy="19" r="1" fill="currentColor"/></symbol>
+  <symbol id="i-admin" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="banana-pin" viewBox="0 0 256.85 291.32">
+    <g>
+      <path fill="#f8db8f" d="M71.1,141.02c.28,1.47.88,7.33,1.51,8.76,1.93,4.39,14.28,1.42,18.58.95-11.67-38.63-11.64-82.48,8.03-118.8,6.14-11.33,14.88-23.92,27.11-29.82l.25-1.18-4.27-.47c-25.63,3.82-45.46,48.7-50.2,69.81-4.86,21.62-5.22,49.03-1,70.76Z"/>
+      <path fill="#ffeda3" d="M122.3.45l4.27.47-.25,1.18c-12.23,5.9-20.97,18.49-27.11,29.82-19.67,36.32-19.7,80.17-8.03,118.8-4.3.48-16.64,3.45-18.58-.95-.63-1.42-1.22-7.29-1.51-8.76l-25.6,2.37c11.12-2.18,20.14.12,27.11,8.76-3.44,1.89-7.15,2.97-10.54,4.97-23.54,13.89-24.41,35.07-30.12,57.27-1.14,17.15,3.46,36,12.55,50.88,6.03,9.87,22.72,28.5,36.15,25.79,1.76-21.88-7.48-39.71-6.02-62.24.91-14.08,10.81-51.24,20.08-62,8.51-9.89,29.8-18.03,36.15-2.13,1.3-5.09,1.66-9.2,5.52-13.25-1.02-2.13,6.58-7.74,6.02-9.23-.07-.19-1.78-.28-2.51-2.84-8.39-29.54-10.59-63.06-5.02-93.24,2.16-11.71,10.88-29.39,3.51-40.23-1.89-2.78-5.1-3.54-7.53-5.44-3.52-.67-5.06-.52-8.53,0Z"/>
+      <path fill="#ffdb27" d="M80.64,291.05c15.58-3.14,4.71-25.51,3.01-35.26-3.34-19.23-3.22-36.25,2.01-55.14,2.36-8.51,11.33-33.16,19.33-37.39,5.51-2.92,10.89-2.02,16.82-.95,3.42.62,5.45,2.59,9.04,2.37-6.35-15.9-27.63-7.76-36.15,2.13-9.27,10.76-19.17,47.93-20.08,62-1.45,22.52,7.78,40.35,6.02,62.24Z"/>
+      <path fill="#ffc910" d="M18.89,251.3c6.47-3.93,7.28-19.33,9.04-26.27.88-3.45,3.38-8.16,4.02-10.65,5.71-22.2,6.59-43.38,30.12-57.27.11-2.35,4.35-1.54,3.01-3.55-21.74-19.04-42.85,15.37-49.2,30.29-6.43,15.12-13.02,38.46-11.04,56.32.93,8.39,3.7,17.42,14.06,11.12Z"/>
+      <path fill="#ffdb27" d="M45.49,143.38C12.83,149.77-5.18,217.75,1.31,243.96c2.27,9.18,8.63,14.45,17.57,7.34-10.36,6.29-13.13-2.73-14.06-11.12-1.97-17.86,4.62-41.2,11.04-56.32,6.34-14.93,27.46-49.33,49.2-30.29,1.33,2.01-2.91,1.2-3.01,3.55,3.39-2,7.1-3.08,10.54-4.97-6.97-8.64-15.99-10.93-27.11-8.76Z"/>
+      <path fill="#ffdb27" d="M226.68,282.86c-29.25,13.86-88.77-31.06-120.23-78.8-3.94-5.99-13.84-37.32,9.8-43.5,1.53-.4,2.62-.5,3.61-.38,1.8.23,2.92.93,4.51,1.76,1.39.73,3.46,1.7,6.18,2.59.19-1.78.84-4.19,1.8-7.01.74-2.17,1.79-4.21,3.72-6.24,50.98-39.77,88.26,30.02,110.95,64.13,2.34,3,5.81,7.55,9.54,8.76.38,4.53-3.49,5.6-7.78,4.73-5.68-1.15-15.85-23.65-19.33-29.11-11.19-17.56-35.92-53.71-59.49-55.14-8.08-.49-13.28,2.2-14.31,10.18-1.71,13.24,30.61,61.14,74.3,98.45,3.01,2.57,10.69,9.03,9.79,16.33-.93,7.5-10.45,12.02-13.05,13.25Z"/>
+      <path fill="#ffc910" d="M227.35,283c-8.08-.83-17.63-2.33-25.6-3.61-28.79-4.62-83.79-52-94.63-77.38-2.57-6.02-9.42-29.07.79-37.25,6.96-5.58,18.77-1.65,22.94-.07-2.37-1.63-6.59-4.07-12.37-5.03-3.5-.58-6.53-.45-8.78-.16,0,0,0,0,0,0,0,0-2.19.37-4.33,1.57-6.53,3.68-11.3,12.65-11.3,12.65-4.63,8.69-6.9,17.53-8.02,24.75,6.18,10.25,15.37,24.34,28.93,39.03,11.07,12,23.42,22.98,36.59,32.91,15.18,11.45,37.24,23.97,61.16,18.46,6.38-1.47,11.36-3.93,14.65-5.85Z"/>
+      <path fill="#34af0e" d="M232.29,255.34c.65,2.52,2.01,9.24-.91,16.82-4.04,10.51-16.83,15.88-18.68,16.69,2.72.6,12.47.42,19.22-2.27,2.52-1,12.08-4.84,13.35-13.11,1.15-7.51-4.18-15.66-12.98-18.14Z"/>
+    </g>
+  </symbol>
+</svg>
+
+<div class="header">
+  <div class="brand" id="brandBtn" title="Return to world view">
+    <svg class="brand-icon" viewBox="0 0 256.85 291.32" preserveAspectRatio="xMidYMid meet"><use href="#banana-pin"/></svg>
+    <span>banana.place</span>
+  </div>
+  <div class="hgroup">
+    <button class="iconbtn" id="toggleSearch" title="Search locations"><svg class="icon"><use href="#i-search"/></svg></button>
+    <button class="iconbtn" id="toggleMenu" title="Menu"><svg class="icon"><use href="#i-menu"/></svg></button>
+  </div>
+</div>
+
+<div class="search-panel" id="searchPanel">
+  <div class="search-input-wrapper">
+    <svg class="icon search-icon"><use href="#i-search"/></svg>
+    <input type="text" id="searchInput" placeholder="Search any location..." autocomplete="off">
+  </div>
+  <div class="search-results" id="searchResults"></div>
+</div>
+
+<div class="menu" id="menu">
+  <div class="row" id="seeMine"><svg class="icon"><use href="#i-eye"/></svg><span>View My Banana</span></div>
+  <div class="row" id="shareMine"><svg class="icon"><use href="#i-share"/></svg><span>Share My Banana</span></div>
+  <div class="row" id="deleteMine"><svg class="icon"><use href="#i-trash"/></svg><span style="color:var(--warn)">Delete My Banana</span></div>
+  <div class="split"></div>
+  <div class="row" id="randomBanana"><svg class="icon"><use href="#i-dice"/></svg><span>Random Banana</span></div>
+  <div class="row" id="browseBananas"><svg class="icon"><use href="#i-globe"/></svg><span>Browse All</span></div>
+  <div class="split"></div>
+  <div class="row" id="openFeed"><svg class="icon"><use href="#i-feed"/></svg><span>Feed & Board</span></div>
+  <div class="row" id="showTutorial"><svg class="icon"><use href="#i-info"/></svg><span>How It Works</span></div>
+  <div class="split"></div>
+  <div class="row" id="openAdmin"><svg class="icon"><use href="#i-admin"/></svg><span>Admin Panel</span></div>
+</div>
+
+<div class="stats">
+  <div class="stats-item">
+    <svg class="banana-mini" viewBox="0 0 256.85 291.32" preserveAspectRatio="xMidYMid meet"><use href="#banana-pin"/></svg>
+    <span>Total</span>
+    <span class="count" id="totalCount">0</span>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="quick-btn" id="locateBtn" title="My location"><svg class="icon"><use href="#i-location"/></svg></button>
+  <button class="quick-btn" id="homeBtn" title="World view"><svg class="icon"><use href="#i-home"/></svg></button>
+  <button id="dropBtn" class="fab"><svg class="icon-lg"><use href="#i-plus"/></svg><span>Drop Banana</span></button>
+</div>
+
+<div id="map"></div>
+<div id="toastContainer"></div>
+
+<div class="prompt-overlay" id="promptOverlay"></div>
+<div class="prompt-dialog" id="promptDialog">
+  <h3 id="promptTitle">Name this stop</h3>
+  <p id="promptMessage">Give this location a memorable name</p>
+  <input type="text" id="promptInput" placeholder="e.g., Coffee shop visit" maxlength="50" style="display:block">
+  <textarea id="promptTextarea" placeholder="Add notes about this stop..." maxlength="200" style="display:none"></textarea>
+  <div class="prompt-actions">
+    <button class="btn-secondary" id="promptCancel">Cancel</button>
+    <button class="btn-primary" id="promptConfirm">Confirm</button>
+  </div>
+</div>
+
+<div class="tutorial-overlay" id="tutorialOverlay"></div>
+<div class="tutorial-modal" id="tutorialModal">
+  <div class="tutorial-content">
+    <button class="modal-close" id="tutorialClose"><svg class="icon"><use href="#i-close"/></svg></button>
+    <div class="tutorial-body">
+      <div class="tutorial-step" data-step="0">
+        <div class="tutorial-icon">🍌</div>
+        <h2>Welcome to banana.place!</h2>
+        <p>Drop virtual bananas anywhere in the world and discover what others have shared.</p>
+        <p style="font-size:13px;color:var(--muted);margin-top:12px">Let's take a quick tour of what you can do!</p>
+      </div>
+      <div class="tutorial-step" data-step="1" style="display:none">
+        <div class="tutorial-icon">📍</div>
+        <h2>Drop Your Banana</h2>
+        <p>Click the <strong>"Drop Banana"</strong> button to place your banana on the map.</p>
+        <p style="margin-top:12px">Share a message, add photos, and leave your mark on the world!</p>
+        <div class="tutorial-note">💡 You can only drop one banana, but you can move or edit it anytime.</div>
+      </div>
+      <div class="tutorial-step" data-step="2" style="display:none">
+        <div class="tutorial-icon">🗺️</div>
+        <h2>Explore the Map</h2>
+        <p>Click on any banana to see what others have shared.</p>
+        <p style="margin-top:12px">Use the <strong>search bar</strong> to find specific locations, or tap <strong>"Random Banana"</strong> to discover something unexpected!</p>
+      </div>
+      <div class="tutorial-step" data-step="3" style="display:none">
+        <div class="tutorial-icon">🚶</div>
+        <h2>Banana Trails</h2>
+        <p>Move your banana to new locations and create a trail of your journey.</p>
+        <p style="margin-top:12px">Your banana's location history will be visible to everyone, showing where you've been!</p>
+        <div class="tutorial-note">🗺️ Trails appear as yellow dotted lines on the map.</div>
+      </div>
+      <div class="tutorial-step" data-step="4" style="display:none">
+        <div class="tutorial-icon">👆</div>
+        <h2>Browse & Swipe</h2>
+        <p>Use <strong>"Browse All"</strong> to swipe through all bananas, or find yours instantly with <strong>"View My Banana"</strong>.</p>
+        <p style="margin-top:12px">Share your banana's unique link with friends!</p>
+      </div>
+      <div class="tutorial-step" data-step="5" style="display:none">
+        <div class="tutorial-icon">🎉</div>
+        <h2>Ready to Go!</h2>
+        <p>You're all set to start your banana adventure.</p>
+        <p style="margin-top:12px">Drop your first banana and join our global community!</p>
+        <div class="tutorial-note">💬 Access this guide anytime from the menu.</div>
+      </div>
+    </div>
+    <div class="tutorial-progress">
+      <div class="tutorial-dots" id="tutorialDots"></div>
+    </div>
+    <div class="tutorial-actions">
+      <button class="tutorial-btn secondary" id="tutorialSkip">Skip</button>
+      <button class="tutorial-btn primary" id="tutorialNext">Next</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay"></div>
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <button class="modal-close" id="modalClose"><svg class="icon"><use href="#i-close"/></svg></button>
+    <div class="modal-body">
+      <div class="modal-header">
+        <h3 id="modalTitle">Banana</h3>
+        <div class="modal-meta" id="modalMeta"></div>
+      </div>
+      <div id="modalReactions"></div>
+      <p class="modal-message" id="modalMessage" style="display:none"></p>
+      <div id="modalPhotoGallery" style="display:none"></div>
+      <div id="modalHistory" style="display:none"></div>
+    </div>
+    <div class="modal-actions" id="modalActions" style="display:none">
+      <button class="action-edit" id="modalEdit"><svg class="icon"><use href="#i-edit"/></svg>Edit</button>
+      <button class="action-move" id="modalMove"><svg class="icon"><use href="#i-location"/></svg>Move Here</button>
+      <button class="action-delete" id="modalDelete"><svg class="icon"><use href="#i-trash"/></svg>Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="swipeOverlay"></div>
+<div class="swipe-modal" id="swipeModal">
+  <div class="swipe-container" id="swipeContainer">
+    <div class="swipe-counter" id="swipeCounter">1/1</div>
+    <button class="modal-close" id="swipeClose"><svg class="icon"><use href="#i-close"/></svg></button>
+    <div class="swipe-card" id="swipeCard">
+      <div class="swipe-card-header">
+        <h3 id="swipeTitle">Banana</h3>
+        <div class="swipe-card-meta" id="swipeMeta"></div>
+        <button id="swipeMapBtn" class="quick-btn" title="View on map" style="position:absolute;top:18px;right:18px;width:40px;height:40px"><svg class="icon"><use href="#i-location"/></svg></button>
+      </div>
+      <div class="swipe-card-body">
+        <div id="swipeReactions"></div>
+        <p class="swipe-card-message" id="swipeMessage" style="display:none"></p>
+        <div id="swipePhotoGallery" style="display:none"></div>
+        <div id="swipeHistory" style="display:none"></div>
+      </div>
+    </div>
+    <div class="swipe-indicator left" id="swipeLeft">👈</div>
+    <div class="swipe-indicator right" id="swipeRight">👉</div>
+    <div class="swipe-nav">
+      <button id="swipePrev" aria-label="Previous"><svg class="icon-lg"><use href="#i-left"/></svg></button>
+      <button id="swipeNext" aria-label="Next"><svg class="icon-lg"><use href="#i-right"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <h3 id="sheetTitle">Drop a Banana</h3>
+  <p class="subtitle" id="sheetSubtitle">Share your moment with the world</p>
+  <label for="name">Your Name</label>
+  <input id="name" type="text" placeholder="What should we call you?" maxlength="50">
+  <label for="msg">Message</label>
+  <textarea id="msg" rows="4" placeholder="Share something fun, inspiring, or interesting..." maxlength="500"></textarea>
+  <div class="char-count" id="charCount">0/500</div>
+  <label>Photos (Optional - up to 5)</label>
+  <div class="file-upload">
+    <label for="photo" class="file-upload-label">
+      <svg class="icon-lg"><use href="#i-camera"/></svg>
+      <span class="file-upload-text">Add Photos</span>
+      <span class="file-upload-hint">JPG or PNG, up to 5 photos</span>
+    </label>
+    <input id="photo" type="file" accept="image/*" multiple>
+  </div>
+  <div class="previews" id="previews"></div>
+  
+  <div class="privacy-option">
+    <input type="checkbox" id="approxLocation">
+    <label for="approxLocation">📍 Use approximate location (more privacy)</label>
+  </div>
+  
+  <div class="sheet-actions">
+    <button class="btn-secondary" id="cancelBtn">Cancel</button>
+    <button class="btn-primary" id="saveBtn">Save Banana</button>
+  </div>
+  <div class="footer">Powered by Nominatim • Map © OpenStreetMap & CARTO</div>
+</div>
+
+<div class="modal-overlay" id="feedOverlay"></div>
+<div class="modal" id="feedModal">
+  <div class="modal-content">
+    <button class="modal-close" id="feedClose"><svg class="icon"><use href="#i-close"/></svg></button>
+    <div class="modal-body">
+      <div class="modal-header">
+        <h3>Feed & Board</h3>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="feed-tab active" data-tab="updates">🍌 Updates</button>
+          <button class="feed-tab" data-tab="board">💬 Message Board</button>
+        </div>
+      </div>
+      <div id="feedContent" style="margin-top:16px"></div>
+      <div id="boardCompose" style="display:none;margin-top:16px"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="adminOverlay"></div>
+<div class="modal" id="adminModal">
+  <div class="modal-content">
+    <button class="modal-close" id="adminClose"><svg class="icon"><use href="#i-close"/></svg></button>
+    <div class="modal-body">
+      <div class="modal-header">
+        <h3>🛡️ Admin Panel</h3>
+        <p style="font-size:13px;color:var(--muted);margin-top:4px">Manage devices and bananas</p>
+      </div>
+      <div id="adminAuth" style="margin-top:16px">
+        <label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px">Admin Password</label>
+        <input type="password" id="adminPassword" placeholder="Enter admin password" style="width:100%;padding:10px;border:1px solid rgba(0,0,0,0.1);border-radius:8px;font:inherit;font-size:14px">
+        <button id="adminLogin" class="btn-primary" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:8px;font-weight:600;cursor:pointer">Unlock Admin Panel</button>
+      </div>
+      <div id="adminContent" style="display:none;margin-top:16px">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="admin-action-btn" id="adminResetDevice">Reset My Device</button>
+          <button class="admin-action-btn" id="adminViewDevices">View All Devices</button>
+          <button class="admin-action-btn" id="adminEditAny">Edit Any Banana</button>
+          <button class="admin-action-btn" id="adminClearBoard">Clear Board</button>
+        </div>
+        <div id="adminResult" style="padding:12px;background:rgba(0,0,0,0.04);border-radius:8px;font-size:13px;max-height:400px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BIN_ID="68f0265443b1c97be96a4ad5",API_KEY="$2a$10$RCnUKDWytC/ysiMgbX6/q.QRSKrLrAOPSOsZVPFYaaW06lur2V5X6",BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`,DEVICE_KEY='banana_device_id',DROPPED_KEY='banana_already_dropped',TUTORIAL_KEY='banana_tutorial_seen',ADMIN_KEY='banana_admin_mode';
+let deviceId=localStorage.getItem(DEVICE_KEY);
+if(!deviceId){
+  deviceId=([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
+  localStorage.setItem(DEVICE_KEY,deviceId);
+}
+
+const esc=s=>s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const fileToDataURL=f=>new Promise((r,e)=>{const reader=new FileReader();reader.onload=ev=>r(ev.target.result);reader.onerror=e;reader.readAsDataURL(f)});
+const timeAgo=t=>{const s=Math.floor((Date.now()-t)/1000);if(s<60)return'just now';const m=Math.floor(s/60);if(m<60)return`${m}m ago`;const h=Math.floor(m/60);if(h<24)return`${h}h ago`;const d=Math.floor(h/24);if(d<30)return`${d}d ago`;const mo=Math.floor(d/30);if(mo<12)return`${mo}mo ago`;return`${Math.floor(mo/12)}y ago`};
+const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}};
+const getVagueLocation=addr=>{if(!addr)return'Unknown';const parts=addr.split(',').map(p=>p.trim());if(parts.length>=2){const city=parts[parts.length-3]||parts[0];const region=parts[parts.length-2];return`Near ${city}, ${region}`}return`Near ${parts[0]}`};
+const approximateCoords=(lat,lng)=>{const offset=0.01;return{lat:lat+(Math.random()-0.5)*offset,lng:lng+(Math.random()-0.5)*offset}};
+
+let promptResolve=null,promptMode='input';
+const showPrompt=(title,message,defaultValue='',mode='input')=>{
+  return new Promise((resolve)=>{
+    promptResolve=resolve;
+    promptMode=mode;
+    document.getElementById('promptTitle').textContent=title;
+    document.getElementById('promptMessage').textContent=message;
+    if(mode==='textarea'){
+      document.getElementById('promptInput').style.display='none';
+      document.getElementById('promptTextarea').style.display='block';
+      document.getElementById('promptTextarea').value=defaultValue;
+      setTimeout(()=>document.getElementById('promptTextarea').focus(),100);
+    }else{
+      document.getElementById('promptInput').style.display='block';
+      document.getElementById('promptTextarea').style.display='none';
+      document.getElementById('promptInput').value=defaultValue;
+      setTimeout(()=>document.getElementById('promptInput').focus(),100);
+    }
+    document.getElementById('promptOverlay').classList.add('show');
+    document.getElementById('promptDialog').classList.add('show');
+  });
+};
+const closePrompt=(value=null)=>{
+  document.getElementById('promptOverlay').classList.remove('show');
+  document.getElementById('promptDialog').classList.remove('show');
+  if(promptResolve){
+    promptResolve(value);
+    promptResolve=null;
+  }
+};
+document.getElementById('promptCancel').onclick=()=>closePrompt(null);
+document.getElementById('promptConfirm').onclick=()=>{
+  const value=promptMode==='textarea'?document.getElementById('promptTextarea').value.trim():document.getElementById('promptInput').value.trim();
+  closePrompt(value||null);
+};
+document.getElementById('promptInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    const value=document.getElementById('promptInput').value.trim();
+    closePrompt(value||null);
+  }else if(e.key==='Escape'){
+    closePrompt(null);
+  }
+});
+document.getElementById('promptOverlay').onclick=()=>closePrompt(null);
+
+let map,bananasCache=[],domMarkers=[],refreshHandle;
+const toast=(msg,type='info',dur=2500)=>{
+  const c=document.getElementById('toastContainer'),iconMap={success:'i-check',error:'i-alert',info:'i-info'};
+  c.innerHTML=`<div class="toast ${type}"><svg class="icon"><use href="#${iconMap[type]}"/></svg><span>${msg}</span></div>`;
+  if(dur>0)setTimeout(()=>c.innerHTML='',dur)
+};
+const pulseAt=(lng,lat)=>{
+  const d=document.createElement('div');
+  d.style.cssText=`width:18px;height:18px;border-radius:50%;border:3px solid #FFD93D;position:absolute;transform:translate(-50%,-50%);pointer-events:none;opacity:.9;animation:pulse 900ms ease-out forwards`;
+  const m=new maplibregl.Marker({element:d}).setLngLat([lng,lat]).addTo(map);
+  setTimeout(()=>m.remove(),900)
+};
+const _pulseStyle=document.createElement('style');
+_pulseStyle.textContent=`@keyframes pulse{0%{transform:translate(-50%,-50%) scale(0.6);opacity:.9}100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}}`;
+document.head.appendChild(_pulseStyle);
+
+const makeStyle=()=>{
+  const sub=['a','b','c','d'],
+    base='https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    labels='https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png';
+  return{
+    version:8,
+    glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    sources:{
+      base:{type:'raster',tiles:sub.map(s=>base.replace('{s}',s)),tileSize:256},
+      labels:{type:'raster',tiles:sub.map(s=>labels.replace('{s}',s)),tileSize:256},
+      bananas:{type:'geojson',data:{type:'FeatureCollection',features:[]},cluster:true,clusterRadius:50}
+    },
+    layers:[
+      {id:'base',type:'raster',source:'base'},
+      {id:'labels',type:'raster',source:'labels',paint:{'raster-opacity':.65}},
+      {id:'clusters',type:'circle',source:'bananas',filter:['has','point_count'],paint:{'circle-color':'#FFE066','circle-stroke-width':2,'circle-stroke-color':'#E0C24B','circle-radius':['step',['get','point_count'],15,10,19,25,24]}},
+      {id:'cluster-count',type:'symbol',source:'bananas',filter:['has','point_count'],layout:{'text-field':['get','point_count_abbreviated'],'text-size':12,'text-font':['Open Sans Bold','Arial Unicode MS Bold']},paint:{'text-color':'#222'}}
+    ]
+  }
+};
+
+const asFeat=b=>({type:'Feature',properties:{deviceId:b.deviceId||'',name:b.name||'',msg:b.msg||'',photos:b.photos||[b.photo]||[],ts:b.ts||0,locationHistory:b.locationHistory||[],comments:b.comments||[],reactions:b.reactions||[]},geometry:{type:'Point',coordinates:[b.lng,b.lat]}});
+const clearMarkers=()=>{domMarkers.forEach(m=>m.remove());domMarkers=[]};
+const bananaSVG=`<svg viewBox="0 0 256.85 291.32" xmlns="http://www.w3.org/2000/svg"><g><path fill="#f8db8f" d="M71.1,141.02c.28,1.47.88,7.33,1.51,8.76,1.93,4.39,14.28,1.42,18.58.95-11.67-38.63-11.64-82.48,8.03-118.8,6.14-11.33,14.88-23.92,27.11-29.82l.25-1.18-4.27-.47c-25.63,3.82-45.46,48.7-50.2,69.81-4.86,21.62-5.22,49.03-1,70.76Z"/><path fill="#ffeda3" d="M122.3.45l4.27.47-.25,1.18c-12.23,5.9-20.97,18.49-27.11,29.82-19.67,36.32-19.7,80.17-8.03,118.8-4.3.48-16.64,3.45-18.58-.95-.63-1.42-1.22-7.29-1.51-8.76l-25.6,2.37c11.12-2.18,20.14.12,27.11,8.76-3.44,1.89-7.15,2.97-10.54,4.97-23.54,13.89-24.41,35.07-30.12,57.27-1.14,17.15,3.46,36,12.55,50.88,6.03,9.87,22.72,28.5,36.15,25.79,1.76-21.88-7.48-39.71-6.02-62.24.91-14.08,10.81-51.24,20.08-62,8.51-9.89,29.8-18.03,36.15-2.13,1.3-5.09,1.66-9.2,5.52-13.25-1.02-2.13,6.58-7.74,6.02-9.23-.07-.19-1.78-.28-2.51-2.84-8.39-29.54-10.59-63.06-5.02-93.24,2.16-11.71,10.88-29.39,3.51-40.23-1.89-2.78-5.1-3.54-7.53-5.44-3.52-.67-5.06-.52-8.53,0Z"/><path fill="#ffdb27" d="M80.64,291.05c15.58-3.14,4.71-25.51,3.01-35.26-3.34-19.23-3.22-36.25,2.01-55.14,2.36-8.51,11.33-33.16,19.33-37.39,5.51-2.92,10.89-2.02,16.82-.95,3.42.62,5.45,2.59,9.04,2.37-6.35-15.9-27.63-7.76-36.15,2.13-9.27,10.76-19.17,47.93-20.08,62-1.45,22.52,7.78,40.35,6.02,62.24Z"/><path fill="#ffc910" d="M18.89,251.3c6.47-3.93,7.28-19.33,9.04-26.27.88-3.45,3.38-8.16,4.02-10.65,5.71-22.2,6.59-43.38,30.12-57.27.11-2.35,4.35-1.54,3.01-3.55-21.74-19.04-42.85,15.37-49.2,30.29-6.43,15.12-13.02,38.46-11.04,56.32.93,8.39,3.7,17.42,14.06,11.12Z"/><path fill="#ffdb27" d="M45.49,143.38C12.83,149.77-5.18,217.75,1.31,243.96c2.27,9.18,8.63,14.45,17.57,7.34-10.36,6.29-13.13-2.73-14.06-11.12-1.97-17.86,4.62-41.2,11.04-56.32,6.34-14.93,27.46-49.33,49.2-30.29,1.33,2.01-2.91,1.2-3.01,3.55,3.39-2,7.1-3.08,10.54-4.97-6.97-8.64-15.99-10.93-27.11-8.76Z"/><path fill="#ffdb27" d="M226.68,282.86c-29.25,13.86-88.77-31.06-120.23-78.8-3.94-5.99-13.84-37.32,9.8-43.5,1.53-.4,2.62-.5,3.61-.38,1.8.23,2.92.93,4.51,1.76,1.39.73,3.46,1.7,6.18,2.59.19-1.78.84-4.19,1.8-7.01.74-2.17,1.79-4.21,3.72-6.24,50.98-39.77,88.26,30.02,110.95,64.13,2.34,3,5.81,7.55,9.54,8.76.38,4.53-3.49,5.6-7.78,4.73-5.68-1.15-15.85-23.65-19.33-29.11-11.19-17.56-35.92-53.71-59.49-55.14-8.08-.49-13.28,2.2-14.31,10.18-1.71,13.24,30.61,61.14,74.3,98.45,3.01,2.57,10.69,9.03,9.79,16.33-.93,7.5-10.45,12.02-13.05,13.25Z"/><path fill="#ffc910" d="M227.35,283c-8.08-.83-17.63-2.33-25.6-3.61-28.79-4.62-83.79-52-94.63-77.38-2.57-6.02-9.42-29.07.79-37.25,6.96-5.58,18.77-1.65,22.94-.07-2.37-1.63-6.59-4.07-12.37-5.03-3.5-.58-6.53-.45-8.78-.16,0,0,0,0,0,0,0,0-2.19.37-4.33,1.57-6.53,3.68-11.3,12.65-11.3,12.65-4.63,8.69-6.9,17.53-8.02,24.75,6.18,10.25,15.37,24.34,28.93,39.03,11.07,12,23.42,22.98,36.59,32.91,15.18,11.45,37.24,23.97,61.16,18.46,6.38-1.47,11.36-3.93,14.65-5.85Z"/><path fill="#34af0e" d="M232.29,255.34c.65,2.52,2.01,9.24-.91,16.82-4.04,10.51-16.83,15.88-18.68,16.69,2.72.6,12.47.42,19.22-2.27,2.52-1,12.08-4.84,13.35-13.11,1.15-7.51-4.18-15.66-12.98-18.14Z"/></g></svg>`;
+
+const createMarker=feat=>{
+  const el=document.createElement('div');
+  el.className='banana-marker';
+  if(feat.properties.deviceId===deviceId)el.className+=' mine';
+  el.innerHTML=bananaSVG;
+  const openModal=ev=>{
+    ev.preventDefault();
+    ev.stopPropagation();
+    showBananaModal(feat.properties)
+  };
+  ['pointerdown','touchstart','mousedown'].forEach(type=>el.addEventListener(type,e=>e.stopPropagation(),{passive:true}));
+  el.addEventListener('pointerup',openModal);
+  el.addEventListener('touchend',openModal);
+  el.addEventListener('click',openModal);
+  return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(feat.geometry.coordinates)
+};
+
+const renderMarkers=geojson=>{
+  clearMarkers();
+  if(map.getLayer('trails'))map.removeLayer('trails');
+  if(map.getSource('trails'))map.removeSource('trails');
+  const trailFeatures=[];
+  geojson.features.forEach(f=>{
+    if(f.properties.point_count)return;
+    const m=createMarker(f).addTo(map);
+    domMarkers.push(m);
+    const history=f.properties.locationHistory||[];
+    if(history.length>1){
+      trailFeatures.push({
+        type:'Feature',
+        properties:{deviceId:f.properties.deviceId},
+        geometry:{type:'LineString',coordinates:history.map(h=>[h.lng,h.lat])}
+      })
+    }
+  });
+  if(trailFeatures.length>0){
+    map.addSource('trails',{type:'geojson',data:{type:'FeatureCollection',features:trailFeatures}});
+    map.addLayer({
+      id:'trails',
+      type:'line',
+      source:'trails',
+      paint:{'line-color':'#FFD93D','line-width':3,'line-opacity':0.6,'line-dasharray':[2,2]},
+      'layout':{'line-cap':'round','line-join':'round'}
+    },'clusters')
+  }
+};
+
+const updateStats=count=>{document.getElementById('totalCount').textContent=count};
+const fetchLatest=async()=>{
+  const res=await fetch(`${BIN_URL}/latest`,{headers:{"X-Master-Key":API_KEY}});
+  if(!res.ok)throw new Error('Load failed');
+  return res.json()
+};
+const putBananas=async arr=>{
+  const res=await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({bananas:arr})});
+  if(!res.ok)throw new Error('Save failed')
+};
+
+const loadBananas=async()=>{
+  try{
+    const data=await fetchLatest();
+    bananasCache=data.record?.bananas||[];
+    const feats=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number').map(asFeat);
+    const src=map.getSource('bananas');
+    if(src)src.setData({type:'FeatureCollection',features:feats});
+    renderMarkers({type:'FeatureCollection',features:feats});
+    updateStats(feats.length);
+    const already=bananasCache.some(b=>b.deviceId===deviceId)||localStorage.getItem(DROPPED_KEY)==='true';
+    document.getElementById('dropBtn').disabled=already;
+    document.getElementById('dropBtn').querySelector('span').textContent=already?"Banana Dropped":"Drop Banana";
+    ['seeMine','shareMine','deleteMine'].forEach(id=>document.getElementById(id).classList.toggle('disabled',!already))
+  }catch(e){
+    console.error(e);
+    toast('Load failed','error',3000)
+  }
+};
+
+const reactToBanana=async(bananaDeviceId,reactionType)=>{
+  try{
+    const data=await fetchLatest();
+    const bananas=data.record?.bananas||[];
+    const idx=bananas.findIndex(b=>b.deviceId===bananaDeviceId);
+    if(idx===-1){toast('Banana not found','error',2000);return}
+    if(!bananas[idx].reactions)bananas[idx].reactions=[];
+    const existingIdx=bananas[idx].reactions.findIndex(r=>r.deviceId===deviceId);
+    if(existingIdx!==-1){
+      if(bananas[idx].reactions[existingIdx].type===reactionType){
+        bananas[idx].reactions.splice(existingIdx,1);
+      }else{
+        bananas[idx].reactions[existingIdx].type=reactionType;
+      }
+    }else{
+      bananas[idx].reactions.push({deviceId,type:reactionType,ts:Date.now()});
+    }
+    await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,bananas})});
+    await loadBananas();
+    const updatedBanana=bananasCache.find(b=>b.deviceId===bananaDeviceId);
+    if(updatedBanana){
+      renderReactions(bananaDeviceId,updatedBanana.reactions||[],document.getElementById('modalReactions'));
+      renderReactions(bananaDeviceId,updatedBanana.reactions||[],document.getElementById('swipeReactions'));
+    }
+  }catch(e){
+    console.error(e);
+    toast('Reaction failed','error',2000);
+  }
+};
+
+const renderReactions=(bananaDeviceId,reactions,container)=>{
+  if(!container)return;
+  const reactionTypes=[
+    {type:'like',emoji:'👍',label:'Like'},
+    {type:'love',emoji:'❤️',label:'Love'},
+    {type:'fire',emoji:'🔥',label:'Fire'}
+  ];
+  const counts={};
+  reactionTypes.forEach(r=>counts[r.type]=0);
+  reactions.forEach(r=>{
+    if(counts[r.type]!==undefined)counts[r.type]++;
+  });
+  const myReaction=reactions.find(r=>r.deviceId===deviceId);
+  container.innerHTML=`<div class="reactions-bar">${reactionTypes.map(r=>{
+    const isActive=myReaction&&myReaction.type===r.type;
+    return`<button class="reaction-btn ${isActive?'active':''}" data-type="${r.type}" data-banana="${bananaDeviceId}">
+      <span class="reaction-emoji">${r.emoji}</span>
+      ${counts[r.type]>0?`<span class="reaction-count">${counts[r.type]}</span>`:''}
+    </button>`;
+  }).join('')}</div>`;
+  container.querySelectorAll('.reaction-btn').forEach(btn=>{
+    btn.onclick=()=>reactToBanana(btn.dataset.banana,btn.dataset.type);
+  });
+};
+
+let currentFeedTab='updates';
+const openFeed=async()=>{
+  document.getElementById('feedOverlay').classList.add('show');
+  document.getElementById('feedModal').classList.add('show');
+  renderFeedTab();
+};
+const closeFeed=()=>{
+  document.getElementById('feedOverlay').classList.remove('show');
+  document.getElementById('feedModal').classList.remove('show');
+};
+const renderFeedTab=async()=>{
+  try{
+    const data=await fetchLatest();
+    const bananas=data.record?.bananas||[];
+    const boardMessages=data.record?.boardMessages||[];
+    const content=document.getElementById('feedContent');
+    const compose=document.getElementById('boardCompose');
+    
+    if(currentFeedTab==='updates'){
+      compose.style.display='none';
+      const updates=[];
+      bananas.forEach(b=>{
+        updates.push({type:'drop',name:b.name||'Anonymous',ts:b.ts,lat:b.lat,lng:b.lng,deviceId:b.deviceId});
+        const history=b.locationHistory||[];
+        history.slice(1).forEach(h=>{
+          updates.push({type:'move',name:b.name||'Anonymous',ts:h.ts,lat:h.lat,lng:h.lng,customName:h.customName,deviceId:b.deviceId});
+        });
+      });
+      updates.sort((a,b)=>b.ts-a.ts);
+      content.innerHTML=updates.slice(0,50).map(u=>{
+        const action=u.type==='drop'?'🍌 dropped a banana':'📍 moved their banana'+(u.customName?` to ${esc(u.customName)}`:'');
+        return`<div class="feed-item">
+          <div class="feed-item-header">
+            <span class="feed-item-name">${esc(u.name)}</span>
+            <span class="feed-item-time">${timeAgo(u.ts)}</span>
+          </div>
+          <div class="feed-item-action">${action}</div>
+        </div>`;
+      }).join('');
+    }else{
+      const myBanana = bananasCache.find(b=>b.deviceId===deviceId);
+      compose.style.display='block';
+      
+      if(!myBanana){
+        compose.innerHTML=`
+          <div style="padding:16px;background:rgba(255,217,61,0.1);border-radius:8px;text-align:center;color:var(--muted);font-size:14px;">
+            🍌 Drop a banana first to post on the message board
+          </div>
+        `;
+      }else{
+        compose.innerHTML=`
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Posting as <strong>${esc(myBanana.name)}</strong></div>
+          <textarea id="boardMessage" placeholder="Share something with the community..." maxlength="300" style="width:100%;padding:10px;border:1px solid rgba(0,0,0,0.1);border-radius:8px;min-height:80px;font:inherit;font-size:13px;resize:vertical"></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+            <span style="font-size:11px;color:var(--muted)" id="boardCharCount">0/300</span>
+            <button id="postBoardMessage" class="btn-primary" style="padding:8px 16px;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer">Post Message</button>
+          </div>
+        `;
+        
+        compose.querySelector('#boardMessage').addEventListener('input',()=>{
+          const len=compose.querySelector('#boardMessage').value.length;
+          compose.querySelector('#boardCharCount').textContent=`${len}/300`;
+        });
+        
+        compose.querySelector('#postBoardMessage').onclick=async()=>{
+          const message=compose.querySelector('#boardMessage').value.trim();
+          if(!message){toast('Enter message','error',2000);return}
+          try{
+            const data=await fetchLatest();
+            const boardMessages=data.record?.boardMessages||[];
+            boardMessages.push({name:myBanana.name,message,ts:Date.now(),deviceId});
+            await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,boardMessages})});
+            compose.querySelector('#boardMessage').value='';
+            compose.querySelector('#boardCharCount').textContent='0/300';
+            toast('Posted!','success',2000);
+            renderFeedTab();
+          }catch(e){
+            console.error(e);
+            toast('Post failed','error',2000);
+          }
+        };
+      }
+      
+      content.innerHTML=boardMessages.sort((a,b)=>b.ts-a.ts).slice(0,50).map(m=>{
+        const isOwn=m.deviceId===deviceId;
+        return`<div class="feed-item">
+          <div class="feed-item-header">
+            <span class="feed-item-name">${esc(m.name||'Anonymous')}
+              ${isOwn?`<span class="feed-item-edit" onclick="editBoardMessage(${m.ts})">edit</span>`:''}
+            </span>
+            <span class="feed-item-time">${timeAgo(m.ts)}</span>
+          </div>
+          <div class="feed-item-message">${esc(m.message)}</div>
+        </div>`;
+      }).join('');
+    }
+  }catch(e){
+    console.error(e);
+    toast('Load failed','error',2000);
+  }
+};
+
+window.editBoardMessage=async(ts)=>{
+  try{
+    const data=await fetchLatest();
+    const boardMessages=data.record?.boardMessages||[];
+    const msg=boardMessages.find(m=>m.ts===ts&&m.deviceId===deviceId);
+    if(!msg){toast('Message not found','error',2000);return}
+    const newText=await showPrompt('Edit Message','Update your message',msg.message,'textarea');
+    if(!newText)return;
+    msg.message=newText;
+    await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,boardMessages})});
+    toast('Updated!','success',2000);
+    renderFeedTab();
+  }catch(e){
+    console.error(e);
+    toast('Edit failed','error',2000);
+  }
+};
+
+document.getElementById('feedOverlay').onclick=closeFeed;
+document.getElementById('feedClose').onclick=closeFeed;
+document.querySelectorAll('.feed-tab').forEach(tab=>{
+  tab.onclick=()=>{
+    document.querySelectorAll('.feed-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFeedTab=tab.dataset.tab;
+    renderFeedTab();
+  };
+});
+
+const renderComments=(comments,bananaDeviceId)=>{
+  const section=document.createElement('div');
+  section.className='comment-section';
+  section.innerHTML=`<h4 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--ink)">💬 Comments (${comments.length})</h4>`;
+  const list=document.createElement('div');
+  comments.sort((a,b)=>b.ts-a.ts).forEach(c=>{
+    const isOwn=c.commenterDevice===deviceId;
+    const item=document.createElement('div');
+    item.className='comment-item';
+    item.innerHTML=`
+      <div class="comment-header">
+        <span class="comment-name">${esc(c.name||'Anonymous')}
+          ${isOwn?`<span class="comment-edit-btn" data-ts="${c.ts}" data-banana="${bananaDeviceId}">edit</span>`:''}
+        </span>
+        <span class="comment-time">${timeAgo(c.ts)}</span>
+      </div>
+      <div class="comment-text">${esc(c.text)}</div>
+    `;
+    list.appendChild(item);
+  });
+  section.appendChild(list);
+  
+  section.querySelectorAll('.comment-edit-btn').forEach(btn=>{
+    btn.onclick=async()=>{
+      const ts=parseInt(btn.dataset.ts);
+      const bananaId=btn.dataset.banana;
+      try{
+        const data=await fetchLatest();
+        const bananas=data.record?.bananas||[];
+        const idx=bananas.findIndex(b=>b.deviceId===bananaId);
+        if(idx===-1){toast('Banana not found','error',2000);return}
+        const comment=bananas[idx].comments.find(c=>c.ts===ts&&c.commenterDevice===deviceId);
+        if(!comment){toast('Comment not found','error',2000);return}
+        const newText=await showPrompt('Edit Comment','Update your comment',comment.text,'textarea');
+        if(!newText)return;
+        comment.text=newText;
+        await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,bananas})});
+        toast('Updated!','success',2000);
+        closeModal();
+        await loadBananas();
+        const updatedBanana=bananasCache.find(b=>b.deviceId===bananaId);
+        if(updatedBanana){
+          setTimeout(()=>showBananaModal(updatedBanana),300);
+        }
+      }catch(e){
+        console.error(e);
+        toast('Edit failed','error',2000);
+      }
+    };
+  });
+  
+  const myBanana = bananasCache.find(b=>b.deviceId===deviceId);
+  
+  const compose=document.createElement('div');
+  compose.className='comment-compose';
+  
+  if(!myBanana){
+    compose.innerHTML=`
+      <div style="padding:12px;background:rgba(255,217,61,0.1);border-radius:8px;text-align:center;color:var(--muted);font-size:13px;">
+        🍌 Drop a banana first to leave comments
+      </div>
+    `;
+  }else{
+    compose.innerHTML=`
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Commenting as <strong>${esc(myBanana.name)}</strong></div>
+      <textarea placeholder="Leave a comment..." maxlength="200" id="commentText"></textarea>
+      <button id="postComment">Post Comment</button>
+    `;
+    compose.querySelector('#postComment').onclick=async()=>{
+      const text=compose.querySelector('#commentText').value.trim();
+      if(!text){toast('Enter comment','error',2000);return}
+      try{
+        const data=await fetchLatest();
+        const bananas=data.record?.bananas||[];
+        const idx=bananas.findIndex(b=>b.deviceId===bananaDeviceId);
+        if(idx===-1){toast('Banana not found','error',2000);return}
+        if(!bananas[idx].comments)bananas[idx].comments=[];
+        bananas[idx].comments.push({name:myBanana.name,text,ts:Date.now(),commenterDevice:deviceId});
+        await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,bananas})});
+        toast('Comment posted!','success',2000);
+        closeModal();
+        await loadBananas();
+        const updatedBanana = bananasCache.find(b=>b.deviceId===bananaDeviceId);
+        if(updatedBanana){
+          setTimeout(()=>showBananaModal(updatedBanana),300);
+        }
+      }catch(e){
+        console.error(e);
+        toast('Comment failed','error',2000);
+      }
+    };
+  }
+  section.appendChild(compose);
+  return section;
+};
+
+let isAdminMode=false;
+const ADMIN_PASSWORD='banana2025';
+const openAdmin=()=>{
+  document.getElementById('adminOverlay').classList.add('show');
+  document.getElementById('adminModal').classList.add('show');
+  if(localStorage.getItem(ADMIN_KEY)==='true'){
+    isAdminMode=true;
+    document.getElementById('adminAuth').style.display='none';
+    document.getElementById('adminContent').style.display='block';
+  }
+};
+const closeAdmin=()=>{
+  document.getElementById('adminOverlay').classList.remove('show');
+  document.getElementById('adminModal').classList.remove('show');
+};
+document.getElementById('adminOverlay').onclick=closeAdmin;
+document.getElementById('adminClose').onclick=closeAdmin;
+document.getElementById('adminLogin').onclick=()=>{
+  const pass=document.getElementById('adminPassword').value;
+  if(pass===ADMIN_PASSWORD){
+    isAdminMode=true;
+    localStorage.setItem(ADMIN_KEY,'true');
+    document.getElementById('adminAuth').style.display='none';
+    document.getElementById('adminContent').style.display='block';
+    toast('Admin access granted','success',2000);
+  }else{
+    toast('Wrong password','error',2000);
+  }
+};
+document.getElementById('adminResetDevice').onclick=()=>{
+  if(!confirm('Reset your device ID? You will lose access to your banana.'))return;
+  localStorage.removeItem(DEVICE_KEY);
+  localStorage.removeItem(DROPPED_KEY);
+  location.reload();
+};
+document.getElementById('adminViewDevices').onclick=async()=>{
+  try{
+    const data=await fetchLatest();
+    const bananas=data.record?.bananas||[];
+    const result=document.getElementById('adminResult');
+    result.innerHTML=`<div style="font-weight:700;margin-bottom:8px">Total Devices: ${bananas.length}</div>`;
+    bananas.forEach(b=>{
+      result.innerHTML+=`<div style="padding:8px;background:#fff;border-radius:6px;margin-bottom:6px">
+        <div><strong>${esc(b.name||'Anonymous')}</strong></div>
+        <div style="font-size:11px;color:var(--muted);font-family:monospace">${b.deviceId}</div>
+        <div style="font-size:11px;color:var(--muted)">${timeAgo(b.ts)}</div>
+      </div>`;
+    });
+  }catch(e){
+    toast('Load failed','error',2000);
+  }
+};
+document.getElementById('adminEditAny').onclick=async()=>{
+  const targetDevice=prompt('Enter device ID to edit:');
+  if(!targetDevice)return;
+  try{
+    const data=await fetchLatest();
+    const bananas=data.record?.bananas||[];
+    const banana=bananas.find(b=>b.deviceId===targetDevice);
+    if(!banana){toast('Device not found','error',2000);return}
+    closeAdmin();
+    showBananaModal(banana);
+  }catch(e){
+    toast('Load failed','error',2000);
+  }
+};
+document.getElementById('adminClearBoard').onclick=async()=>{
+  if(!confirm('Clear all board messages? This cannot be undone.'))return;
+  try{
+    const data=await fetchLatest();
+    await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,boardMessages:[]})});
+    toast('Board cleared','success',2000);
+  }catch(e){
+    toast('Clear failed','error',2000);
+  }
+};
+
+const viewTrailOnMap=(lat,lng,customName)=>{
+  closeModal();
+  closeSwipeModal();
+  map.easeTo({center:[lng,lat],zoom:17,duration:800});
+  pulseAt(lng,lat);
+  toast(customName||'Trail location','info',2000);
+};
+
+const deleteTrailPoint=async(trailIndex)=>{
+  if(!confirm('Delete this trail point?'))return;
+  try{
+    const latest=await fetchLatest();
+    const arr=latest.record?.bananas||[];
+    const idx=arr.findIndex(x=>x.deviceId===deviceId);
+    if(idx===-1){toast("No banana",'info',2000);return}
+    const history=arr[idx].locationHistory||[];
+    if(trailIndex<0||trailIndex>=history.length||history.length<=1){toast("Cannot delete",'error',2000);return}
+    history.splice(trailIndex,1);
+    arr[idx].locationHistory=history;
+    if(trailIndex===history.length){
+      arr[idx].lat=history[history.length-1].lat;
+      arr[idx].lng=history[history.length-1].lng
+    }
+    await putBananas(arr);
+    await loadBananas();
+    toast('Trail point deleted','success',2000);
+    closeModal()
+  }catch(e){
+    console.error(e);
+    toast('Delete failed','error',2000)
+  }
+};
+
+const showBananaModal=p=>{
+  document.getElementById('modalTitle').textContent=p.name||'Anonymous';
+  document.getElementById('modalMeta').textContent=p.ts?timeAgo(p.ts):'';
+  
+  renderReactions(p.deviceId,p.reactions||[],document.getElementById('modalReactions'));
+  
+  const msg=document.getElementById('modalMessage');
+  if(p.msg){msg.textContent=p.msg;msg.style.display='block'}else{msg.style.display='none'}
+  const gallery=document.getElementById('modalPhotoGallery');
+  const photos=p.photos||[p.photo]||[];
+  photos.filter(ph=>ph).length>0?(()=>{
+    gallery.innerHTML='';
+    photos.filter(ph=>ph).forEach((ph,i)=>{
+      const img=document.createElement('img');
+      img.src=ph;
+      img.alt=`Photo ${i+1}`;
+      gallery.appendChild(img)
+    });
+    gallery.style.display='flex'
+  })():(gallery.style.display='none',gallery.innerHTML='');
+  const history=document.getElementById('modalHistory');
+  const trail=p.locationHistory||[];
+  if(trail.length>1){
+    const isOwner=p.deviceId===deviceId;
+    history.innerHTML='<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--ink)">🗺️ Banana Trail</h4>'+trail.map((loc,i)=>{
+      const title=i===trail.length-1?'📍 Current Location':(loc.customName||`🚩 Stop ${i+1}`);
+      const notes=loc.notes?`<div class="trail-item-notes">"${esc(loc.notes)}"</div>`:'';
+      return`<div class="trail-item"><div class="trail-item-content"><div class="trail-item-title">${esc(title)}</div><div class="trail-item-address">${esc(getVagueLocation(loc.address||''))}</div>${notes}<div class="trail-item-time">${timeAgo(loc.ts)}</div></div><div class="trail-item-actions"><button class="trail-map-btn" onclick="viewTrailOnMap(${loc.lat},${loc.lng},'${esc(title).replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-location"/></svg></button>${isOwner&&trail.length>1?`<button class="trail-delete-btn" onclick="deleteTrailPoint(${i})"><svg class="icon"><use href="#i-trash"/></svg></button>`:''}</div></div>`
+    }).reverse().join('');
+    history.style.display='block'
+  }else{
+    history.style.display='none'
+  }
+  const existingComments=document.querySelector('.modal-body .comment-section');
+  if(existingComments)existingComments.remove();
+
+  const comments=p.comments||[];
+  const commentSection=renderComments(comments,p.deviceId);
+  document.querySelector('.modal-body').appendChild(commentSection);
+  const actions=document.getElementById('modalActions');
+  if(p.deviceId===deviceId||isAdminMode){
+    actions.style.display='flex';
+    document.getElementById('modalEdit').onclick=()=>{
+      closeModal();
+      openSheet('edit',{lat:0,lng:0,...p})
+    };
+    document.getElementById('modalMove').onclick=()=>{
+      closeModal();
+      if(navigator.geolocation){
+        toast('Getting location...','info',1500);
+        navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>moveBanana(latitude,longitude),()=>toast('Location unavailable','error',2000),{enableHighAccuracy:true,timeout:8000})
+      }else{
+        toast('Location unavailable','error',2000)
+      }
+    };
+    document.getElementById('modalDelete').onclick=()=>{
+      closeModal();
+      if(isAdminMode){
+        deleteAnyBanana(p.deviceId)
+      }else{
+        deleteMyBanana()
+      }
+    }
+  }else{
+    actions.style.display='none'
+  }
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show')
+};
+
+const closeModal=()=>{
+  const existingComments=document.querySelector('.comment-section');
+  if(existingComments)existingComments.remove();
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('modal').classList.remove('show')
+};
+
+document.getElementById('modalOverlay').onclick=closeModal;
+document.getElementById('modalClose').onclick=closeModal;
+
+let swipeList=[],swipeIndex=0,swipeStartX=0,swipeStartY=0,isSwiping=false;
+const openSwipeModal=()=>{
+  swipeList=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number').sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!swipeList.length){toast("No bananas yet",'info',2000);return}
+  swipeIndex=0;
+  document.getElementById('swipeOverlay').classList.add('show');
+  document.getElementById('swipeModal').classList.add('show');
+  renderSwipeCard()
+};
+
+const closeSwipeModal=()=>{
+  const existingComments=document.querySelector('.swipe-card-body .comment-section');
+  if(existingComments)existingComments.remove();
+  document.getElementById('swipeOverlay').classList.remove('show');
+  document.getElementById('swipeModal').classList.remove('show')
+};
+
+const renderSwipeCard=()=>{
+  const b=swipeList[swipeIndex];
+  if(!b){closeSwipeModal();return}
+  document.getElementById('swipeTitle').textContent=b.name||'Anonymous';
+  document.getElementById('swipeMeta').textContent=b.ts?timeAgo(b.ts):'';
+  
+  renderReactions(b.deviceId,b.reactions||[],document.getElementById('swipeReactions'));
+  
+  const msg=document.getElementById('swipeMessage');
+  if(b.msg){msg.textContent=b.msg;msg.style.display='block'}else{msg.style.display='none'}
+  const gallery=document.getElementById('swipePhotoGallery');
+  const photos=b.photos||[b.photo]||[];
+  photos.filter(ph=>ph).length>0?(()=>{
+    gallery.innerHTML='';
+    photos.filter(ph=>ph).forEach((ph,i)=>{
+      const img=document.createElement('img');
+      img.src=ph;
+      img.alt=`Photo ${i+1}`;
+      gallery.appendChild(img)
+    });
+    gallery.style.display='flex'
+  })():(gallery.style.display='none',gallery.innerHTML='');
+  const history=document.getElementById('swipeHistory');
+  const trail=b.locationHistory||[];
+  if(trail.length>1){
+    history.innerHTML='<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--ink)">🗺️ Banana Trail</h4>'+trail.map((loc,i)=>{
+      const title=i===trail.length-1?'📍 Current Location':(loc.customName||`🚩 Stop ${i+1}`);
+      const notes=loc.notes?`<div class="trail-item-notes">"${esc(loc.notes)}"</div>`:'';
+      return`<div class="trail-item"><div class="trail-item-content"><div class="trail-item-title">${esc(title)}</div><div class="trail-item-address">${esc(getVagueLocation(loc.address||''))}</div>${notes}<div class="trail-item-time">${timeAgo(loc.ts)}</div></div><div class="trail-item-actions"><button class="trail-map-btn" onclick="viewTrailOnMap(${loc.lat},${loc.lng},'${esc(title).replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-location"/></svg></button></div></div>`
+    }).reverse().join('');
+    history.style.display='block'
+  }else{
+    history.style.display='none'
+  }
+  const existingComments=document.querySelector('.swipe-card-body .comment-section');
+  if(existingComments)existingComments.remove();
+  const comments=b.comments||[];
+  const commentSection=renderComments(comments,b.deviceId);
+  document.querySelector('.swipe-card-body').appendChild(commentSection);
+  document.getElementById('swipeCounter').textContent=`${swipeIndex+1}/${swipeList.length}`;
+  document.getElementById('swipePrev').disabled=swipeIndex===0;
+  document.getElementById('swipeNext').disabled=swipeIndex===swipeList.length-1
+};
+
+const swipeToIndex=idx=>{
+  if(idx<0||idx>=swipeList.length)return;
+  swipeIndex=idx;
+  renderSwipeCard()
+};
+
+const card=document.getElementById('swipeCard');
+card.addEventListener('touchstart',e=>{
+  swipeStartX=e.touches[0].clientX;
+  swipeStartY=e.touches[0].clientY;
+  isSwiping=true;
+  card.classList.add('swiping')
+},{passive:true});
+
+card.addEventListener('touchmove',e=>{
+  if(!isSwiping)return;
+  const dx=e.touches[0].clientX-swipeStartX,dy=e.touches[0].clientY-swipeStartY;
+  if(Math.abs(dx)>Math.abs(dy)){
+    e.preventDefault();
+    card.style.transform=`translateX(${dx}px) rotate(${dx*0.05}deg)`;
+    if(dx<-50)document.getElementById('swipeLeft').style.opacity='1';
+    else if(dx>50)document.getElementById('swipeRight').style.opacity='1';
+    else{
+      document.getElementById('swipeLeft').style.opacity='0';
+      document.getElementById('swipeRight').style.opacity='0'
+    }
+  }
+},{passive:false});
+
+card.addEventListener('touchend',e=>{
+  if(!isSwiping)return;
+  const dx=e.changedTouches[0].clientX-swipeStartX;
+  isSwiping=false;
+  card.classList.remove('swiping');
+  card.style.transform='';
+  document.getElementById('swipeLeft').style.opacity='0';
+  document.getElementById('swipeRight').style.opacity='0';
+  if(dx<-100&&swipeIndex<swipeList.length-1){
+    swipeToIndex(swipeIndex+1)
+  }else if(dx>100&&swipeIndex>0){
+    swipeToIndex(swipeIndex-1)
+  }
+},{passive:true});
+
+document.getElementById('swipeOverlay').onclick=closeSwipeModal;
+document.getElementById('swipeClose').onclick=closeSwipeModal;
+document.getElementById('swipePrev').onclick=()=>swipeToIndex(swipeIndex-1);
+document.getElementById('swipeNext').onclick=()=>swipeToIndex(swipeIndex+1);
+document.getElementById('swipeMapBtn').onclick=()=>{
+  const b=swipeList[swipeIndex];
+  if(!b)return;
+  closeSwipeModal();
+  map.easeTo({center:[b.lng,b.lat],zoom:17,duration:800});
+  pulseAt(b.lng,b.lat);
+  setTimeout(()=>showBananaModal(b),350)
+};
+
+document.addEventListener('keydown',e=>{
+  const swipeOpen=document.getElementById('swipeModal').classList.contains('show');
+  if(swipeOpen){
+    if(e.key==='ArrowLeft')swipeToIndex(swipeIndex-1);
+    else if(e.key==='ArrowRight')swipeToIndex(swipeIndex+1);
+    else if(e.key==='Escape')closeSwipeModal()
+  }
+});
+
+const wireSearch=()=>{
+  const panel=document.getElementById('searchPanel'),input=document.getElementById('searchInput'),results=document.getElementById('searchResults'),toggle=document.getElementById('toggleSearch');
+  toggle.onclick=()=>{
+    const open=panel.classList.toggle('show');
+    toggle.classList.toggle('active',open);
+    if(open)input.focus();
+    else{
+      input.value='';
+      results.classList.remove('show')
+    }
+  };
+  document.addEventListener('click',e=>{
+    if(!panel.contains(e.target)&&e.target!==toggle){
+      panel.classList.remove('show');
+      toggle.classList.remove('active');
+      input.value='';
+      results.classList.remove('show')
+    }
+  });
+  const searchLoc=async q=>{
+    if(!q.trim()){
+      results.classList.remove('show');
+      return
+    }
+    try{
+      const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8`);
+      const data=await res.json();
+      results.innerHTML='';
+      if(!data||!data.length){
+        results.innerHTML='<div class="search-result-item"><small>No results</small></div>'
+      }else{
+        data.forEach(r=>{
+          const item=document.createElement('div');
+          item.className='search-result-item';
+          const name=r.display_name.split(',')[0];
+          item.innerHTML=`<div class="icon-wrapper"><svg class="icon"><use href="#i-location"/></svg></div><div class="text"><strong>${esc(name)}</strong><small>${esc(r.display_name)}</small></div>`;
+          item.onclick=()=>{
+            map.easeTo({center:[+r.lon,+r.lat],zoom:14,duration:800});
+            panel.classList.remove('show');
+            toggle.classList.remove('active');
+            input.value='';
+            results.classList.remove('show');
+            toast(name,'info',2000)
+          };
+          results.appendChild(item)
+        })
+      }
+      results.classList.add('show')
+    }catch(e){
+      console.error(e)
+    }
+  };
+  input.addEventListener('input',debounce(()=>searchLoc(input.value),400));
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Enter')searchLoc(input.value)
+  })
+};
+
+const goWorld=()=>{
+  map.easeTo({center:[0,20],zoom:2,duration:900});
+  toast('World view','info',1200)
+};
+
+let currentTutorialStep=0;
+const totalTutorialSteps=6;
+const openTutorial=()=>{
+  currentTutorialStep=0;
+  document.getElementById('tutorialOverlay').classList.add('show');
+  document.getElementById('tutorialModal').classList.add('show');
+  renderTutorialStep()
+};
+const closeTutorial=()=>{
+  document.getElementById('tutorialOverlay').classList.remove('show');
+  document.getElementById('tutorialModal').classList.remove('show');
+  localStorage.setItem(TUTORIAL_KEY,'true')
+};
+const renderTutorialStep=()=>{
+  document.querySelectorAll('.tutorial-step').forEach((step,i)=>{
+    step.style.display=i===currentTutorialStep?'block':'none'
+  });
+  const dots=document.getElementById('tutorialDots');
+  dots.innerHTML='';
+  for(let i=0;i<totalTutorialSteps;i++){
+    const dot=document.createElement('div');
+    dot.className='tutorial-dot'+(i===currentTutorialStep?' active':'');
+    dot.onclick=()=>{
+      currentTutorialStep=i;
+      renderTutorialStep()
+    };
+    dots.appendChild(dot)
+  }
+  const nextBtn=document.getElementById('tutorialNext');
+  const skipBtn=document.getElementById('tutorialSkip');
+  if(currentTutorialStep===totalTutorialSteps-1){
+    nextBtn.textContent='Get Started';
+    skipBtn.style.display='none'
+  }else{
+    nextBtn.textContent='Next';
+    skipBtn.style.display='block'
+  }
+};
+
+const wireTutorial=()=>{
+  document.getElementById('tutorialClose').onclick=closeTutorial;
+  document.getElementById('tutorialOverlay').onclick=closeTutorial;
+  document.getElementById('tutorialModal').onclick=e=>{
+    if(e.target===e.currentTarget)closeTutorial()
+  };
+  document.getElementById('tutorialSkip').onclick=closeTutorial;
+  document.getElementById('tutorialNext').onclick=()=>{
+    if(currentTutorialStep<totalTutorialSteps-1){
+      currentTutorialStep++;
+      renderTutorialStep()
+    }else{
+      closeTutorial()
+    }
+  };
+  document.getElementById('showTutorial').onclick=()=>{
+    menu.classList.remove('show');
+    toggleMenu.classList.remove('active');
+    openTutorial()
+  };
+  document.addEventListener('keydown',e=>{
+    const tutorialOpen=document.getElementById('tutorialModal').classList.contains('show');
+    if(tutorialOpen){
+      if(e.key==='ArrowRight'||e.key==='Enter'){
+        if(currentTutorialStep<totalTutorialSteps-1){
+          currentTutorialStep++;
+          renderTutorialStep()
+        }else{
+          closeTutorial()
+        }
+      }else if(e.key==='ArrowLeft'&&currentTutorialStep>0){
+        currentTutorialStep--;
+        renderTutorialStep()
+      }else if(e.key==='Escape'){
+        closeTutorial()
+      }
+    }
+  });
+  if(!localStorage.getItem(TUTORIAL_KEY)){
+    setTimeout(()=>openTutorial(),1000)
+  }
+};
+
+const wireUI=()=>{
+  wireSearch();
+  const menu=document.getElementById('menu'),toggleMenu=document.getElementById('toggleMenu');
+  toggleMenu.onclick=()=>{
+    const open=menu.classList.toggle('show');
+    toggleMenu.classList.toggle('active',open)
+  };
+  document.addEventListener('click',e=>{
+    if(!menu.contains(e.target)&&e.target!==toggleMenu){
+      menu.classList.remove('show');
+      toggleMenu.classList.remove('active')
+    }
+  });
+  document.getElementById('brandBtn').onclick=goWorld;
+  document.getElementById('homeBtn').onclick=goWorld;
+  const dropBtn=document.getElementById('dropBtn');
+  dropBtn.onclick=()=>{
+    if(dropBtn.disabled){toast('Already dropped','info',2000);return}
+    const openForm=(lat,lng)=>{
+      map.easeTo({center:[lng,lat],zoom:17,duration:800});
+      setTimeout(()=>openSheet('add',{lat,lng}),400)
+    };
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>openForm(latitude,longitude),()=>{
+        const c=map.getCenter();
+        openForm(c.lat,c.lng)
+      },{enableHighAccuracy:true,timeout:6000})
+    }else{
+      const c=map.getCenter();
+      openForm(c.lat,c.lng)
+    }
+  };
+  document.getElementById('locateBtn').onclick=()=>{
+    if(!navigator.geolocation)return;
+    toast('Locating...','info',1500);
+    navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>{
+      map.easeTo({center:[longitude,latitude],zoom:14,duration:800});
+      toast('You are here','success',2000)
+    },()=>toast('Location unavailable','error',2000),{enableHighAccuracy:true,timeout:8000})
+  };
+  document.getElementById('seeMine').onclick=async()=>{
+    if(document.getElementById('seeMine').classList.contains('disabled')){toast("No banana yet",'info',2000);return}
+    try{
+      const data=await fetchLatest();
+      const b=(data.record?.bananas||[]).find(x=>x.deviceId===deviceId);
+      if(!b){toast("No banana yet",'info',2000);return}
+      map.easeTo({center:[b.lng,b.lat],zoom:17,duration:1000});
+      pulseAt(b.lng,b.lat);
+      toast("Your banana",'success',2000);
+      menu.classList.remove('show');
+      toggleMenu.classList.remove('active');
+      setTimeout(()=>showBananaModal(b),500)
+    }catch(e){
+      toast('Error','error',2000)
+    }
+  };
+  document.getElementById('shareMine').onclick=async()=>{
+    if(document.getElementById('shareMine').classList.contains('disabled')){toast("Drop first",'info',2000);return}
+    try{
+      const data=await fetchLatest();
+      const b=(data.record?.bananas||[]).find(x=>x.deviceId===deviceId);
+      if(!b){toast("Drop first",'info',2000);return}
+      const url=new URL(location.href);
+      url.searchParams.set('id',deviceId);
+      await navigator.clipboard.writeText(url.toString());
+      toast("Link copied!",'success',2000);
+      menu.classList.remove('show');
+      toggleMenu.classList.remove('active')
+    }catch(e){
+      toast('Copy failed','error',2000)
+    }
+  };
+  document.getElementById('deleteMine').onclick=()=>{
+    if(document.getElementById('deleteMine').classList.contains('disabled')){toast("No banana",'info',2000);return}
+    menu.classList.remove('show');
+    toggleMenu.classList.remove('active');
+    deleteMyBanana()
+  };
+  document.getElementById('randomBanana').onclick=()=>{
+    menu.classList.remove('show');
+    toggleMenu.classList.remove('active');
+    goRandomBanana()
+  };
+  document.getElementById('browseBananas').onclick=()=>{
+    menu.classList.remove('show');
+    toggleMenu.classList.remove('active');
+    openSwipeModal()
+  };
+  document.getElementById('openFeed').onclick=()=>{
+    menu.classList.remove('show');
+    toggleMenu.classList.remove('active');
+    openFeed()
+  };
+  document.getElementById('openAdmin').onclick=()=>{
+    menu.classList.remove('show');
+    toggleMenu.classList.remove('active');
+    openAdmin()
+  }
+};
+
+document.querySelectorAll('.modal, .swipe-modal').forEach(el=>{
+  el.addEventListener('click',e=>{
+    if(e.target===e.currentTarget){
+      el.classList.remove('show');
+      document.getElementById(el.id==='swipeModal'?'swipeOverlay':'modalOverlay').classList.remove('show')
+    }
+  })
+});
+
+const sheet=document.getElementById('sheet'),sheetTitle=document.getElementById('sheetTitle'),sheetSubtitle=document.getElementById('sheetSubtitle'),nameEl=document.getElementById('name'),msgEl=document.getElementById('msg'),photoEl=document.getElementById('photo'),previews=document.getElementById('previews'),cancelBtn=document.getElementById('cancelBtn'),saveBtn=document.getElementById('saveBtn'),charCount=document.getElementById('charCount');
+let sheetMode='add',sheetTarget={lat:null,lng:null,existingPhotos:[]};
+
+msgEl.addEventListener('input',()=>charCount.textContent=`${msgEl.value.length}/500`);
+
+photoEl.addEventListener('change',async()=>{
+  const files=Array.from(photoEl.files).slice(0,5-sheetTarget.existingPhotos.length);
+  if(!files.length)return;
+  previews.innerHTML='';
+  for(const f of files){
+    try{
+      const d=await fileToDataURL(f);
+      const wrap=document.createElement('div');
+      wrap.style.cssText='position:relative';
+      const img=document.createElement('img');
+      img.src=d;
+      img.style.cssText='width:100%;height:100px;object-fit:cover;border-radius:10px;box-shadow:var(--shadow-md)';
+      const btn=document.createElement('button');
+      btn.textContent='✕';
+      btn.style.cssText='position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:var(--warn);color:#fff;border:none;cursor:pointer;font-size:12px;box-shadow:var(--shadow-md)';
+      btn.onclick=()=>{
+        wrap.remove();
+        const dt=new DataTransfer();
+        Array.from(photoEl.files).forEach(file=>{
+          if(file!==f)dt.items.add(file)
+        });
+        photoEl.files=dt.files
+      };
+      wrap.appendChild(img);
+      wrap.appendChild(btn);
+      previews.appendChild(wrap)
+    }catch(e){
+      toast('Photo load failed','error',2000)
+    }
+  }
+});
+
+const openSheet=(mode,p)=>{
+  sheetMode=mode;
+  if(mode==='add'){
+    sheetTitle.textContent='Drop a Banana';
+    sheetSubtitle.textContent='Share your moment with the world';
+    nameEl.value='';
+    msgEl.value='';
+    photoEl.value='';
+    previews.innerHTML='';
+    charCount.textContent='0/500';
+    sheetTarget={lat:p.lat,lng:p.lng,existingPhotos:[]};
+    saveBtn.textContent='Save Banana';
+    document.getElementById('approxLocation').checked=false
+  }else{
+    sheetTitle.textContent='Edit Banana';
+    sheetSubtitle.textContent='Update your moment';
+    nameEl.value=p.name||'';
+    msgEl.value=p.msg||'';
+    photoEl.value='';
+    charCount.textContent=`${(p.msg||'').length}/500`;
+    const existingPhotos=p.photos||[p.photo]||[];
+    sheetTarget={lat:p.lat,lng:p.lng,existingPhotos:existingPhotos.filter(ph=>ph)};
+    previews.innerHTML='';
+    sheetTarget.existingPhotos.forEach((ph,idx)=>{
+      const wrap=document.createElement('div');
+      wrap.style.cssText='position:relative';
+      const img=document.createElement('img');
+      img.src=ph;
+      img.style.cssText='width:100%;height:100px;object-fit:cover;border-radius:10px;box-shadow:var(--shadow-md)';
+      const btn=document.createElement('button');
+      btn.textContent='✕';
+      btn.style.cssText='position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:var(--warn);color:#fff;border:none;cursor:pointer;font-size:12px;box-shadow:var(--shadow-md)';
+      btn.onclick=()=>{
+        wrap.remove();
+        sheetTarget.existingPhotos.splice(idx,1)
+      };
+      wrap.appendChild(img);
+      wrap.appendChild(btn);
+      previews.appendChild(wrap)
+    });
+    saveBtn.textContent='Update Banana';
+    document.getElementById('approxLocation').parentElement.style.display='none'
+  }
+  sheet.classList.add('show');
+  setTimeout(()=>nameEl.focus(),150)
+};
+
+const closeSheet=()=>sheet.classList.remove('show');
+cancelBtn.onclick=closeSheet;
+
+saveBtn.onclick=async()=>{
+  try{
+    const name=nameEl.value.trim(),msg=msgEl.value.trim();
+    if(!name){toast('Enter name','error',2000);nameEl.focus();return}
+    saveBtn.disabled=true;
+    saveBtn.textContent='Saving...';
+    const newFiles=Array.from(photoEl.files);
+    const photos=[...sheetTarget.existingPhotos];
+    for(const f of newFiles){
+      if(photos.length>=5)break;
+      try{
+        photos.push(await fileToDataURL(f))
+      }catch(e){
+        console.error('Photo error:',e)
+      }
+    }
+    if(sheetMode==='add'){
+      const useApprox=document.getElementById('approxLocation').checked;
+      await saveBanana(sheetTarget.lat,sheetTarget.lng,msg,photos,name,useApprox)
+    }else await updateBanana(msg,photos,name);
+    closeSheet();
+    saveBtn.disabled=false;
+    saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'
+  }catch(e){
+    console.error(e);
+    toast(e.message||'Failed','error',3000);
+    saveBtn.disabled=false;
+    saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'
+  }
+};
+
+const getAddress=async(lat,lng)=>{
+  try{
+    const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+    const data=await res.json();
+    return data.display_name||`${lat.toFixed(4)}, ${lng.toFixed(4)}`
+  }catch(e){
+    return`${lat.toFixed(4)}, ${lng.toFixed(4)}`
+  }
+};
+
+const saveBanana=async(lat,lng,msg,photos,name,useApprox)=>{
+  const data=await fetchLatest();
+  const arr=data.record?.bananas||[];
+  if(arr.some(b=>b.deviceId===deviceId))throw new Error('Already dropped');
+  let finalLat=lat,finalLng=lng;
+  if(useApprox){
+    const approx=approximateCoords(lat,lng);
+    finalLat=approx.lat;
+    finalLng=approx.lng
+  }
+  const address=await getAddress(lat,lng);
+  arr.push({lat:finalLat,lng:finalLng,msg,photos:photos||[],name,ts:Date.now(),deviceId,locationHistory:[{lat:finalLat,lng:finalLng,ts:Date.now(),address}],reactions:[]});
+  await putBananas(arr);
+  localStorage.setItem(DROPPED_KEY,'true');
+  await loadBananas();
+  map.easeTo({center:[finalLng,finalLat],zoom:17,duration:800});
+  pulseAt(finalLng,finalLat);
+  toast('Banana dropped!','success',2500)
+};
+
+const updateBanana=async(msg,photos,name)=>{
+  const latest=await fetchLatest();
+  const arr=latest.record?.bananas||[];
+  const idx=arr.findIndex(x=>x.deviceId===deviceId);
+  if(idx===-1)throw new Error("Not found");
+  arr[idx]={...arr[idx],msg,photos:photos||arr[idx].photos||[],name};
+  await putBananas(arr);
+  await loadBananas();
+  toast('Updated!','success',2000)
+};
+
+const moveBanana=async(lat,lng)=>{
+  const result=await showPrompt('Move Banana','Name this stop and add optional notes','');
+  if(result===null)return;
+  
+  const notes=await showPrompt('Trail Notes (Optional)','Add details about this location','','textarea');
+  
+  try{
+    const latest=await fetchLatest();
+    const arr=latest.record?.bananas||[];
+    const idx=arr.findIndex(x=>x.deviceId===deviceId);
+    if(idx===-1){toast("No banana",'info',2000);return}
+    const address=await getAddress(lat,lng);
+    const history=arr[idx].locationHistory||[];
+    history.push({lat,lng,ts:Date.now(),address,customName:result||'',notes:notes||''});
+    arr[idx]={...arr[idx],lat,lng,locationHistory:history};
+    await putBananas(arr);
+    await loadBananas();
+    map.easeTo({center:[lng,lat],zoom:17,duration:800});
+    pulseAt(lng,lat);
+    toast('Banana moved!','success',2000);
+    setTimeout(()=>showBananaModal(arr[idx]),500)
+  }catch(e){
+    console.error(e);
+    toast('Move failed','error',2000)
+  }
+};
+
+const deleteMyBanana=async()=>{
+  if(!confirm('Delete your banana? This cannot be undone.'))return;
+  try{
+    const latest=await fetchLatest();
+    const arr=latest.record?.bananas||[];
+    const idx=arr.findIndex(x=>x.deviceId===deviceId);
+    if(idx===-1){toast("No banana",'info',2000);return}
+    arr.splice(idx,1);
+    await putBananas(arr);
+    localStorage.removeItem(DROPPED_KEY);
+    await loadBananas();
+    toast('Deleted','success',2000)
+  }catch(e){
+    console.error(e);
+    toast('Delete failed','error',2000)
+  }
+};
+
+const deleteAnyBanana=async(targetDeviceId)=>{
+  if(!confirm('Delete this banana? This cannot be undone.'))return;
+  try{
+    const latest=await fetchLatest();
+    const arr=latest.record?.bananas||[];
+    const idx=arr.findIndex(x=>x.deviceId===targetDeviceId);
+    if(idx===-1){toast("Banana not found",'info',2000);return}
+    arr.splice(idx,1);
+    await putBananas(arr);
+    await loadBananas();
+    toast('Deleted','success',2000)
+  }catch(e){
+    console.error(e);
+    toast('Delete failed','error',2000)
+  }
+};
+
+const goRandomBanana=()=>{
+  const list=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number');
+  if(!list.length){toast("No bananas yet",'info',2000);return}
+  const pick=list[Math.floor(Math.random()*list.length)];
+  map.easeTo({center:[pick.lng,pick.lat],zoom:17,duration:900});
+  pulseAt(pick.lng,pick.lat);
+  toast('Random!','success',2000);
+  setTimeout(()=>showBananaModal(pick),500)
+};
+
+const startAuto=()=>{
+  if(refreshHandle)clearInterval(refreshHandle);
+  refreshHandle=setInterval(async()=>{await loadBananas()},30000)
+};
+
+const checkURL=()=>{
+  const params=new URLSearchParams(location.search),sharedId=params.get('id');
+  if(sharedId){
+    setTimeout(async()=>{
+      try{
+        const data=await fetchLatest();
+        const b=(data.record?.bananas||[]).find(x=>x.deviceId===sharedId);
+        if(b){
+          map.easeTo({center:[b.lng,b.lat],zoom:17,duration:1500});
+          pulseAt(b.lng,b.lat);
+          toast('Shared banana','success',2000);
+          setTimeout(()=>showBananaModal(b),1000)
+        }else{
+          toast('Not found','error',2000)
+        }
+      }catch(e){
+        console.error(e)
+      }
+    },1500)
+  }
+};
+
+(async()=>{
+  try{
+    map=new maplibregl.Map({container:'map',style:makeStyle(),center:[0,20],zoom:2});
+    map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');
+    map.on('load',async()=>{
+      await loadBananas();
+      startAuto();
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>{
+          map.easeTo({center:[longitude,latitude],zoom:11,duration:1200})
+        },()=>{},{enableHighAccuracy:true,timeout:8000})
+      }
+      checkURL()
+    });
+    wireUI();
+    wireTutorial()
+  }catch(e){
+    console.error(e);
+    toast('Map failed','error',0)
+  }
+})();
+</script>
+</body>
+</html>
+Banana Enthusiast'},{level:4,xpRequired:500,title:'🌟 Banana Explorer'},{level:5,xpRequired:1000,title:'💎 Banana Collector'},{level:6,xpRequired:1750,title:'🚀 Banana Master'},{level:7,xpRequired:2750,title:'🔥 Banana Legend'},{level:8,xpRequired:4000,title:'⚡ Banana Hero'},{level:9,xpRequired:5500,title:'🌈 Banana Champion'},{level:10,xpRequired:7500,title:'👑 Banana Royalty'}];const getProfile=()=>{const stored=localStorage.getItem('banana_profile');if(stored){try{return JSON.parse(stored)}catch(e){console.error('Profile parse error:',e)}}return{xp:0,level:1,achievements:[],stats:{bananasVisited:0,bananasMoved:0,photosAdded:0,commentsGiven:0,reactionsGiven:0,boardMessages:0,continentsVisited:[]},streaks:{current:0,longest:0,lastActive:null},quests:{}}};const saveProfile=profile=>{localStorage.setItem('banana_profile',JSON.stringify(profile))};const calculateLevel=xp=>{for(let i=LEVELS.length-1;i>=0;i--){if(xp>=LEVELS[i].xpRequired)return LEVELS[i]}return LEVELS[0]};const addXP=(amount,source)=>{const profile=getProfile();const oldLevel=profile.level;profile.xp+=amount;const newLevelData=calculateLevel(profile.xp);profile.level=newLevelData.level;saveProfile(profile);showXPGain(amount,source);if(newLevelData.level>oldLevel){showLevelUp(newLevelData)}updateProfileUI();return profile};const checkAchievement=achievementId=>{const profile=getProfile();if(profile.achievements.includes(achievementId))return false;const achievement=ACHIEVEMENTS[achievementId];if(!achievement)return false;profile.achievements.push(achievementId);profile.xp+=achievement.xp;const newLevelData=calculateLevel(profile.xp);profile.level=newLevelData.level;saveProfile(profile);showAchievement(achievement);updateProfileUI();return true};const updateStreak=()=>{const profile=getProfile();const today=new Date().toDateString();const lastActive=profile.streaks.lastActive;if(lastActive===today)return profile.streaks.current;const yesterday=new Date(Date.now()-86400000).toDateString();if(lastActive===yesterday){profile.streaks.current++}else if(lastActive!==null){profile.streaks.current=1}else{profile.streaks.current=1}if(profile.streaks.current>profile.streaks.longest){profile.streaks.longest=profile.streaks.current}profile.streaks.lastActive=today;saveProfile(profile);if(profile.streaks.current===7)checkAchievement('streaker');if(profile.streaks.current===30)checkAchievement('marathoner');return profile.streaks.current};const trackStat=(statName,value=1)=>{const profile=getProfile();if(Array.isArray(profile.stats[statName])){if(!profile.stats[statName].includes(value)){profile.stats[statName].push(value)}}else{profile.stats[statName]=(profile.stats[statName]||0)+value}saveProfile(profile);checkStatAchievements(profile)};const checkStatAchievements=profile=>{if(profile.stats.bananasVisited>=5)checkAchievement('explorer');if(profile.stats.bananasMoved>=5)checkAchievement('globetrotter');if(profile.stats.photosAdded>=10)checkAchievement('photographer');if(profile.stats.commentsGiven>=10)checkAchievement('social');if(profile.stats.reactionsGiven>=20)checkAchievement('reactor');if(profile.stats.boardMessages>=5)checkAchievement('writer');if(profile.stats.continentsVisited.length>=3)checkAchievement('wanderer');if(profile.level>=10)checkAchievement('legendary')};const showAchievement=achievement=>{const toast=document.createElement('div');toast.className='achievement-toast';toast.innerHTML=`<div class="achievement-icon">🏆</div><div class="achievement-content"><div class="achievement-title">Achievement Unlocked!</div><div class="achievement-name">${achievement.name}</div><div class="achievement-xp">+${achievement.xp} XP</div></div>`;document.body.appendChild(toast);setTimeout(()=>toast.classList.add('show'),100);setTimeout(()=>{toast.classList.remove('show');setTimeout(()=>toast.remove(),400)},4000)};const showXPGain=(amount,source)=>{const xpFloat=document.createElement('div');xpFloat.className='xp-float';xpFloat.textContent=`+${amount} XP`;if(source)xpFloat.textContent+=` • ${source}`;document.body.appendChild(xpFloat);setTimeout(()=>xpFloat.classList.add('show'),100);setTimeout(()=>{xpFloat.classList.remove('show');setTimeout(()=>xpFloat.remove(),600)},2000)};const showLevelUp=levelData=>{const toast=document.createElement('div');toast.className='levelup-toast';toast.innerHTML=`<div class="levelup-icon">⬆️</div><div class="levelup-content"><div class="levelup-title">Level Up!</div><div class="levelup-level">Level ${levelData.level}</div><div class="levelup-name">${levelData.title}</div></div>`;document.body.appendChild(toast);setTimeout(()=>toast.classList.add('show'),100);setTimeout(()=>{toast.classList.remove('show');setTimeout(()=>toast.remove(),400)},4000)};const updateProfileUI=()=>{const profile=getProfile();const levelData=calculateLevel(profile.xp);const nextLevel=LEVELS.find(l=>l.level===levelData.level+1);const xpInLevel=profile.xp-levelData.xpRequired;const xpForNext=nextLevel?nextLevel.xpRequired-levelData.xpRequired:0;const progress=nextLevel?Math.min(100,(xpInLevel/xpForNext)*100):100;document.getElementById('profileLevel').textContent=levelData.level;document.getElementById('profileTitle').textContent=levelData.title;document.getElementById('profileXP').textContent=`${profile.xp} XP`;document.getElementById('profileProgress').style.width=`${progress}%`;document.getElementById('profileStreak').textContent=profile.streaks.current};const openStats=()=>{const profile=getProfile();document.getElementById('statsOverlay').classList.add('show');document.getElementById('statsModal').classList.add('show');const statsGrid=document.getElementById('statsGrid');statsGrid.innerHTML=`<div class="stat-card"><div class="stat-value">${profile.stats.bananasVisited||0}</div><div class="stat-label">Bananas Visited</div></div><div class="stat-card"><div class="stat-value">${profile.stats.bananasMoved||0}</div><div class="stat-label">Times Moved</div></div><div class="stat-card"><div class="stat-value">${profile.stats.photosAdded||0}</div><div class="stat-label">Photos Added</div></div><div class="stat-card"><div class="stat-value">${profile.stats.commentsGiven||0}</div><div class="stat-label">Comments Given</div></div><div class="stat-card"><div class="stat-value">${profile.stats.reactionsGiven||0}</div><div class="stat-label">Reactions Given</div></div><div class="stat-card"><div class="stat-value">${profile.stats.boardMessages||0}</div><div class="stat-label">Board Messages</div></div>`;document.getElementById('currentStreak').textContent=profile.streaks.current||0;document.getElementById('longestStreak').textContent=profile.streaks.longest||0};const closeStats=()=>{document.getElementById('statsOverlay').classList.remove('show');document.getElementById('statsModal').classList.remove('show')};const openAchievements=()=>{const profile=getProfile();document.getElementById('achievementsOverlay').classList.add('show');document.getElementById('achievementsModal').classList.add('show');const grid=document.getElementById('achievementsGrid');const achievementList=Object.values(ACHIEVEMENTS);const unlocked=profile.achievements.length;document.getElementById('achievementProgress').textContent=`${unlocked}/${achievementList.length} unlocked`;grid.innerHTML=achievementList.map(a=>{const isUnlocked=profile.achievements.includes(a.id);return`<div class="achievement-card ${isUnlocked?'unlocked':'locked'}"><div class="achievement-card-icon">${a.name.split(' ')[0]}</div><div class="achievement-card-name">${a.name.substring(a.name.indexOf(' ')+1)}</div><div class="achievement-card-desc">${a.desc}</div><div class="achievement-card-xp">${isUnlocked?'✓ ':''}${a.xp} XP</div></div>`}).join('')};const closeAchievements=()=>{document.getElementById('achievementsOverlay').classList.remove('show');document.getElementById('achievementsModal').classList.remove('show')};const openLeaderboard=async()=>{document.getElementById('leaderboardOverlay').classList.add('show');document.getElementById('leaderboardModal').classList.add('show');try{const data=await fetchLatest();const bananas=data.record?.bananas||[];const profiles=data.record?.profiles||{};const leaderboardData=bananas.map(b=>{const profile=profiles[b.deviceId]||{xp:0,level:1};return{deviceId:b.deviceId,name:b.name||'Anonymous',xp:profile.xp||0,level:profile.level||1}}).sort((a,b)=>b.xp-a.xp).slice(0,20);const list=document.getElementById('leaderboardList');if(leaderboardData.length===0){list.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">No data yet. Be the first!</p>'}else{list.innerHTML=leaderboardData.map((item,idx)=>{const levelData=calculateLevel(item.xp);const isMe=item.deviceId===deviceId;return`<div class="leaderboard-item ${isMe?'style="border:2px solid var(--accent)"':''}"><div class="leaderboard-rank">${idx+1}</div><div class="leaderboard-info"><div class="leaderboard-name">${esc(item.name)}${isMe?' (You)':''}</div><div class="leaderboard-level">${levelData.title}</div></div><div class="leaderboard-xp">${item.xp} XP</div></div>`}).join('')}}catch(e){console.error(e);document.getElementById('leaderboardList').innerHTML='<p style="text-align:center;color:var(--warn);padding:20px">Failed to load leaderboard</p>'}};const closeLeaderboard=()=>{document.getElementById('leaderboardOverlay').classList.remove('show');document.getElementById('leaderboardModal').classList.remove('show')};const syncProfileToServer=async()=>{try{const profile=getProfile();const data=await fetchLatest();if(!data.record.profiles)data.record.profiles={};data.record.profiles[deviceId]=profile;await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify(data.record)})}catch(e){console.error('Profile sync failed:',e)}};document.getElementById('statsOverlay').onclick=closeStats;document.getElementById('statsClose').onclick=closeStats;document.getElementById('achievementsOverlay').onclick=closeAchievements;document.getElementById('achievementsClose').onclick=closeAchievements;document.getElementById('leaderboardOverlay').onclick=closeLeaderboard;document.getElementById('leaderboardClose').onclick=closeLeaderboard;document.getElementById('profileBadge').onclick=openStats;let promptResolve=null,promptMode='input';const showPrompt=(title,message,defaultValue='',mode='input')=>{return new Promise((resolve)=>{promptResolve=resolve;promptMode=mode;document.getElementById('promptTitle').textContent=title;document.getElementById('promptMessage').textContent=message;if(mode==='textarea'){document.getElementById('promptInput').style.display='none';document.getElementById('promptTextarea').style.display='block';document.getElementById('promptTextarea').value=defaultValue;setTimeout(()=>document.getElementById('promptTextarea').focus(),100)}else{document.getElementById('promptInput').style.display='block';document.getElementById('promptTextarea').style.display='none';document.getElementById('promptInput').value=defaultValue;setTimeout(()=>document.getElementById('promptInput').focus(),100)}document.getElementById('promptOverlay').classList.add('show');document.getElementById('promptDialog').classList.add('show')})};const closePrompt=(value=null)=>{document.getElementById('promptOverlay').classList.remove('show');document.getElementById('promptDialog').classList.remove('show');if(promptResolve){promptResolve(value);promptResolve=null}};document.getElementById('promptCancel').onclick=()=>closePrompt(null);document.getElementById('promptConfirm').onclick=()=>{const value=promptMode==='textarea'?document.getElementById('promptTextarea').value.trim():document.getElementById('promptInput').value.trim();closePrompt(value||null)};document.getElementById('promptInput').addEventListener('keydown',e=>{if(e.key==='Enter'){const value=document.getElementById('promptInput').value.trim();closePrompt(value||null)}else if(e.key==='Escape'){closePrompt(null)}});document.getElementById('promptOverlay').onclick=()=>closePrompt(null);let map,bananasCache=[],domMarkers=[],refreshHandle;const toast=(msg,type='info',dur=2500)=>{const c=document.getElementById('toastContainer'),iconMap={success:'i-check',error:'i-alert',info:'i-info'};c.innerHTML=`<div class="toast ${type}"><svg class="icon"><use href="#${iconMap[type]}"/></svg><span>${msg}</span></div>`;if(dur>0)setTimeout(()=>c.innerHTML='',dur)};const pulseAt=(lng,lat)=>{const d=document.createElement('div');d.style.cssText=`width:18px;height:18px;border-radius:50%;border:3px solid #FFD93D;position:absolute;transform:translate(-50%,-50%);pointer-events:none;opacity:.9;animation:pulse 900ms ease-out forwards`;const m=new maplibregl.Marker({element:d}).setLngLat([lng,lat]).addTo(map);setTimeout(()=>m.remove(),900)};const _pulseStyle=document.createElement('style');_pulseStyle.textContent=`@keyframes pulse{0%{transform:translate(-50%,-50%) scale(0.6);opacity:.9}100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}}`;document.head.appendChild(_pulseStyle);const makeStyle=()=>{const sub=['a','b','c','d'],base='https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',labels='https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png';return{version:8,glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',sources:{base:{type:'raster',tiles:sub.map(s=>base.replace('{s}',s)),tileSize:256},labels:{type:'raster',tiles:sub.map(s=>labels.replace('{s}',s)),tileSize:256},bananas:{type:'geojson',data:{type:'FeatureCollection',features:[]},cluster:true,clusterRadius:50}},layers:[{id:'base',type:'raster',source:'base'},{id:'labels',type:'raster',source:'labels',paint:{'raster-opacity':.65}},{id:'clusters',type:'circle',source:'bananas',filter:['has','point_count'],paint:{'circle-color':'#FFE066','circle-stroke-width':2,'circle-stroke-color':'#E0C24B','circle-radius':['step',['get','point_count'],15,10,19,25,24]}},{id:'cluster-count',type:'symbol',source:'bananas',filter:['has','point_count'],layout:{'text-field':['get','point_count_abbreviated'],'text-size':12,'text-font':['Open Sans Bold','Arial Unicode MS Bold']},paint:{'text-color':'#222'}}]}};const asFeat=b=>({type:'Feature',properties:{deviceId:b.deviceId||'',name:b.name||'',msg:b.msg||'',photos:b.photos||[b.photo]||[],ts:b.ts||0,locationHistory:b.locationHistory||[],comments:b.comments||[],reactions:b.reactions||[]},geometry:{type:'Point',coordinates:[b.lng,b.lat]}});const clearMarkers=()=>{domMarkers.forEach(m=>m.remove());domMarkers=[]};const bananaSVG=`<svg viewBox="0 0 256.85 291.32" xmlns="http://www.w3.org/2000/svg"><g><path fill="#f8db8f" d="M71.1,141.02c.28,1.47.88,7.33,1.51,8.76,1.93,4.39,14.28,1.42,18.58.95-11.67-38.63-11.64-82.48,8.03-118.8,6.14-11.33,14.88-23.92,27.11-29.82l.25-1.18-4.27-.47c-25.63,3.82-45.46,48.7-50.2,69.81-4.86,21.62-5.22,49.03-1,70.76Z"/><path fill="#ffeda3" d="M122.3.45l4.27.47-.25,1.18c-12.23,5.9-20.97,18.49-27.11,29.82-19.67,36.32-19.7,80.17-8.03,118.8-4.3.48-16.64,3.45-18.58-.95-.63-1.42-1.22-7.29-1.51-8.76l-25.6,2.37c11.12-2.18,20.14.12,27.11,8.76-3.44,1.89-7.15,2.97-10.54,4.97-23.54,13.89-24.41,35.07-30.12,57.27-1.14,17.15,3.46,36,12.55,50.88,6.03,9.87,22.72,28.5,36.15,25.79,1.76-21.88-7.48-39.71-6.02-62.24.91-14.08,10.81-51.24,20.08-62,8.51-9.89,29.8-18.03,36.15-2.13,1.3-5.09,1.66-9.2,5.52-13.25-1.02-2.13,6.58-7.74,6.02-9.23-.07-.19-1.78-.28-2.51-2.84-8.39-29.54-10.59-63.06-5.02-93.24,2.16-11.71,10.88-29.39,3.51-40.23-1.89-2.78-5.1-3.54-7.53-5.44-3.52-.67-5.06-.52-8.53,0Z"/><path fill="#ffdb27" d="M80.64,291.05c15.58-3.14,4.71-25.51,3.01-35.26-3.34-19.23-3.22-36.25,2.01-55.14,2.36-8.51,11.33-33.16,19.33-37.39,5.51-2.92,10.89-2.02,16.82-.95,3.42.62,5.45,2.59,9.04,2.37-6.35-15.9-27.63-7.76-36.15,2.13-9.27,10.76-19.17,47.93-20.08,62-1.45,22.52,7.78,40.35,6.02,62.24Z"/><path fill="#ffc910" d="M18.89,251.3c6.47-3.93,7.28-19.33,9.04-26.27.88-3.45,3.38-8.16,4.02-10.65,5.71-22.2,6.59-43.38,30.12-57.27.11-2.35,4.35-1.54,3.01-3.55-21.74-19.04-42.85,15.37-49.2,30.29-6.43,15.12-13.02,38.46-11.04,56.32.93,8.39,3.7,17.42,14.06,11.12Z"/><path fill="#ffdb27" d="M45.49,143.38C12.83,149.77-5.18,217.75,1.31,243.96c2.27,9.18,8.63,14.45,17.57,7.34-10.36,6.29-13.13-2.73-14.06-11.12-1.97-17.86,4.62-41.2,11.04-56.32,6.34-14.93,27.46-49.33,49.2-30.29,1.33,2.01-2.91,1.2-3.01,3.55,3.39-2,7.1-3.08,10.54-4.97-6.97-8.64-15.99-10.93-27.11-8.76Z"/><path fill="#ffdb27" d="M226.68,282.86c-29.25,13.86-88.77-31.06-120.23-78.8-3.94-5.99-13.84-37.32,9.8-43.5,1.53-.4,2.62-.5,3.61-.38,1.8.23,2.92.93,4.51,1.76,1.39.73,3.46,1.7,6.18,2.59.19-1.78.84-4.19,1.8-7.01.74-2.17,1.79-4.21,3.72-6.24,50.98-39.77,88.26,30.02,110.95,64.13,2.34,3,5.81,7.55,9.54,8.76.38,4.53-3.49,5.6-7.78,4.73-5.68-1.15-15.85-23.65-19.33-29.11-11.19-17.56-35.92-53.71-59.49-55.14-8.08-.49-13.28,2.2-14.31,10.18-1.71,13.24,30.61,61.14,74.3,98.45,3.01,2.57,10.69,9.03,9.79,16.33-.93,7.5-10.45,12.02-13.05,13.25Z"/><path fill="#ffc910" d="M227.35,283c-8.08-.83-17.63-2.33-25.6-3.61-28.79-4.62-83.79-52-94.63-77.38-2.57-6.02-9.42-29.07.79-37.25,6.96-5.58,18.77-1.65,22.94-.07-2.37-1.63-6.59-4.07-12.37-5.03-3.5-.58-6.53-.45-8.78-.16,0,0,0,0,0,0,0,0-2.19.37-4.33,1.57-6.53,3.68-11.3,12.65-11.3,12.65-4.63,8.69-6.9,17.53-8.02,24.75,6.18,10.25,15.37,24.34,28.93,39.03,11.07,12,23.42,22.98,36.59,32.91,15.18,11.45,37.24,23.97,61.16,18.46,6.38-1.47,11.36-3.93,14.65-5.85Z"/><path fill="#34af0e" d="M232.29,255.34c.65,2.52,2.01,9.24-.91,16.82-4.04,10.51-16.83,15.88-18.68,16.69,2.72.6,12.47.42,19.22-2.27,2.52-1,12.08-4.84,13.35-13.11,1.15-7.51-4.18-15.66-12.98-18.14Z"/></g></svg>`;const createMarker=feat=>{const el=document.createElement('div');el.className='banana-marker';if(feat.properties.deviceId===deviceId)el.className+=' mine';el.innerHTML=bananaSVG;const openModal=ev=>{ev.preventDefault();ev.stopPropagation();showBananaModal(feat.properties)};['pointerdown','touchstart','mousedown'].forEach(type=>el.addEventListener(type,e=>e.stopPropagation(),{passive:true}));el.addEventListener('pointerup',openModal);el.addEventListener('touchend',openModal);el.addEventListener('click',openModal);return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(feat.geometry.coordinates)};const renderMarkers=geojson=>{clearMarkers();if(map.getLayer('trails'))map.removeLayer('trails');if(map.getSource('trails'))map.removeSource('trails');const trailFeatures=[];geojson.features.forEach(f=>{if(f.properties.point_count)return;const m=createMarker(f).addTo(map);domMarkers.push(m);const history=f.properties.locationHistory||[];if(history.length>1){trailFeatures.push({type:'Feature',properties:{deviceId:f.properties.deviceId},geometry:{type:'LineString',coordinates:history.map(h=>[h.lng,h.lat])}})}});if(trailFeatures.length>0){map.addSource('trails',{type:'geojson',data:{type:'FeatureCollection',features:trailFeatures}});map.addLayer({id:'trails',type:'line',source:'trails',paint:{'line-color':'#FFD93D','line-width':3,'line-opacity':0.6,'line-dasharray':[2,2]},'layout':{'line-cap':'round','line-join':'round'}},'clusters')}};const updateStats=count=>{document.getElementById('totalCount').textContent=count};const fetchLatest=async()=>{const res=await fetch(`${BIN_URL}/latest`,{headers:{"X-Master-Key":API_KEY}});if(!res.ok)throw new Error('Load failed');return res.json()};const putBananas=async arr=>{const res=await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({bananas:arr})});if(!res.ok)throw new Error('Save failed')};const loadBananas=async()=>{try{const data=await fetchLatest();bananasCache=data.record?.bananas||[];const feats=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number').map(asFeat);const src=map.getSource('bananas');if(src)src.setData({type:'FeatureCollection',features:feats});renderMarkers({type:'FeatureCollection',features:feats});updateStats(feats.length);const already=bananasCache.some(b=>b.deviceId===deviceId)||localStorage.getItem(DROPPED_KEY)==='true';document.getElementById('dropBtn').disabled=already;document.getElementById('dropBtn').querySelector('span').textContent=already?"Banana Dropped":"Drop Banana";['seeMine','shareMine','deleteMine'].forEach(id=>document.getElementById(id).classList.toggle('disabled',!already))}catch(e){console.error(e);toast('Load failed','error',3000)}};const reactToBanana=async(bananaDeviceId,reactionType)=>{try{const data=await fetchLatest();const bananas=data.record?.bananas||[];const idx=bananas.findIndex(b=>b.deviceId===bananaDeviceId);if(idx===-1){toast('Banana not found','error',2000);return}if(!bananas[idx].reactions)bananas[idx].reactions=[];const existingIdx=bananas[idx].reactions.findIndex(r=>r.deviceId===deviceId);let addedReaction=false;if(existingIdx!==-1){if(bananas[idx].reactions[existingIdx].type===reactionType){bananas[idx].reactions.splice(existingIdx,1)}else{bananas[idx].reactions[existingIdx].type=reactionType}}else{bananas[idx].reactions.push({deviceId,type:reactionType,ts:Date.now()});addedReaction=true}await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,bananas})});if(addedReaction){trackStat('reactionsGiven',1);addXP(3,'Reacted');const myBanana=bananas.find(b=>b.deviceId===deviceId);const receivedReactions=bananas[idx].reactions.filter(r=>r.deviceId!==bananaDeviceId).length;if(myBanana&&bananaDeviceId===deviceId&&receivedReactions>=25){checkAchievement('popular')}}await loadBananas();const updatedBanana=bananasCache.find(b=>b.deviceId===bananaDeviceId);if(updatedBanana){renderReactions(bananaDeviceId,updatedBanana.reactions||[],document.getElementById('modalReactions'));renderReactions(bananaDeviceId,updatedBanana.reactions||[],document.getElementById('swipeReactions'))}}catch(e){console.error(e);toast('Reaction failed','error',2000)}};const renderReactions=(bananaDeviceId,reactions,container)=>{if(!container)return;const reactionTypes=[{type:'like',emoji:'👍',label:'Like'},{type:'love',emoji:'❤️',label:'Love'},{type:'fire',emoji:'🔥',label:'Fire'}];const counts={};reactionTypes.forEach(r=>counts[r.type]=0);reactions.forEach(r=>{if(counts[r.type]!==undefined)counts[r.type]++});const myReaction=reactions.find(r=>r.deviceId===deviceId);container.innerHTML=`<div class="reactions-bar">${reactionTypes.map(r=>{const isActive=myReaction&&myReaction.type===r.type;return`<button class="reaction-btn ${isActive?'active':''}" data-type="${r.type}" data-banana="${bananaDeviceId}"><span class="reaction-emoji">${r.emoji}</span>${counts[r.type]>0?`<span class="reaction-count">${counts[r.type]}</span>`:''}</button>`}).join('')}</div>`;container.querySelectorAll('.reaction-btn').forEach(btn=>{btn.onclick=()=>reactToBanana(btn.dataset.banana,btn.dataset.type)})};let currentFeedTab='updates';const openFeed=async()=>{document.getElementById('feedOverlay').classList.add('show');document.getElementById('feedModal').classList.add('show');renderFeedTab()};const closeFeed=()=>{document.getElementById('feedOverlay').classList.remove('show');document.getElementById('feedModal').classList.remove('show')};const renderFeedTab=async()=>{try{const data=await fetchLatest();const bananas=data.record?.bananas||[];const boardMessages=data.record?.boardMessages||[];const content=document.getElementById('feedContent');const compose=document.getElementById('boardCompose');if(currentFeedTab==='updates'){compose.style.display='none';const updates=[];bananas.forEach(b=>{updates.push({type:'drop',name:b.name||'Anonymous',ts:b.ts,lat:b.lat,lng:b.lng,deviceId:b.deviceId});const history=b.locationHistory||[];history.slice(1).forEach(h=>{updates.push({type:'move',name:b.name||'Anonymous',ts:h.ts,lat:h.lat,lng:h.lng,customName:h.customName,deviceId:b.deviceId})})});updates.sort((a,b)=>b.ts-a.ts);content.innerHTML=updates.slice(0,50).map(u=>{const action=u.type==='drop'?'🍌 dropped a banana':'📍 moved their banana'+(u.customName?` to ${esc(u.customName)}`:'');return`<div class="feed-item"><div class="feed-item-header"><span class="feed-item-name">${esc(u.name)}</span><span class="feed-item-time">${timeAgo(u.ts)}</span></div><div class="feed-item-action">${action}</div></div>`}).join('')}else{const myBanana=bananasCache.find(b=>b.deviceId===deviceId);compose.style.display='block';if(!myBanana){compose.innerHTML=`<div style="padding:16px;background:rgba(255,217,61,0.1);border-radius:8px;text-align:center;color:var(--muted);font-size:14px;">🍌 Drop a banana first to post on the message board</div>`}else{compose.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Posting as <strong>${esc(myBanana.name)}</strong></div><textarea id="boardMessage" placeholder="Share something with the community..." maxlength="300" style="width:100%;padding:10px;border:1px solid rgba(0,0,0,0.1);border-radius:8px;min-height:80px;font:inherit;font-size:13px;resize:vertical"></textarea><div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span style="font-size:11px;color:var(--muted)" id="boardCharCount">0/300</span><button id="postBoardMessage" class="btn-primary" style="padding:8px 16px;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer">Post Message</button></div>`;compose.querySelector('#boardMessage').addEventListener('input',()=>{const len=compose.querySelector('#boardMessage').value.length;compose.querySelector('#boardCharCount').textContent=`${len}/300`});compose.querySelector('#postBoardMessage').onclick=async()=>{const message=compose.querySelector('#boardMessage').value.trim();if(!message){toast('Enter message','error',2000);return}try{const data=await fetchLatest();const boardMessages=data.record?.boardMessages||[];boardMessages.push({name:myBanana.name,message,ts:Date.now(),deviceId});await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,boardMessages})});compose.querySelector('#boardMessage').value='';compose.querySelector('#boardCharCount').textContent='0/300';trackStat('boardMessages',1);addXP(10,'Posted message');updateStreak();await syncProfileToServer();toast('Posted!','success',2000);renderFeedTab()}catch(e){console.error(e);toast('Post failed','error',2000)}}}content.innerHTML=boardMessages.sort((a,b)=>b.ts-a.ts).slice(0,50).map(m=>{const isOwn=m.deviceId===deviceId;return`<div class="feed-item"><div class="feed-item-header"><span class="feed-item-name">${esc(m.name||'Anonymous')}${isOwn?`<span class="feed-item-edit" onclick="editBoardMessage(${m.ts})">edit</span>`:''}</span><span class="feed-item-time">${timeAgo(m.ts)}</span></div><div class="feed-item-message">${esc(m.message)}</div></div>`}).join('')}}catch(e){console.error(e);toast('Load failed','error',2000)}};window.editBoardMessage=async(ts)=>{try{const data=await fetchLatest();const boardMessages=data.record?.boardMessages||[];const msg=boardMessages.find(m=>m.ts===ts&&m.deviceId===deviceId);if(!msg){toast('Message not found','error',2000);return}const newText=await showPrompt('Edit Message','Update your message',msg.message,'textarea');if(!newText)return;msg.message=newText;await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,boardMessages})});toast('Updated!','success',2000);renderFeedTab()}catch(e){console.error(e);toast('Edit failed','error',2000)}};document.getElementById('feedOverlay').onclick=closeFeed;document.getElementById('feedClose').onclick=closeFeed;document.querySelectorAll('.feed-tab').forEach(tab=>{tab.onclick=()=>{document.querySelectorAll('.feed-tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');currentFeedTab=tab.dataset.tab;renderFeedTab()}});const renderComments=(comments,bananaDeviceId)=>{const section=document.createElement('div');section.className='comment-section';section.innerHTML=`<h4 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--ink)">💬 Comments (${comments.length})</h4>`;const list=document.createElement('div');comments.sort((a,b)=>b.ts-a.ts).forEach(c=>{const isOwn=c.commenterDevice===deviceId;const item=document.createElement('div');item.className='comment-item';item.innerHTML=`<div class="comment-header"><span class="comment-name">${esc(c.name||'Anonymous')}${isOwn?`<span class="comment-edit-btn" data-ts="${c.ts}" data-banana="${bananaDeviceId}">edit</span>`:''}</span><span class="comment-time">${timeAgo(c.ts)}</span></div><div class="comment-text">${esc(c.text)}</div>`;list.appendChild(item)});section.appendChild(list);section.querySelectorAll('.comment-edit-btn').forEach(btn=>{btn.onclick=async()=>{const ts=parseInt(btn.dataset.ts);const bananaId=btn.dataset.banana;try{const data=await fetchLatest();const bananas=data.record?.bananas||[];const idx=bananas.findIndex(b=>b.deviceId===bananaId);if(idx===-1){toast('Banana not found','error',2000);return}const comment=bananas[idx].comments.find(c=>c.ts===ts&&c.commenterDevice===deviceId);if(!comment){toast('Comment not found','error',2000);return}const newText=await showPrompt('Edit Comment','Update your comment',comment.text,'textarea');if(!newText)return;comment.text=newText;await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,bananas})});toast('Updated!','success',2000);closeModal();await loadBananas();const updatedBanana=bananasCache.find(b=>b.deviceId===bananaId);if(updatedBanana){setTimeout(()=>showBananaModal(updatedBanana),300)}}catch(e){console.error(e);toast('Edit failed','error',2000)}}});const myBanana=bananasCache.find(b=>b.deviceId===deviceId);const compose=document.createElement('div');compose.className='comment-compose';if(!myBanana){compose.innerHTML=`<div style="padding:12px;background:rgba(255,217,61,0.1);border-radius:8px;text-align:center;color:var(--muted);font-size:13px;">🍌 Drop a banana first to leave comments</div>`}else{compose.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Commenting as <strong>${esc(myBanana.name)}</strong></div><textarea placeholder="Leave a comment..." maxlength="200" id="commentText"></textarea><button id="postComment">Post Comment</button>`;compose.querySelector('#postComment').onclick=async()=>{const text=compose.querySelector('#commentText').value.trim();if(!text){toast('Enter comment','error',2000);return}try{const data=await fetchLatest();const bananas=data.record?.bananas||[];const idx=bananas.findIndex(b=>b.deviceId===bananaDeviceId);if(idx===-1){toast('Banana not found','error',2000);return}if(!bananas[idx].comments)bananas[idx].comments=[];bananas[idx].comments.push({name:myBanana.name,text,ts:Date.now(),commenterDevice:deviceId});await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,bananas})});trackStat('commentsGiven',1);addXP(5,'Left comment');const myBanana2=bananas.find(b=>b.deviceId===deviceId);if(myBanana2&&bananaDeviceId===deviceId){const receivedComments=bananas[idx].comments.filter(c=>c.commenterDevice!==deviceId).length;if(receivedComments>=10){checkAchievement('commenter')}}updateStreak();await syncProfileToServer();toast('Comment posted!','success',2000);closeModal();await loadBananas();const updatedBanana=bananasCache.find(b=>b.deviceId===bananaDeviceId);if(updatedBanana){setTimeout(()=>showBananaModal(updatedBanana),300)}}catch(e){console.error(e);toast('Comment failed','error',2000)}}}section.appendChild(compose);return section};let isAdminMode=false;const ADMIN_PASSWORD='banana2025';const openAdmin=()=>{document.getElementById('adminOverlay').classList.add('show');document.getElementById('adminModal').classList.add('show');if(localStorage.getItem(ADMIN_KEY)==='true'){isAdminMode=true;document.getElementById('adminAuth').style.display='none';document.getElementById('adminContent').style.display='block'}};const closeAdmin=()=>{document.getElementById('adminOverlay').classList.remove('show');document.getElementById('adminModal').classList.remove('show')};document.getElementById('adminOverlay').onclick=closeAdmin;document.getElementById('adminClose').onclick=closeAdmin;document.getElementById('adminLogin').onclick=()=>{const pass=document.getElementById('adminPassword').value;if(pass===ADMIN_PASSWORD){isAdminMode=true;localStorage.setItem(ADMIN_KEY,'true');document.getElementById('adminAuth').style.display='none';document.getElementById('adminContent').style.display='block';toast('Admin access granted','success',2000)}else{toast('Wrong password','error',2000)}};document.getElementById('adminResetDevice').onclick=()=>{if(!confirm('Reset your device ID? You will lose access to your banana.'))return;localStorage.removeItem(DEVICE_KEY);localStorage.removeItem(DROPPED_KEY);location.reload()};document.getElementById('adminViewDevices').onclick=async()=>{try{const data=await fetchLatest();const bananas=data.record?.bananas||[];const result=document.getElementById('adminResult');result.innerHTML=`<div style="font-weight:700;margin-bottom:8px">Total Devices: ${bananas.length}</div>`;bananas.forEach(b=>{result.innerHTML+=`<div style="padding:8px;background:#fff;border-radius:6px;margin-bottom:6px"><div><strong>${esc(b.name||'Anonymous')}</strong></div><div style="font-size:11px;color:var(--muted);font-family:monospace">${b.deviceId}</div><div style="font-size:11px;color:var(--muted)">${timeAgo(b.ts)}</div></div>`})}catch(e){toast('Load failed','error',2000)}};document.getElementById('adminEditAny').onclick=async()=>{const targetDevice=prompt('Enter device ID to edit:');if(!targetDevice)return;try{const data=await fetchLatest();const bananas=data.record?.bananas||[];const banana=bananas.find(b=>b.deviceId===targetDevice);if(!banana){toast('Device not found','error',2000);return}closeAdmin();showBananaModal(banana)}catch(e){toast('Load failed','error',2000)}};document.getElementById('adminClearBoard').onclick=async()=>{if(!confirm('Clear all board messages? This cannot be undone.'))return;try{const data=await fetchLatest();await fetch(BIN_URL,{method:'PUT',headers:{"X-Master-Key":API_KEY,"Content-Type":"application/json"},body:JSON.stringify({...data.record,boardMessages:[]})});toast('Board cleared','success',2000)}catch(e){toast('Clear failed','error',2000)}};const viewTrailOnMap=(lat,lng,customName)=>{closeModal();closeSwipeModal();map.easeTo({center:[lng,lat],zoom:17,duration:800});pulseAt(lng,lat);toast(customName||'Trail location','info',2000)};const deleteTrailPoint=async(trailIndex)=>{if(!confirm('Delete this trail point?'))return;try{const latest=await fetchLatest();const arr=latest.record?.bananas||[];const idx=arr.findIndex(x=>x.deviceId===deviceId);if(idx===-1){toast("No banana",'info',2000);return}const history=arr[idx].locationHistory||[];if(trailIndex<0||trailIndex>=history.length||history.length<=1){toast("Cannot delete",'error',2000);return}history.splice(trailIndex,1);arr[idx].locationHistory=history;if(trailIndex===history.length){arr[idx].lat=history[history.length-1].lat;arr[idx].lng=history[history.length-1].lng}await putBananas(arr);await loadBananas();toast('Trail point deleted','success',2000);closeModal()}catch(e){console.error(e);toast('Delete failed','error',2000)}};const showBananaModal=p=>{trackStat('bananasVisited',1);addXP(5,'Visited banana');document.getElementById('modalTitle').textContent=p.name||'Anonymous';document.getElementById('modalMeta').textContent=p.ts?timeAgo(p.ts):'';renderReactions(p.deviceId,p.reactions||[],document.getElementById('modalReactions'));const msg=document.getElementById('modalMessage');if(p.msg){msg.textContent=p.msg;msg.style.display='block'}else{msg.style.display='none'}const gallery=document.getElementById('modalPhotoGallery');const photos=p.photos||[p.photo]||[];photos.filter(ph=>ph).length>0?(()=>{gallery.innerHTML='';photos.filter(ph=>ph).forEach((ph,i)=>{const img=document.createElement('img');img.src=ph;img.alt=`Photo ${i+1}`;gallery.appendChild(img)});gallery.style.display='flex'})():(gallery.style.display='none',gallery.innerHTML='');const history=document.getElementById('modalHistory');const trail=p.locationHistory||[];if(trail.length>1){const isOwner=p.deviceId===deviceId;history.innerHTML='<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--ink)">🗺️ Banana Trail</h4>'+trail.map((loc,i)=>{const title=i===trail.length-1?'📍 Current Location':(loc.customName||`🚩 Stop ${i+1}`);const notes=loc.notes?`<div class="trail-item-notes">"${esc(loc.notes)}"</div>`:'';return`<div class="trail-item"><div class="trail-item-content"><div class="trail-item-title">${esc(title)}</div><div class="trail-item-address">${esc(getVagueLocation(loc.address||''))}</div>${notes}<div class="trail-item-time">${timeAgo(loc.ts)}</div></div><div class="trail-item-actions"><button class="trail-map-btn" onclick="viewTrailOnMap(${loc.lat},${loc.lng},'${esc(title).replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-location"/></svg></button>${isOwner&&trail.length>1?`<button class="trail-delete-btn" onclick="deleteTrailPoint(${i})"><svg class="icon"><use href="#i-trash"/></svg></button>`:''}</div></div>`}).reverse().join('');history.style.display='block'}else{history.style.display='none'}const existingComments=document.querySelector('.modal-body .comment-section');if(existingComments)existingComments.remove();const comments=p.comments||[];const commentSection=renderComments(comments,p.deviceId);document.querySelector('.modal-body').appendChild(commentSection);const actions=document.getElementById('modalActions');if(p.deviceId===deviceId||isAdminMode){actions.style.display='flex';document.getElementById('modalEdit').onclick=()=>{closeModal();openSheet('edit',{lat:0,lng:0,...p})};document.getElementById('modalMove').onclick=()=>{closeModal();if(navigator.geolocation){toast('Getting location...','info',1500);navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>moveBanana(latitude,longitude),()=>toast('Location unavailable','error',2000),{enableHighAccuracy:true,timeout:8000})}else{toast('Location unavailable','error',2000)}};document.getElementById('modalDelete').onclick=()=>{closeModal();if(isAdminMode){deleteAnyBanana(p.deviceId)}else{deleteMyBanana()}}}else{actions.style.display='none'}document.getElementById('modalOverlay').classList.add('show');document.getElementById('modal').classList.add('show')};const closeModal=()=>{const existingComments=document.querySelector('.comment-section');if(existingComments)existingComments.remove();document.getElementById('modalOverlay').classList.remove('show');document.getElementById('modal').classList.remove('show')};document.getElementById('modalOverlay').onclick=closeModal;document.getElementById('modalClose').onclick=closeModal;let swipeList=[],swipeIndex=0,swipeStartX=0,swipeStartY=0,isSwiping=false;const openSwipeModal=()=>{swipeList=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number').sort((a,b)=>(b.ts||0)-(a.ts||0));if(!swipeList.length){toast("No bananas yet",'info',2000);return}swipeIndex=0;document.getElementById('swipeOverlay').classList.add('show');document.getElementById('swipeModal').classList.add('show');renderSwipeCard()};const closeSwipeModal=()=>{const existingComments=document.querySelector('.swipe-card-body .comment-section');if(existingComments)existingComments.remove();document.getElementById('swipeOverlay').classList.remove('show');document.getElementById('swipeModal').classList.remove('show')};const renderSwipeCard=()=>{const b=swipeList[swipeIndex];if(!b){closeSwipeModal();return}document.getElementById('swipeTitle').textContent=b.name||'Anonymous';document.getElementById('swipeMeta').textContent=b.ts?timeAgo(b.ts):'';renderReactions(b.deviceId,b.reactions||[],document.getElementById('swipeReactions'));const msg=document.getElementById('swipeMessage');if(b.msg){msg.textContent=b.msg;msg.style.display='block'}else{msg.style.display='none'}const gallery=document.getElementById('swipePhotoGallery');const photos=b.photos||[b.photo]||[];photos.filter(ph=>ph).length>0?(()=>{gallery.innerHTML='';photos.filter(ph=>ph).forEach((ph,i)=>{const img=document.createElement('img');img.src=ph;img.alt=`Photo ${i+1}`;gallery.appendChild(img)});gallery.style.display='flex'})():(gallery.style.display='none',gallery.innerHTML='');const history=document.getElementById('swipeHistory');const trail=b.locationHistory||[];if(trail.length>1){history.innerHTML='<h4 style="font-size:14px;font-weight:700;margin:16px 0 8px;color:var(--ink)">🗺️ Banana Trail</h4>'+trail.map((loc,i)=>{const title=i===trail.length-1?'📍 Current Location':(loc.customName||`🚩 Stop ${i+1}`);const notes=loc.notes?`<div class="trail-item-notes">"${esc(loc.notes)}"</div>`:'';return`<div class="trail-item"><div class="trail-item-content"><div class="trail-item-title">${esc(title)}</div><div class="trail-item-address">${esc(getVagueLocation(loc.address||''))}</div>${notes}<div class="trail-item-time">${timeAgo(loc.ts)}</div></div><div class="trail-item-actions"><button class="trail-map-btn" onclick="viewTrailOnMap(${loc.lat},${loc.lng},'${esc(title).replace(/'/g,"\\'")}')"><svg class="icon"><use href="#i-location"/></svg></button></div></div>`}).reverse().join('');history.style.display='block'}else{history.style.display='none'}const existingComments=document.querySelector('.swipe-card-body .comment-section');if(existingComments)existingComments.remove();const comments=b.comments||[];const commentSection=renderComments(comments,b.deviceId);document.querySelector('.swipe-card-body').appendChild(commentSection);document.getElementById('swipeCounter').textContent=`${swipeIndex+1}/${swipeList.length}`;document.getElementById('swipePrev').disabled=swipeIndex===0;document.getElementById('swipeNext').disabled=swipeIndex===swipeList.length-1};const swipeToIndex=idx=>{if(idx<0||idx>=swipeList.length)return;swipeIndex=idx;renderSwipeCard()};const card=document.getElementById('swipeCard');card.addEventListener('touchstart',e=>{swipeStartX=e.touches[0].clientX;swipeStartY=e.touches[0].clientY;isSwiping=true;card.classList.add('swiping')},{passive:true});card.addEventListener('touchmove',e=>{if(!isSwiping)return;const dx=e.touches[0].clientX-swipeStartX,dy=e.touches[0].clientY-swipeStartY;if(Math.abs(dx)>Math.abs(dy)){e.preventDefault();card.style.transform=`translateX(${dx}px) rotate(${dx*0.05}deg)`;if(dx<-50)document.getElementById('swipeLeft').style.opacity='1';else if(dx>50)document.getElementById('swipeRight').style.opacity='1';else{document.getElementById('swipeLeft').style.opacity='0';document.getElementById('swipeRight').style.opacity='0'}}},{passive:false});card.addEventListener('touchend',e=>{if(!isSwiping)return;const dx=e.changedTouches[0].clientX-swipeStartX;isSwiping=false;card.classList.remove('swiping');card.style.transform='';document.getElementById('swipeLeft').style.opacity='0';document.getElementById('swipeRight').style.opacity='0';if(dx<-100&&swipeIndex<swipeList.length-1){swipeToIndex(swipeIndex+1)}else if(dx>100&&swipeIndex>0){swipeToIndex(swipeIndex-1)}},{passive:true});document.getElementById('swipeOverlay').onclick=closeSwipeModal;document.getElementById('swipeClose').onclick=closeSwipeModal;document.getElementById('swipePrev').onclick=()=>swipeToIndex(swipeIndex-1);document.getElementById('swipeNext').onclick=()=>swipeToIndex(swipeIndex+1);document.getElementById('swipeMapBtn').onclick=()=>{const b=swipeList[swipeIndex];if(!b)return;closeSwipeModal();map.easeTo({center:[b.lng,b.lat],zoom:17,duration:800});pulseAt(b.lng,b.lat);setTimeout(()=>showBananaModal(b),350)};document.addEventListener('keydown',e=>{const swipeOpen=document.getElementById('swipeModal').classList.contains('show');if(swipeOpen){if(e.key==='ArrowLeft')swipeToIndex(swipeIndex-1);else if(e.key==='ArrowRight')swipeToIndex(swipeIndex+1);else if(e.key==='Escape')closeSwipeModal()}});const wireSearch=()=>{const panel=document.getElementById('searchPanel'),input=document.getElementById('searchInput'),results=document.getElementById('searchResults'),toggle=document.getElementById('toggleSearch');toggle.onclick=()=>{const open=panel.classList.toggle('show');toggle.classList.toggle('active',open);if(open)input.focus();else{input.value='';results.classList.remove('show')}};document.addEventListener('click',e=>{if(!panel.contains(e.target)&&e.target!==toggle){panel.classList.remove('show');toggle.classList.remove('active');input.value='';results.classList.remove('show')}});const searchLoc=async q=>{if(!q.trim()){results.classList.remove('show');return}try{const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8`);const data=await res.json();results.innerHTML='';if(!data||!data.length){results.innerHTML='<div class="search-result-item"><small>No results</small></div>'}else{data.forEach(r=>{const item=document.createElement('div');item.className='search-result-item';const name=r.display_name.split(',')[0];item.innerHTML=`<div class="icon-wrapper"><svg class="icon"><use href="#i-location"/></svg></div><div class="text"><strong>${esc(name)}</strong><small>${esc(r.display_name)}</small></div>`;item.onclick=()=>{map.easeTo({center:[+r.lon,+r.lat],zoom:14,duration:800});panel.classList.remove('show');toggle.classList.remove('active');input.value='';results.classList.remove('show');toast(name,'info',2000)};results.appendChild(item)})}results.classList.add('show')}catch(e){console.error(e)}};input.addEventListener('input',debounce(()=>searchLoc(input.value),400));input.addEventListener('keydown',e=>{if(e.key==='Enter')searchLoc(input.value)})};const goWorld=()=>{map.easeTo({center:[0,20],zoom:2,duration:900});toast('World view','info',1200)};let currentTutorialStep=0;const totalTutorialSteps=7;const openTutorial=()=>{currentTutorialStep=0;document.getElementById('tutorialOverlay').classList.add('show');document.getElementById('tutorialModal').classList.add('show');renderTutorialStep()};const closeTutorial=()=>{document.getElementById('tutorialOverlay').classList.remove('show');document.getElementById('tutorialModal').classList.remove('show');localStorage.setItem(TUTORIAL_KEY,'true')};const renderTutorialStep=()=>{document.querySelectorAll('.tutorial-step').forEach((step,i)=>{step.style.display=i===currentTutorialStep?'block':'none'});const dots=document.getElementById('tutorialDots');dots.innerHTML='';for(let i=0;i<totalTutorialSteps;i++){const dot=document.createElement('div');dot.className='tutorial-dot'+(i===currentTutorialStep?' active':'');dot.onclick=()=>{currentTutorialStep=i;renderTutorialStep()};dots.appendChild(dot)}const nextBtn=document.getElementById('tutorialNext');const skipBtn=document.getElementById('tutorialSkip');if(currentTutorialStep===totalTutorialSteps-1){nextBtn.textContent='Get Started';skipBtn.style.display='none'}else{nextBtn.textContent='Next';skipBtn.style.display='block'}};const wireTutorial=()=>{document.getElementById('tutorialClose').onclick=closeTutorial;document.getElementById('tutorialOverlay').onclick=closeTutorial;document.getElementById('tutorialModal').onclick=e=>{if(e.target===e.currentTarget)closeTutorial()};document.getElementById('tutorialSkip').onclick=closeTutorial;document.getElementById('tutorialNext').onclick=()=>{if(currentTutorialStep<totalTutorialSteps-1){currentTutorialStep++;renderTutorialStep()}else{closeTutorial()}};document.getElementById('showTutorial').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');openTutorial()};document.addEventListener('keydown',e=>{const tutorialOpen=document.getElementById('tutorialModal').classList.contains('show');if(tutorialOpen){if(e.key==='ArrowRight'||e.key==='Enter'){if(currentTutorialStep<totalTutorialSteps-1){currentTutorialStep++;renderTutorialStep()}else{closeTutorial()}}else if(e.key==='ArrowLeft'&&currentTutorialStep>0){currentTutorialStep--;renderTutorialStep()}else if(e.key==='Escape'){closeTutorial()}}});if(!localStorage.getItem(TUTORIAL_KEY)){setTimeout(()=>openTutorial(),1000)}};const wireUI=()=>{wireSearch();const menu=document.getElementById('menu'),toggleMenu=document.getElementById('toggleMenu');toggleMenu.onclick=()=>{const open=menu.classList.toggle('show');toggleMenu.classList.toggle('active',open)};document.addEventListener('click',e=>{if(!menu.contains(e.target)&&e.target!==toggleMenu){menu.classList.remove('show');toggleMenu.classList.remove('active')}});document.getElementById('brandBtn').onclick=goWorld;document.getElementById('homeBtn').onclick=goWorld;const dropBtn=document.getElementById('dropBtn');dropBtn.onclick=()=>{if(dropBtn.disabled){toast('Already dropped','info',2000);return}const openForm=(lat,lng)=>{map.easeTo({center:[lng,lat],zoom:17,duration:800});setTimeout(()=>openSheet('add',{lat,lng}),400)};if(navigator.geolocation){navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>openForm(latitude,longitude),()=>{const c=map.getCenter();openForm(c.lat,c.lng)},{enableHighAccuracy:true,timeout:6000})}else{const c=map.getCenter();openForm(c.lat,c.lng)}};document.getElementById('locateBtn').onclick=()=>{if(!navigator.geolocation)return;toast('Locating...','info',1500);navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>{map.easeTo({center:[longitude,latitude],zoom:14,duration:800});toast('You are here','success',2000)},()=>toast('Location unavailable','error',2000),{enableHighAccuracy:true,timeout:8000})};document.getElementById('seeMine').onclick=async()=>{if(document.getElementById('seeMine').classList.contains('disabled')){toast("No banana yet",'info',2000);return}try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===deviceId);if(!b){toast("No banana yet",'info',2000);return}map.easeTo({center:[b.lng,b.lat],zoom:17,duration:1000});pulseAt(b.lng,b.lat);toast("Your banana",'success',2000);menu.classList.remove('show');toggleMenu.classList.remove('active');setTimeout(()=>showBananaModal(b),500)}catch(e){toast('Error','error',2000)}};document.getElementById('shareMine').onclick=async()=>{if(document.getElementById('shareMine').classList.contains('disabled')){toast("Drop first",'info',2000);return}try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===deviceId);if(!b){toast("Drop first",'info',2000);return}const url=new URL(location.href);url.searchParams.set('id',deviceId);await navigator.clipboard.writeText(url.toString());toast("Link copied!",'success',2000);menu.classList.remove('show');toggleMenu.classList.remove('active')}catch(e){toast('Copy failed','error',2000)}};document.getElementById('deleteMine').onclick=()=>{if(document.getElementById('deleteMine').classList.contains('disabled')){toast("No banana",'info',2000);return}menu.classList.remove('show');toggleMenu.classList.remove('active');deleteMyBanana()};document.getElementById('randomBanana').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');goRandomBanana()};document.getElementById('browseBananas').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');openSwipeModal()};document.getElementById('openFeed').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');openFeed()};document.getElementById('openAdmin').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');openAdmin()};document.getElementById('openStats').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');openStats()};document.getElementById('openAchievements').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');openAchievements()};document.getElementById('openLeaderboard').onclick=()=>{menu.classList.remove('show');toggleMenu.classList.remove('active');openLeaderboard()}};document.querySelectorAll('.modal, .swipe-modal').forEach(el=>{el.addEventListener('click',e=>{if(e.target===e.currentTarget){el.classList.remove('show');document.getElementById(el.id==='swipeModal'?'swipeOverlay':'modalOverlay').classList.remove('show')}})});const sheet=document.getElementById('sheet'),sheetTitle=document.getElementById('sheetTitle'),sheetSubtitle=document.getElementById('sheetSubtitle'),nameEl=document.getElementById('name'),msgEl=document.getElementById('msg'),photoEl=document.getElementById('photo'),previews=document.getElementById('previews'),cancelBtn=document.getElementById('cancelBtn'),saveBtn=document.getElementById('saveBtn'),charCount=document.getElementById('charCount');let sheetMode='add',sheetTarget={lat:null,lng:null,existingPhotos:[]};msgEl.addEventListener('input',()=>charCount.textContent=`${msgEl.value.length}/500`);photoEl.addEventListener('change',async()=>{const files=Array.from(photoEl.files);if(!files.length)return;previews.innerHTML='';for(const f of files){try{const d=await compressImage(f,1200,0.8);const wrap=document.createElement('div');wrap.style.cssText='position:relative';const img=document.createElement('img');img.src=d;img.style.cssText='width:100%;height:100px;object-fit:cover;border-radius:10px;box-shadow:var(--shadow-md)';const btn=document.createElement('button');btn.textContent='✕';btn.style.cssText='position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:var(--warn);color:#fff;border:none;cursor:pointer;font-size:12px;box-shadow:var(--shadow-md)';btn.onclick=()=>{wrap.remove();const dt=new DataTransfer();Array.from(photoEl.files).forEach(file=>{if(file!==f)dt.items.add(file)});photoEl.files=dt.files};wrap.appendChild(img);wrap.appendChild(btn);previews.appendChild(wrap)}catch(e){toast('Photo compression failed','error',2000)}}});const openSheet=(mode,p)=>{sheetMode=mode;if(mode==='add'){sheetTitle.textContent='Drop a Banana';sheetSubtitle.textContent='Share your moment with the world';nameEl.value='';msgEl.value='';photoEl.value='';previews.innerHTML='';charCount.textContent='0/500';sheetTarget={lat:p.lat,lng:p.lng,existingPhotos:[]};saveBtn.textContent='Save Banana';document.getElementById('approxLocation').checked=false}else{sheetTitle.textContent='Edit Banana';sheetSubtitle.textContent='Update your moment';nameEl.value=p.name||'';msgEl.value=p.msg||'';photoEl.value='';charCount.textContent=`${(p.msg||'').length}/500`;const existingPhotos=p.photos||[p.photo]||[];sheetTarget={lat:p.lat,lng:p.lng,existingPhotos:existingPhotos.filter(ph=>ph)};previews.innerHTML='';sheetTarget.existingPhotos.forEach((ph,idx)=>{const wrap=document.createElement('div');wrap.style.cssText='position:relative';const img=document.createElement('img');img.src=ph;img.style.cssText='width:100%;height:100px;object-fit:cover;border-radius:10px;box-shadow:var(--shadow-md)';const btn=document.createElement('button');btn.textContent='✕';btn.style.cssText='position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:var(--warn);color:#fff;border:none;cursor:pointer;font-size:12px;box-shadow:var(--shadow-md)';btn.onclick=()=>{wrap.remove();sheetTarget.existingPhotos.splice(idx,1)};wrap.appendChild(img);wrap.appendChild(btn);previews.appendChild(wrap)});saveBtn.textContent='Update Banana';document.getElementById('approxLocation').parentElement.style.display='none'}sheet.classList.add('show');setTimeout(()=>nameEl.focus(),150)};const closeSheet=()=>sheet.classList.remove('show');cancelBtn.onclick=closeSheet;saveBtn.onclick=async()=>{try{const name=nameEl.value.trim(),msg=msgEl.value.trim();if(!name){toast('Enter name','error',2000);nameEl.focus();return}saveBtn.disabled=true;saveBtn.textContent='Saving...';const newFiles=Array.from(photoEl.files);const photos=[...sheetTarget.existingPhotos];for(const f of newFiles){try{photos.push(await compressImage(f,1200,0.8))}catch(e){console.error('Photo error:',e)}}if(sheetMode==='add'){const useApprox=document.getElementById('approxLocation').checked;await saveBanana(sheetTarget.lat,sheetTarget.lng,msg,photos,name,useApprox)}else await updateBanana(msg,photos,name);closeSheet();saveBtn.disabled=false;saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'}catch(e){console.error(e);toast(e.message||'Failed','error',3000);saveBtn.disabled=false;saveBtn.textContent=sheetMode==='add'?'Save Banana':'Update Banana'}};const getAddress=async(lat,lng)=>{try{const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);const data=await res.json();return data.display_name||`${lat.toFixed(4)}, ${lng.toFixed(4)}`}catch(e){return`${lat.toFixed(4)}, ${lng.toFixed(4)}`}};const saveBanana=async(lat,lng,msg,photos,name,useApprox)=>{const data=await fetchLatest();const arr=data.record?.bananas||[];if(arr.some(b=>b.deviceId===deviceId))throw new Error('Already dropped');let finalLat=lat,finalLng=lng;if(useApprox){const approx=approximateCoords(lat,lng);finalLat=approx.lat;finalLng=approx.lng}const address=await getAddress(lat,lng);arr.push({lat:finalLat,lng:finalLng,msg,photos:photos||[],name,ts:Date.now(),deviceId,locationHistory:[{lat:finalLat,lng:finalLng,ts:Date.now(),address}],reactions:[]});await putBananas(arr);localStorage.setItem(DROPPED_KEY,'true');trackStat('photosAdded',photos.length);addXP(100,'Dropped first banana!');checkAchievement('firstDrop');updateStreak();await syncProfileToServer();await loadBananas();map.easeTo({center:[finalLng,finalLat],zoom:17,duration:800});pulseAt(finalLng,finalLat);toast('Banana dropped!','success',2500)};const updateBanana=async(msg,photos,name)=>{const latest=await fetchLatest();const arr=latest.record?.bananas||[];const idx=arr.findIndex(x=>x.deviceId===deviceId);if(idx===-1)throw new Error("Not found");const oldPhotoCount=arr[idx].photos?.length||0;arr[idx]={...arr[idx],msg,photos:photos||arr[idx].photos||[],name};const newPhotoCount=arr[idx].photos?.length||0;if(newPhotoCount>oldPhotoCount){trackStat('photosAdded',newPhotoCount-oldPhotoCount);addXP(10*(newPhotoCount-oldPhotoCount),'Added photos')}await putBananas(arr);updateStreak();await syncProfileToServer();await loadBananas();toast('Updated!','success',2000)};const moveBanana=async(lat,lng)=>{const result=await showPrompt('Move Banana','Name this stop and add optional notes','');if(result===null)return;const notes=await showPrompt('Trail Notes (Optional)','Add details about this location','','textarea');try{const latest=await fetchLatest();const arr=latest.record?.bananas||[];const idx=arr.findIndex(x=>x.deviceId===deviceId);if(idx===-1){toast("No banana",'info',2000);return}const address=await getAddress(lat,lng);const history=arr[idx].locationHistory||[];history.push({lat,lng,ts:Date.now(),address,customName:result||'',notes:notes||''});arr[idx]={...arr[idx],lat,lng,locationHistory:history};await putBananas(arr);trackStat('bananasMoved',1);addXP(30,'Moved banana');updateStreak();await syncProfileToServer();await loadBananas();map.easeTo({center:[lng,lat],zoom:17,duration:800});pulseAt(lng,lat);toast('Banana moved!','success',2000);setTimeout(()=>showBananaModal(arr[idx]),500)}catch(e){console.error(e);toast('Move failed','error',2000)}};const deleteMyBanana=async()=>{if(!confirm('Delete your banana? This cannot be undone.'))return;try{const latest=await fetchLatest();const arr=latest.record?.bananas||[];const idx=arr.findIndex(x=>x.deviceId===deviceId);if(idx===-1){toast("No banana",'info',2000);return}arr.splice(idx,1);await putBananas(arr);localStorage.removeItem(DROPPED_KEY);await loadBananas();toast('Deleted','success',2000)}catch(e){console.error(e);toast('Delete failed','error',2000)}};const deleteAnyBanana=async(targetDeviceId)=>{if(!confirm('Delete this banana? This cannot be undone.'))return;try{const latest=await fetchLatest();const arr=latest.record?.bananas||[];const idx=arr.findIndex(x=>x.deviceId===targetDeviceId);if(idx===-1){toast("Banana not found",'info',2000);return}arr.splice(idx,1);await putBananas(arr);await loadBananas();toast('Deleted','success',2000)}catch(e){console.error(e);toast('Delete failed','error',2000)}};const goRandomBanana=()=>{const list=bananasCache.filter(b=>typeof b.lat==='number'&&typeof b.lng==='number');if(!list.length){toast("No bananas yet",'info',2000);return}const pick=list[Math.floor(Math.random()*list.length)];map.easeTo({center:[pick.lng,pick.lat],zoom:17,duration:900});pulseAt(pick.lng,pick.lat);toast('Random!','success',2000);setTimeout(()=>showBananaModal(pick),500)};const startAuto=()=>{if(refreshHandle)clearInterval(refreshHandle);refreshHandle=setInterval(async()=>{await loadBananas()},30000)};const checkURL=()=>{const params=new URLSearchParams(location.search),sharedId=params.get('id');if(sharedId){setTimeout(async()=>{try{const data=await fetchLatest();const b=(data.record?.bananas||[]).find(x=>x.deviceId===sharedId);if(b){map.easeTo({center:[b.lng,b.lat],zoom:17,duration:1500});pulseAt(b.lng,b.lat);toast('Shared banana','success',2000);setTimeout(()=>showBananaModal(b),1000)}else{toast('Not found','error',2000)}}catch(e){console.error(e)}},1500)}};(async()=>{try{updateStreak();updateProfileUI();map=new maplibregl.Map({container:'map',style:makeStyle(),center:[0,20],zoom:2});map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');map.on('load',async()=>{await loadBananas();startAuto();if(navigator.geolocation){navigator.geolocation.getCurrentPosition(({coords:{latitude,longitude}})=>{map.easeTo({center:[longitude,latitude],zoom:11,duration:1200})},()=>{},{enableHighAccuracy:true,timeout:8000})}checkURL()});wireUI();wireTutorial()}catch(e){console.error(e);toast('Map failed','error',0)}})();
+</script>
+</body>
+</html>
