@@ -172,25 +172,25 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .btn-apply{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--ink);border:1px solid var(--accent-dark);box-shadow:var(--shadow-md)}
 .btn-apply:hover{box-shadow:var(--shadow-lg),0 8px 20px rgba(255,217,61,0.3);transform:translateY(-2px)}
 .tutorial-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:none;animation:fadeIn 0.3s ease}
-.tutorial-overlay.show{display:block}
-.tutorial-spotlight{position:absolute;border-radius:12px;box-shadow:0 0 0 4px var(--accent),0 0 0 9999px rgba(0,0,0,0.85);transition:all 0.4s ease;pointer-events:none;z-index:10000}
-.tutorial-tooltip{position:absolute;background:var(--surface);border-radius:18px;padding:24px 28px;max-width:380px;box-shadow:var(--shadow-xl);animation:slideInUp 0.3s cubic-bezier(0.4,0,0.2,1);z-index:10001}
-.tutorial-tooltip h3{font-size:20px;font-weight:700;margin-bottom:10px;color:var(--ink)}
+.tutorial-overlay.show{display:flex;align-items:center;justify-content:center;padding:20px}
+.tutorial-spotlight{position:fixed;border-radius:12px;box-shadow:0 0 0 4px var(--accent),0 0 0 9999px rgba(0,0,0,0.85);transition:all 0.4s ease;pointer-events:none;z-index:10000}
+.tutorial-tooltip{position:relative;background:var(--surface);border-radius:18px;padding:24px;max-width:450px;width:100%;box-shadow:var(--shadow-xl);z-index:10001;margin:auto}
+.tutorial-tooltip h3{font-size:20px;font-weight:700;margin-bottom:12px;color:var(--ink)}
 .tutorial-tooltip p{font-size:15px;line-height:1.6;color:#4b5563;margin-bottom:20px}
 .tutorial-progress{display:flex;gap:8px;margin-bottom:20px;justify-content:center}
 .tutorial-dot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.2);transition:all 0.3s ease}
 .tutorial-dot.active{background:var(--accent);width:28px;border-radius:4px}
 .tutorial-actions{display:flex;gap:12px}
-.tutorial-actions button{flex:1;padding:12px 18px;border:none;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.2s ease}
+.tutorial-actions button{flex:1;padding:14px 20px;border:none;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.2s ease}
 .btn-skip{background:rgba(0,0,0,0.08);color:var(--muted)}
 .btn-skip:hover{background:rgba(0,0,0,0.12);color:var(--ink)}
 .btn-next{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--ink)}
 .btn-next:hover{box-shadow:0 4px 12px rgba(255,217,61,0.3);transform:translateY(-1px)}
 @media (max-width:640px){
-  .customize-header{flex-direction:column}
-  .customize-stage{width:100%;height:260px}
-  .customize-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}
-  .tutorial-tooltip{max-width:calc(100% - 40px);padding:20px}
+  .tutorial-tooltip{padding:20px;max-width:calc(100vw - 40px)}
+  .tutorial-tooltip h3{font-size:18px}
+  .tutorial-tooltip p{font-size:14px}
+  .tutorial-actions button{padding:12px 16px;font-size:13px}
 }
 @keyframes pulseMarker{
   0%{transform:translate(-50%,-50%) scale(0.6);opacity:.9}
@@ -1298,39 +1298,27 @@ const checkURL=()=>{
 const TUTORIAL_STEPS=[
   {
     title:'🍌 Welcome to banana.place!',
-    text:'This is a fun global map where you can drop bananas anywhere in the world and customize them with hats, outfits, and accessories!',
-    target:'#map',
-    position:'center'
+    text:'This is a fun global map where you can drop bananas anywhere in the world and customize them with hats, outfits, and accessories!'
   },
   {
     title:'📍 Drop Your First Banana',
-    text:'Click this button to drop your banana at your current location. You can add a message, photos, and choose whether to use your exact or approximate location for privacy.',
-    target:'#dropBtn',
-    position:'left'
+    text:'Click the "Drop Banana" button (bottom right) to place your banana at your current location. You can add a message, photos, and choose privacy options.'
   },
   {
     title:'🎨 Customize Your Style',
-    text:'After dropping your banana, use the menu to customize it! Choose from hats, accessories, and outfits to make your banana unique.',
-    target:'#toggleMenu',
-    position:'bottom'
+    text:'After dropping your banana, open the menu (top right) to customize it! Choose from hats, accessories, and outfits to make your banana unique.'
   },
   {
     title:'🔍 Explore the World',
-    text:'Search for any location on the map or click on bananas to see messages, photos, and reactions from people around the world!',
-    target:'#toggleSearch',
-    position:'bottom'
+    text:'Use the search button (top right) to find any location, or click on bananas to see messages, photos, and reactions from people around the world!'
   },
   {
     title:'🏠 Quick Navigation',
-    text:'Use these buttons to find your location or return to the world view at any time.',
-    target:'#homeBtn',
-    position:'left'
+    text:'The location button finds your current position, and the home button returns you to the world view at any time.'
   },
   {
     title:"🎉 You're All Set!",
-    text:"That's it! Now go ahead and drop your banana somewhere special. Have fun exploring and customizing!",
-    target:'#map',
-    position:'center'
+    text:"That's it! Now go ahead and drop your banana somewhere special. Have fun exploring and customizing!"
   }
 ];
 
@@ -1349,9 +1337,6 @@ const endTutorial=()=>{
 
 const showTutorialStep=()=>{
   const step=TUTORIAL_STEPS[tutorialStep];
-  const overlay=document.getElementById('tutorialOverlay');
-  const spotlight=document.getElementById('tutorialSpotlight');
-  const tooltip=document.getElementById('tutorialTooltip');
   
   document.getElementById('tutorialTitle').textContent=step.title;
   document.getElementById('tutorialText').textContent=step.text;
@@ -1361,36 +1346,8 @@ const showTutorialStep=()=>{
   
   document.getElementById('tutorialNext').textContent=tutorialStep===TUTORIAL_STEPS.length-1?'Finish':'Next';
   
-  if(step.target==='#map'||step.position==='center'){
-    spotlight.style.display='none';
-    tooltip.style.left='50%';
-    tooltip.style.top='50%';
-    tooltip.style.transform='translate(-50%,-50%)';
-  }else{
-    const target=document.querySelector(step.target);
-    if(target){
-      const rect=target.getBoundingClientRect();
-      spotlight.style.display='block';
-      spotlight.style.left=rect.left+'px';
-      spotlight.style.top=rect.top+'px';
-      spotlight.style.width=rect.width+'px';
-      spotlight.style.height=rect.height+'px';
-      
-      if(step.position==='bottom'){
-        tooltip.style.left=rect.left+(rect.width/2)+'px';
-        tooltip.style.top=rect.bottom+20+'px';
-        tooltip.style.transform='translateX(-50%)';
-      }else if(step.position==='left'){
-        tooltip.style.left=rect.left-20+'px';
-        tooltip.style.top=rect.top+(rect.height/2)+'px';
-        tooltip.style.transform='translate(-100%,-50%)';
-      }else{
-        tooltip.style.left=rect.left+(rect.width/2)+'px';
-        tooltip.style.top=rect.top-20+'px';
-        tooltip.style.transform='translate(-50%,-100%)';
-      }
-    }
-  }
+  // Hide spotlight for simpler centered tutorial
+  document.getElementById('tutorialSpotlight').style.display='none';
 };
 
 document.getElementById('tutorialSkip').onclick=endTutorial;
@@ -1402,6 +1359,7 @@ document.getElementById('tutorialNext').onclick=()=>{
     showTutorialStep();
   }
 };
+
 
 (async()=>{
   try{
