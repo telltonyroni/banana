@@ -98,7 +98,9 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .privacy-option:hover{background:rgba(255,217,61,0.12)}
 .privacy-option input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:var(--accent-dark)}
 .privacy-option label{font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;text-transform:none;letter-spacing:normal;margin:0;flex:1}
-.banana-marker{width:36px;height:36px;cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);filter:drop-shadow(0 3px 8px rgba(0,0,0,.12))}
+.banana-marker{width:100px;height:100px;cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);filter:drop-shadow(0 3px 8px rgba(0,0,0,.12))}
+.banana-marker svg{ display:block;width:100%;height:100%;
+}
 .banana-marker:hover{transform:translateY(-5px) scale(1.12);filter:drop-shadow(0 6px 16px rgba(0,0,0,.2))}
 .banana-marker.mine{filter:drop-shadow(0 3px 12px rgba(255,217,61,.5))}
 .banana-marker.mine:hover{filter:drop-shadow(0 6px 20px rgba(255,217,61,.7))}
@@ -450,8 +452,8 @@ if(!deviceId){
       'default-shades': 'https://raw.githubusercontent.com/telltonyroni/banana/main/svgs/default-shades.svg',
       'viking-default': 'https://raw.githubusercontent.com/telltonyroni/banana/main/svgs/viking-default.svg',
       'viking-bowtie': 'https://raw.githubusercontent.com/telltonyroni/banana/main/svgs/viking-bowtie.svg',
-      // Add more as you create them
-    };
+  'default-default-overalls': 'https://raw.githubusercontent.com/telltonyroni/banana/main/svgs/default-default-overalls.svg',
+};
     
     const svgCache = {};
 
@@ -466,7 +468,8 @@ const CUSTOMIZATION_OPTIONS = {
     { value: 'shades', label: 'Shades' }
   ],
   shirt: [
-    { value: 'default', label: 'None' }
+    { value: 'default', label: 'None' },
+    { label: 'Overalls', value: 'overalls' },
   ]
 };
 
@@ -477,23 +480,28 @@ const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f
 const getVagueLocation=addr=>{if(!addr)return'Unknown';const parts=addr.split(',').map(p=>p.trim());if(parts.length>=2){const city=parts[parts.length-3]||parts[0];const region=parts[parts.length-2];return`Near ${city}, ${region}`}return`Near ${parts[0]}`};
 const approximateCoords=(lat,lng)=>{const offset=0.01;return{lat:lat+(Math.random()-0.5)*offset,lng:lng+(Math.random()-0.5)*offset}};
 
-const getBananaSVG = async (head, accessory) => {
-  const key = `${head}-${accessory}`;
-  const url = BANANA_SVG_URLS[key] || BANANA_SVG_URLS['default-default'];
-  
-  // Check cache first
-  if (svgCache[key]) {
-    return svgCache[key];
-  }
-  
+const getBananaSVG = async (head, accessory, shirt = 'default') => {
+  // Try 3-key, then 2-key, then default
+  const key3 = `${head}-${accessory}-${shirt}`;
+  const key2 = `${head}-${accessory}`;
+  const fallbackKey = 'default-default';
+
+  const url =
+    BANANA_SVG_URLS[key3] ||
+    BANANA_SVG_URLS[key2] ||
+    BANANA_SVG_URLS[fallbackKey];
+
+  const cacheKey = BANANA_SVG_URLS[key3] ? key3 : (BANANA_SVG_URLS[key2] ? key2 : fallbackKey);
+  if (svgCache[cacheKey]) return svgCache[cacheKey];
+
   try {
-    const response = await fetch(url);
-    const svgText = await response.text();
-    svgCache[key] = svgText;
-    return svgText;
+    const resp = await fetch(url);
+    const svg = await resp.text();
+    svgCache[cacheKey] = svg;
+    return svg;
   } catch (e) {
     console.error('Failed to load SVG:', e);
-    return svgCache['default-default'] || '';
+    return svgCache[fallbackKey] || '';
   }
 };
 
@@ -577,28 +585,46 @@ const makeStyle=()=>{
   }
 };
 
-const asFeat=b=>({type:'Feature',properties:{deviceId:b.deviceId||'',name:b.name||'',msg:b.msg||'',photos:b.photos||[b.photo]||[],ts:b.ts||0,locationHistory:b.locationHistory||[],comments:b.comments||[],reactions:b.reactions||[],head:b.head||'default',accessory:b.accessory||'default'},geometry:{type:'Point',coordinates:[b.lng,b.lat]}});
+const asFeat = b => ({
+  type: 'Feature',
+  properties: {
+    deviceId: b.deviceId || '',
+    name: b.name || '',
+    msg: b.msg || '',
+    photos: b.photos || [b.photo] || [],
+    ts: b.ts || 0,
+    locationHistory: b.locationHistory || [],
+    comments: b.comments || [],
+    reactions: b.reactions || [],
+    head: b.head || 'default',
+    accessory: b.accessory || 'default',
+    shirt: b.shirt || 'default',            // 👈 add this
+  },
+  geometry: { type: 'Point', coordinates: [b.lng, b.lat] }
+});
 const clearMarkers=()=>{domMarkers.forEach(m=>m.remove());domMarkers=[]};
 
 const createMarker = async (feat) => {
-  const el=document.createElement('div');
-  el.className='banana-marker';
-  if(feat.properties.deviceId===deviceId)el.className+=' mine';
+  const el = document.createElement('div');
+  el.className = 'banana-marker';
+  if (feat.properties.deviceId === deviceId) el.className += ' mine';
+
   const head = feat.properties.head || 'default';
   const accessory = feat.properties.accessory || 'default';
-  el.innerHTML = getBananaSVG(head, accessory);
-  const openModal=ev=>{
-    ev.preventDefault();
-    ev.stopPropagation();
-    showBananaModal(feat.properties)
-  };
+  const shirt = feat.properties.shirt || 'default';                 // 👈 new
+
+  el.innerHTML = await getBananaSVG(head, accessory, shirt);         // 👈 pass shirt
+
+  const openModal = ev => { ev.preventDefault(); ev.stopPropagation(); showBananaModal(feat.properties) };
 
   ['pointerdown','touchstart','mousedown'].forEach(type=>el.addEventListener(type,e=>e.stopPropagation(),{passive:true}));
   el.addEventListener('pointerup',openModal);
   el.addEventListener('touchend',openModal);
   el.addEventListener('click',openModal);
-  return new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(feat.geometry.coordinates)
+
+  return new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(feat.geometry.coordinates);
 };
+
 
 const renderMarkers = async (geojson) => {
       clearMarkers();
@@ -982,15 +1008,17 @@ document.querySelectorAll('.feed-tab').forEach(tab=>{
     let shirtIndex = CUSTOMIZATION_OPTIONS.shirt.findIndex(s => s.value === currentShirt);
     
 const updatePreview = async () => {
-      const preview = document.getElementById('customizePreviewSVG');
-      preview.innerHTML = getBananaSVG(
-        CUSTOMIZATION_OPTIONS.head[headIndex].value,
-        CUSTOMIZATION_OPTIONS.accessory[accessoryIndex].value
-      );
-      document.getElementById('headLabel').textContent = CUSTOMIZATION_OPTIONS.head[headIndex].label;
-      document.getElementById('accessoryLabel').textContent = CUSTOMIZATION_OPTIONS.accessory[accessoryIndex].label;
-      document.getElementById('shirtLabel').textContent = CUSTOMIZATION_OPTIONS.shirt[shirtIndex].label;
-    };
+  const preview = document.getElementById('customizePreviewSVG');
+  preview.innerHTML = await getBananaSVG(
+    CUSTOMIZATION_OPTIONS.head[headIndex].value,
+    CUSTOMIZATION_OPTIONS.accessory[accessoryIndex].value,
+    CUSTOMIZATION_OPTIONS.shirt[shirtIndex].value     // 👈 pass shirt
+  );
+  document.getElementById('headLabel').textContent = CUSTOMIZATION_OPTIONS.head[headIndex].label;
+  document.getElementById('accessoryLabel').textContent = CUSTOMIZATION_OPTIONS.accessory[accessoryIndex].label;
+  document.getElementById('shirtLabel').textContent = CUSTOMIZATION_OPTIONS.shirt[shirtIndex].label;
+};
+
     
     const customizeHTML = `
       <div class="customize-section">
