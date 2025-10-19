@@ -183,15 +183,22 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .customize-tab:hover:not(.active){background:rgba(0,0,0,0.05)}
 .customize-category{display:none}
 .customize-category.active{display:block}
-.customize-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:12px;margin-bottom:24px}
-.customize-option{position:relative;aspect-ratio:1;border:2px solid rgba(0,0,0,0.1);border-radius:14px;padding:10px;cursor:pointer;transition:all 0.2s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#fff}
-.customize-option:hover{border-color:var(--accent-dark);transform:translateY(-3px);box-shadow:var(--shadow-md)}
-.customize-option.selected{border-color:var(--accent-dark);background:linear-gradient(135deg,rgba(255,217,61,0.15),rgba(224,194,75,0.15));box-shadow:var(--shadow-md)}
-.customize-option-preview{width:60px;height:60px;display:flex;align-items:center;justify-content:center}
+.customize-carousel{position:relative;margin-bottom:24px}
+.customize-grid{display:flex;gap:12px;overflow-x:auto;scroll-behavior:smooth;padding:8px 4px;scrollbar-width:none;-ms-overflow-style:none}
+.customize-grid::-webkit-scrollbar{display:none}
+.customize-option{position:relative;min-width:120px;width:120px;aspect-ratio:0.9;border:2px solid rgba(0,0,0,0.1);border-radius:14px;padding:12px;cursor:pointer;transition:all 0.2s ease;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#fff;flex-shrink:0}
+.customize-option:hover{border-color:var(--accent-dark);transform:scale(1.05);box-shadow:var(--shadow-md)}
+.customize-option.selected{border-color:var(--accent-dark);background:linear-gradient(135deg,rgba(255,217,61,0.15),rgba(224,194,75,0.15));box-shadow:var(--shadow-md);transform:scale(1.05)}
+.customize-option-preview{width:70px;height:70px;display:flex;align-items:center;justify-content:center}
 .customize-option-preview svg{width:100%;height:auto;max-height:100%}
-.customize-option-label{font-size:11px;font-weight:600;color:var(--ink);text-align:center;line-height:1.2}
+.customize-option-label{font-size:12px;font-weight:600;color:var(--ink);text-align:center;line-height:1.2}
 .customize-option.none-option{border-style:dashed;opacity:0.6}
 .customize-option.none-option:hover{opacity:1}
+.carousel-arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid rgba(0,0,0,0.1);box-shadow:var(--shadow-md);cursor:pointer;display:grid;place-items:center;z-index:10;transition:all 0.2s ease}
+.carousel-arrow:hover{box-shadow:var(--shadow-lg);transform:translateY(-50%) scale(1.1)}
+.carousel-arrow:disabled{opacity:0.3;cursor:not-allowed}
+.carousel-arrow.left{left:-20px}
+.carousel-arrow.right{right:-20px}
 .customize-action-bar{display:flex;gap:12px;padding-top:20px;border-top:2px solid rgba(0,0,0,0.06)}
 .customize-action-bar button{flex:1;padding:16px;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;gap:10px}
 .btn-reset{background:rgba(0,0,0,0.06);color:var(--ink);border:1px solid rgba(0,0,0,0.1)}
@@ -1073,7 +1080,9 @@ const showCustomizeModal=async()=>{
   };
   
   const renderCategory=category=>{
+    const container=document.getElementById('customizeCarousel');
     const grid=document.getElementById('customizeGrid');
+    
     grid.innerHTML=CUSTOMIZATION_OPTIONS[category].map(opt=>{
       const isNone=opt.value==='default';
       const isSelected=selections[category]===opt.value;
@@ -1104,15 +1113,40 @@ const showCustomizeModal=async()=>{
         updatePreview();
       };
     });
+    
+    const leftArrow=container.querySelector('.carousel-arrow.left');
+    const rightArrow=container.querySelector('.carousel-arrow.right');
+    
+    const updateArrows=()=>{
+      leftArrow.disabled=grid.scrollLeft<=0;
+      rightArrow.disabled=grid.scrollLeft>=grid.scrollWidth-grid.clientWidth-5;
+    };
+    
+    leftArrow.onclick=()=>{
+      grid.scrollBy({left:-200,behavior:'smooth'});
+      setTimeout(updateArrows,300);
+    };
+    
+    rightArrow.onclick=()=>{
+      grid.scrollBy({left:200,behavior:'smooth'});
+      setTimeout(updateArrows,300);
+    };
+    
+    grid.addEventListener('scroll',updateArrows);
+    updateArrows();
   };
   
-  const customizeHTML=`
+const customizeHTML=`
     <div class="customize-modal">
       <div class="customize-header">
         <div class="customize-stage">
           <div class="customize-preview-svg" id="customizePreviewSVG"></div>
         </div>
-
+        <div class="customize-info">
+          <h4>Style Your Banana</h4>
+          <p>Choose hats, gear, and outfits to make your banana unique. Mix and match to create your perfect look!</p>
+        </div>
+      </div>
       
       <div class="customize-tabs">
         <button class="customize-tab active" data-category="head">👒 Hats</button>
@@ -1120,7 +1154,15 @@ const showCustomizeModal=async()=>{
         <button class="customize-tab" data-category="shirt">👕 Outfits</button>
       </div>
       
-      <div class="customize-grid" id="customizeGrid"></div>
+      <div class="customize-carousel" id="customizeCarousel">
+        <button class="carousel-arrow left" aria-label="Scroll left">
+          <svg class="icon"><use href="#i-left"/></svg>
+        </button>
+        <div class="customize-grid" id="customizeGrid"></div>
+        <button class="carousel-arrow right" aria-label="Scroll right">
+          <svg class="icon"><use href="#i-right"/></svg>
+        </button>
+      </div>
       
       <div class="customize-action-bar">
         <button class="btn-reset" id="resetCustomize">
@@ -1134,6 +1176,7 @@ const showCustomizeModal=async()=>{
       </div>
     </div>
   `;
+
   
   document.getElementById('modalTitle').textContent='Customize Your Banana';
   document.getElementById('modalMeta').textContent='Make it unique!';
