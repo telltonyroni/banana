@@ -445,11 +445,11 @@ if(!deviceId){
 }
 
     const BANANA_SVG_URLS = {
-      'default-default': 'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/default-default.svg',
-      'default-bowtie': 'https://your-cdn.com/bananas/default-bowtie.svg',
-      'default-shades': 'https://your-cdn.com/bananas/default-shades.svg',
-      'viking-default': 'https://your-cdn.com/bananas/viking-default.svg',
-      'viking-bowtie': 'https://your-cdn.com/bananas/viking-bowtie.svg',
+      'default-default': 'https://raw.githubusercontent.com/telltonyroni/banana/main/svgs/default-default.svg',
+      'default-bowtie': 'https://raw.githubusercontent.com/telltonyroni/banana/main/svgs/default-bowtie.svg',
+      'default-shades': 'https://raw.githubusercontent.com/telltonyroni/banana/main/svgs/default-shades.svg',
+      'viking-default': 'https://raw.githubusercontent.com/telltonyroni/banana/main/svgs/viking-default.svg',
+      'viking-bowtie': 'https://raw.githubusercontent.com/telltonyroni/banana/main/svgs/viking-bowtie.svg',
       // Add more as you create them
     };
     
@@ -580,7 +580,7 @@ const makeStyle=()=>{
 const asFeat=b=>({type:'Feature',properties:{deviceId:b.deviceId||'',name:b.name||'',msg:b.msg||'',photos:b.photos||[b.photo]||[],ts:b.ts||0,locationHistory:b.locationHistory||[],comments:b.comments||[],reactions:b.reactions||[],head:b.head||'default',accessory:b.accessory||'default'},geometry:{type:'Point',coordinates:[b.lng,b.lat]}});
 const clearMarkers=()=>{domMarkers.forEach(m=>m.remove());domMarkers=[]};
 
-const createMarker=feat=>{
+const createMarker = async (feat) => {
   const el=document.createElement('div');
   el.className='banana-marker';
   if(feat.properties.deviceId===deviceId)el.className+=' mine';
@@ -981,7 +981,7 @@ document.querySelectorAll('.feed-tab').forEach(tab=>{
     let accessoryIndex = CUSTOMIZATION_OPTIONS.accessory.findIndex(a => a.value === currentAccessory);
     let shirtIndex = CUSTOMIZATION_OPTIONS.shirt.findIndex(s => s.value === currentShirt);
     
-    const updatePreview = () => {
+const updatePreview = async () => {
       const preview = document.getElementById('customizePreviewSVG');
       preview.innerHTML = getBananaSVG(
         CUSTOMIZATION_OPTIONS.head[headIndex].value,
