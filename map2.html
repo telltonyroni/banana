@@ -53,6 +53,12 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 .menu .row.disabled{opacity:0.35;cursor:not-allowed}
 .menu .row.disabled:hover{background:transparent;padding-left:12px}
 .menu .split{height:1px;background:rgba(0,0,0,0.06);margin:6px 8px}
+.menu-profile{padding:12px;border-bottom:1px solid rgba(0,0,0,0.06);margin-bottom:6px;display:flex;align-items:center;gap:12px}
+.menu-profile-icon{width:60px;height:60px;background:linear-gradient(135deg,rgba(255,217,61,0.15),rgba(224,194,75,0.15));border-radius:12px;padding:8px;display:flex;align-items:center;justify-content:center;border:2px solid var(--accent-dark)}
+.menu-profile-icon svg{width:100%;height:auto}
+.menu-profile-info{flex:1;min-width:0}
+.menu-profile-name{font-weight:700;font-size:14px;color:var(--ink);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.menu-profile-status{font-size:11px;color:var(--muted)}
 .controls{position:fixed;right:16px;bottom:16px;z-index:998;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .controls>*{pointer-events:auto}
 .fab{border:none;border-radius:var(--radius);background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:var(--ink);font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;box-shadow:var(--shadow-lg);cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;border:1px solid var(--accent-dark)}
@@ -361,6 +367,13 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
 </div>
 
 <div class="menu" id="menu">
+  <div class="menu-profile" id="menuProfile" style="display:none">
+    <div class="menu-profile-icon" id="menuProfileIcon"></div>
+    <div class="menu-profile-info">
+      <div class="menu-profile-name" id="menuProfileName">Anonymous</div>
+      <div class="menu-profile-status">🍌 Your banana</div>
+    </div>
+  </div>
   <div class="row" id="seeMine"><svg class="icon"><use href="#i-eye"/></svg><span>View My Banana</span></div>
   <div class="row" id="customizeMine"><svg class="icon"><use href="#i-sparkles"/></svg><span>Customize My Banana</span></div>
   <div class="row" id="shareMine"><svg class="icon"><use href="#i-share"/></svg><span>Share My Banana</span></div>
@@ -1426,9 +1439,30 @@ document.querySelectorAll('.feed-tab').forEach(tab=>{
   };
 });
 
-const showBananaModal=p=>{
+const showBananaModal=async p=>{
   document.getElementById('modalTitle').textContent=p.name||'Anonymous';
   document.getElementById('modalMeta').textContent=p.ts?timeAgo(p.ts):'';
+  
+  // Add banana profile preview at top of modal
+  const modalBody=document.querySelector('.modal-body');
+  const existingProfile=modalBody.querySelector('.modal-banana-profile');
+  if(existingProfile)existingProfile.remove();
+  
+  const profileDiv=document.createElement('div');
+  profileDiv.className='modal-banana-profile';
+  profileDiv.style.cssText='display:flex;align-items:center;gap:12px;padding:12px;background:linear-gradient(135deg,rgba(255,217,61,0.08),rgba(224,194,75,0.08));border-radius:12px;margin-bottom:16px;border:1px solid rgba(255,217,61,0.3)';
+  
+  const iconDiv=document.createElement('div');
+  iconDiv.style.cssText='width:60px;height:60px;background:linear-gradient(135deg,rgba(255,217,61,0.15),rgba(224,194,75,0.15));border-radius:12px;padding:8px;display:flex;align-items:center;justify-content:center;border:2px solid var(--accent-dark);flex-shrink:0';
+  iconDiv.innerHTML=await getCompositeBananaSVG(p.head||'default',p.accessory||'default',p.shirt||'default');
+  
+  const infoDiv=document.createElement('div');
+  infoDiv.style.cssText='flex:1;min-width:0';
+  infoDiv.innerHTML=`<div style="font-weight:700;font-size:16px;color:var(--ink)">${esc(p.name||'Anonymous')}'s Banana</div><div style="font-size:12px;color:var(--muted)">Dropped ${timeAgo(p.ts)}</div>`;
+  
+  profileDiv.appendChild(iconDiv);
+  profileDiv.appendChild(infoDiv);
+  modalBody.insertBefore(profileDiv,modalBody.firstChild);
   renderReactions(p.deviceId,p.reactions||[],document.getElementById('modalReactions'));
   const msg=document.getElementById('modalMessage');
   if(p.msg){msg.textContent=p.msg;msg.style.display='block'}else{msg.style.display='none'}
@@ -1759,12 +1793,32 @@ document.getElementById('tutorialNext').onclick=()=>{
   }
 };
 
+const updateMenuProfile=async()=>{
+  const myBanana=bananasCache.find(b=>b.deviceId===deviceId);
+  const profileSection=document.getElementById('menuProfile');
+  const profileIcon=document.getElementById('menuProfileIcon');
+  const profileName=document.getElementById('menuProfileName');
+  
+  if(myBanana){
+    profileSection.style.display='flex';
+    profileName.textContent=myBanana.name||'Anonymous';
+    const head=myBanana.head||'default';
+    const accessory=myBanana.accessory||'default';
+    const shirt=myBanana.shirt||'default';
+    profileIcon.innerHTML=await getCompositeBananaSVG(head,accessory,shirt);
+  }else{
+    profileSection.style.display='none';
+  }
+};
+
+
 const wireUI=()=>{
   wireSearch();
   const menu=document.getElementById('menu'),toggleMenu=document.getElementById('toggleMenu');
-  toggleMenu.onclick=()=>{
+toggleMenu.onclick=async()=>{
     const open=menu.classList.toggle('show');
-    toggleMenu.classList.toggle('active',open)
+    toggleMenu.classList.toggle('active',open);
+    if(open)await updateMenuProfile();
   };
   document.addEventListener('click',e=>{
     if(!menu.contains(e.target)&&e.target!==toggleMenu){
