@@ -434,7 +434,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-u
     </div>
     <div class="modal-actions" id="modalActions" style="display:none">
       <button class="action-edit" id="modalEdit"><svg class="icon"><use href="#i-edit"/></svg>Edit</button>
-      <button class="action-customize" id="modalCustomizeBtn"><svg class="icon"><use href="#i-sparkles"/></svg>Style</button>
+      <button class="action-customize" id="modalCustomizeBtn"><svg class="icon"><use href="#i-palette"/></svg>Style</button>
       <button class="action-move" id="modalMove"><svg class="icon"><use href="#i-location"/></svg>Move</button>
       <button class="action-delete" id="modalDelete"><svg class="icon"><use href="#i-trash"/></svg>Delete</button>
     </div>
@@ -552,35 +552,19 @@ if(!deviceId){
 }
 
 const BASE_SVG_URL='https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/base.svg';
-const HEAD_SVG_URLS={
-  default:null,
-  backcap:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/heads/backcap.svg',
-  cat:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/heads/cat.svg',
-  chef:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/heads/chef.svg',
-  detective:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/heads/detective.svg',
-  explorer:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/heads/explorer.svg',
-  funcap:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/heads/funcap.svg',
-  wizard:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/heads/wizard.svg',
-  artcap:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/heads/artcap.svg',
-  beanie:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/heads/beanie.svg',
-  sailorcap:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/heads/sailorcap.svg',
+const GITHUB_BASE='https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs';
+
+const buildURLs=(folder,items)=>{
+  const urls={default:null};
+  items.forEach(item=>urls[item]=`${GITHUB_BASE}/${folder}/${item}.svg`);
+  return urls;
 };
-const ACCESSORY_SVG_URLS={
-  default:null,
-  backpack:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/accessories/backpack.svg',
-  shades:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/accessories/shades.svg',
-  hearts:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/accessories/hearts.svg',
-};
-const SHIRT_SVG_URLS={
-  default:null,
-  bowtie:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/shirts/bowtie.svg',
-  suit:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/shirts/suit.svg',
-  overalls:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/shirts/overalls.svg',
-  shirt:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/shirts/shirt.svg',
-  green:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/shirts/green.svg',
-  sailor:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/shirts/sailor.svg',
-  art:'https://raw.githubusercontent.com/telltonyroni/banana/refs/heads/main/svgs/shirts/art.svg',
-};
+
+const HEAD_SVG_URLS=buildURLs('heads',['backcap','cat','chef','detective','explorer','funcap','wizard','artcap','beanie','sailorcap']);
+const ACCESSORY_SVG_URLS=buildURLs('accessories',['backpack','shades','hearts','cape']);
+const SHIRT_SVG_URLS=buildURLs('shirts',['bowtie','suit','overalls','shirt','green','sailor','art']);
+
+const toLabel=str=>str.charAt(0).toUpperCase()+str.slice(1).replace(/([A-Z])/g,' $1').trim();
 
 const svgCache={};
 const fetchText=async url=>{
@@ -622,35 +606,9 @@ const getCompositeBananaSVG=async(head,accessory,shirt)=>{
 };
 
 const CUSTOMIZATION_OPTIONS={
-  head:[
-    {value:'default',label:'None'},
-    {value:'backcap',label:'Back Cap'},
-    {value:'artcap',label:'Art Cap'},
-    {value:'beanie',label:'Beanie'},
-    {value:'sailorcap',label:'Sailor Cap'},
-    {value:'cat',label:'Cat'},
-    {value:'chef',label:'Chef'},
-    {value:'detective',label:'Detective'},
-    {value:'explorer',label:'Explorer'},
-    {value:'funcap',label:'Fun Cap'},
-    {value:'wizard',label:'Wizard'},
-  ],
-  accessory:[
-    {value:'default',label:'None'},
-    {value:'shades',label:'Shades'},
-    {value:'backpack',label:'Backpack'},
-    {value:'hearts',label:'Hearts'},
-  ],
-  shirt:[
-    {value:'default',label:'None'},
-    {value:'bowtie',label:'Bow Tie'},
-    {value:'suit',label:'Suit'},
-    {value:'overalls',label:'Overalls'},
-    {value:'shirt',label:'Shirt'},
-    {value:'green',label:'Green Tee'},
-    {value:'sailor',label:'Sailor'},
-    {value:'art',label:'Art Smock'},
-  ]
+  head:[{value:'default',label:'None'},...['backcap','cat','chef','detective','explorer','funcap','wizard','artcap','beanie','sailorcap'].map(v=>({value:v,label:toLabel(v)}))],
+  accessory:[{value:'default',label:'None'},...['backpack','shades','hearts','cape'].map(v=>({value:v,label:toLabel(v)}))],
+  shirt:[{value:'default',label:'None'},...['bowtie','suit','overalls','shirt','green','sailor','art'].map(v=>({value:v,label:toLabel(v)}))],
 };
 
 const resizeImage=(file,maxW=1200,maxH=1200,q=0.8)=>new Promise((res,rej)=>{
