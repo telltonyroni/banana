@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍌 Banana Runner</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #FEF3C7, #FED7AA);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      overflow-x: hidden;
+    }
+    #gameContainer {
+      width: 100%;
+      max-width: 800px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5rem;
+      color: #D97706;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    .subtitle {
+      color: #374151;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+    #canvasWrapper {
+      position: relative;
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      overflow: hidden;
+      margin: 0 auto;
+    }
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .menu-box, .gameover-box {
+      background: white;
+      border-radius: 1.5rem;
+      padding: 2rem;
+      max-width: 400px;
+      width: 100%;
+    }
+    .menu-box h2, .gameover-box h2 {
+      font-size: 1.75rem;
+      font-weight: bold;
+      color: #D97706;
+      margin-bottom: 1.5rem;
+    }
+    .gameover-box h2 { color: #DC2626; }
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      text-align: left;
+    }
+    select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 2px solid #FCD34D;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    button {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.125rem;
+      font-weight: bold;
+      background: linear-gradient(to right, #FCD34D, #FBBF24);
+      color: white;
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    button:hover { transform: scale(1.05); }
+    button:active { transform: scale(0.95); }
+    .btn-secondary {
+      background: linear-gradient(to right, #10B981, #059669);
+      margin-bottom: 0.5rem;
+    }
+    .btn-menu {
+      background: linear-gradient(to right, #FCD34D, #FBBF24);
+    }
+    .stats {
+      margin-top: 1rem;
+      background: white;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #D97706;
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: #6B7280;
+    }
+    .controls-info {
+      margin-top: 1.5rem;
+      background: white;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .controls-info h3 {
+      font-weight: bold;
+      margin-bottom: 0.75rem;
+    }
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      text-align: center;
+    }
+    .control-item {
+      background: #FEF3C7;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+    }
+    .control-label {
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+    .control-desc {
+      color: #6B7280;
+      font-size: 0.875rem;
+    }
+    .abilities {
+      margin-top: 1.5rem;
+      background: linear-gradient(to right, #FEF3C7, #FED7AA);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .abilities h3 {
+      font-weight: bold;
+      margin-bottom: 1rem;
+      font-size: 1.125rem;
+    }
+    .abilities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+    }
+    .ability-item {
+      background: white;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      text-align: center;
+    }
+    .ability-name {
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+    .ability-desc {
+      color: #6B7280;
+      font-size: 0.875rem;
+    }
+    .score-item {
+      margin: 0.5rem 0;
+      font-size: 1.25rem;
+    }
+    .highscore {
+      color: #10B981;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+    @media (max-width: 640px) {
+      h1 { font-size: 2rem; }
+      .menu-box, .gameover-box { padding: 1.5rem; }
+      .stats { gap: 1rem; }
+      .stat-value { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="gameContainer">
+    <h1>🍌 Banana Runner</h1>
+    <p class="subtitle" id="subtitle">Jump and slide to avoid obstacles!</p>
+    
+    <div id="canvasWrapper">
+      <canvas id="gameCanvas"></canvas>
+      
+      <!-- Menu Overlay -->
+      <div class="overlay" id="menuOverlay">
+        <div class="menu-box">
+          <h2>Customize Your Banana</h2>
+          
+          <label>Head Gear</label>
+          <select id="headSelect">
+            <option value="default">🍌 None</option>
+            <option value="chef">👨‍🍳 Chef Hat (Magnet)</option>
+            <option value="detective">🕵️ Detective (Slow-mo)</option>
+            <option value="wizard">🧙 Wizard (Higher Jump)</option>
+          </select>
+          
+          <label>Accessory</label>
+          <select id="accessorySelect">
+            <option value="default">🍌 None</option>
+            <option value="sunglasses">😎 Sunglasses (Shield)</option>
+            <option value="backpack">🎒 Backpack (Storage)</option>
+          </select>
+          
+          <label>Outfit</label>
+          <select id="shirtSelect">
+            <option value="default">🍌 None</option>
+            <option value="suit">👔 Suit (2x Coins)</option>
+            <option value="casual">👕 Casual (Balanced)</option>
+          </select>
+          
+          <button onclick="startGame()">▶️ Start Running!</button>
+          <p id="highScoreDisplay" class="highscore" style="display:none;"></p>
+        </div>
+      </div>
+      
+      <!-- Game Over Overlay -->
+      <div class="overlay" id="gameoverOverlay" style="display:none;">
+        <div class="gameover-box">
+          <h2>Game Over!</h2>
+          <div class="score-item">Distance: <strong id="finalDistance">0</strong>m</div>
+          <div class="score-item">Score: <strong id="finalScore">0</strong></div>
+          <div class="score-item">🪙 Coins: <strong id="finalCoins">0</strong></div>
+          <p id="newHighScore" class="highscore" style="display:none;">🏆 New High Score!</p>
+          <button class="btn-secondary" onclick="startGame()">🔄 Play Again</button>
+          <button class="btn-menu" onclick="showMenu()">⚙️ Menu</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Live Stats -->
+    <div class="stats" id="liveStats" style="display:none;">
+      <div class="stat-item">
+        <div class="stat-value" id="liveDistance">0</div>
+        <div class="stat-label">Distance (m)</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="liveScore">0</div>
+        <div class="stat-label">Score</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="liveCoins">🪙 0</div>
+        <div class="stat-label">Coins</div>
+      </div>
+    </div>
+    
+    <!-- Controls Info -->
+    <div class="controls-info">
+      <h3>🎮 Controls</h3>
+      <div class="controls-grid" id="controlsGrid">
+        <div class="control-item">
+          <div class="control-label">⬆️ Arrow Up / Space</div>
+          <div class="control-desc">Jump</div>
+        </div>
+        <div class="control-item">
+          <div class="control-label">⬇️ Arrow Down</div>
+          <div class="control-desc">Slide</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Abilities Info -->
+    <div class="abilities">
+      <h3>✨ Special Abilities</h3>
+      <div class="abilities-grid">
+        <div class="ability-item">
+          <div class="ability-name" style="color:#D97706;">👨‍🍳 Chef Hat</div>
+          <div class="ability-desc">Magnet pulls coins closer</div>
+        </div>
+        <div class="ability-item">
+          <div class="ability-name" style="color:#7C3AED;">🧙 Wizard Hat</div>
+          <div class="ability-desc">Jump higher and further</div>
+        </div>
+        <div class="ability-item">
+          <div class="ability-name" style="color:#2563EB;">😎 Sunglasses</div>
+          <div class="ability-desc">Shield from 1 obstacle</div>
+        </div>
+        <div class="ability-item">
+          <div class="ability-name" style="color:#10B981;">👔 Suit</div>
+          <div class="ability-desc">2x coin value</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let gameState = 'menu';
+    let gameLoop = null;
+    let highScore = localStorage.getItem('bananaRunnerHighScore') || 0;
+    let isMobile = window.innerWidth < 768;
+    
+    const game = {
+      player: { x: 150, y: 300, width: 40, height: 60, velocityY: 0, isJumping: false, isSliding: false },
+      obstacles: [],
+      collectibles: [],
+      background: { x: 0 },
+      gameSpeed: 5,
+      gravity: 0.8,
+      jumpForce: -15,
+      score: 0,
+      distance: 0,
+      coins: 0,
+      obstacleTimer: 0,
+      collectibleTimer: 0
+    };
+    
+    const customization = {
+      head: 'default',
+      accessory: 'default',
+      shirt: 'default'
+    };
+    
+    const themes = {
+      urban: { name: 'Urban City', sky: '#87CEEB', ground: '#555555', buildings: ['#8B4513', '#A0522D', '#CD853F'], obstacles: ['🚗', '🚧', '🚦'] },
+      desert: { name: 'Desert Sands', sky: '#FFE4B5', ground: '#EDC9AF', buildings: ['#D2691E', '#8B4513', '#A0522D'], obstacles: ['🌵', '🦂', '🪨'] },
+      tropical: { name: 'Tropical Beach', sky: '#00CED1', ground: '#F4A460', buildings: ['#228B22', '#32CD32', '#00FF00'], obstacles: ['🥥', '🦀', '🏖️'] }
+    };
+    
+    const abilityEmojis = {
+      head: { chef: '👨‍🍳', detective: '🕵️', wizard: '🧙' },
+      accessory: { sunglasses: '😎', backpack: '🎒' },
+      shirt: { suit: '👔', casual: '👕' }
+    };
+    
+    function resizeCanvas() {
+      const container = document.getElementById('canvasWrapper');
+      const width = Math.min(container.clientWidth, 800);
+      const height = isMobile ? Math.min(window.innerHeight * 0.6, 450) : 600;
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      game.groundY = height * 0.67;
+      game.player.y = game.groundY - 60;
+    }
+    
+    function drawBanana(x, y, width, height) {
+      ctx.save();
+      
+      ctx.fillStyle = '#FFD93D';
+      ctx.beginPath();
+      ctx.ellipse(x, y + height/2, width/2, height/2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.strokeStyle = '#E0C24B';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - width/4, y + height/4);
+      ctx.lineTo(x - width/4, y + height * 0.75);
+      ctx.stroke();
+      
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.arc(x - 8, y + height/2 - 5, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x + 8, y + height/2 - 5, 3, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y + height/2 + 5, 8, 0, Math.PI);
+      ctx.stroke();
+      
+      ctx.font = '24px Arial';
+      ctx.textAlign = 'center';
+      
+      if (customization.head !== 'default') {
+        ctx.fillText(abilityEmojis.head[customization.head], x, y + height/2 - 20);
+      }
+      if (customization.accessory !== 'default') {
+        ctx.fillText(abilityEmojis.accessory[customization.accessory], x + 15, y + height/2);
+      }
+      if (customization.shirt !== 'default') {
+        ctx.fillText(abilityEmojis.shirt[customization.shirt], x, y + height/2 + 20);
+      }
+      
+      ctx.restore();
+    }
+    
+    function drawBackground(currentTheme) {
+      const theme = themes[currentTheme];
+      
+      ctx.fillStyle = theme.sky;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      const buildingOffset = (game.background.x * 0.3) % 200;
+      for (let i = -1; i < Math.ceil(canvas.width / 200) + 2; i++) {
+        const x = i * 200 - buildingOffset;
+        const height = 100 + Math.sin(i * 0.5) * 30;
+        ctx.fillStyle = theme.buildings[i % theme.buildings.length];
+        ctx.fillRect(x, game.groundY - height, 150, height);
+      }
+      
+      ctx.fillStyle = theme.ground;
+      ctx.fillRect(0, game.groundY, canvas.width, canvas.height - game.groundY);
+      
+      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+      ctx.lineWidth = 2;
+      const lineOffset = game.background.x % 100;
+      for (let i = 0; i < Math.ceil(canvas.width / 100) + 1; i++) {
+        const x = i * 100 - lineOffset;
+        ctx.beginPath();
+        ctx.moveTo(x, game.groundY);
+        ctx.lineTo(x + 50, game.groundY);
+        ctx.stroke();
+      }
+    }
+    
+    function update() {
+      if (gameState !== 'playing') return;
+      
+      const themeIndex = Math.floor(game.distance / 500) % Object.keys(themes).length;
+      const currentTheme = Object.keys(themes)[themeIndex];
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground(currentTheme);
+      
+      game.background.x += game.gameSpeed;
+      
+      if (game.player.isJumping) {
+        game.player.velocityY += game.gravity;
+        game.player.y += game.player.velocityY;
+        
+        if (game.player.y >= game.groundY - 60) {
+          game.player.y = game.groundY - 60;
+          game.player.velocityY = 0;
+          game.player.isJumping = false;
+        }
+      }
+      
+      const playerHeight = game.player.isSliding ? 30 : 60;
+      drawBanana(game.player.x, game.player.y, game.player.width, playerHeight);
+      
+      game.obstacleTimer++;
+      if (game.obstacleTimer > Math.max(60 - game.gameSpeed * 1.5, 30)) {
+        game.obstacles.push({
+          x: canvas.width,
+          y: game.groundY,
+          width: 40,
+          height: 60,
+          type: themes[currentTheme].obstacles[Math.floor(Math.random() * 3)]
+        });
+        game.obstacleTimer = 0;
+      }
+      
+      game.collectibleTimer++;
+      if (game.collectibleTimer > 50) {
+        game.collectibles.push({
+          x: canvas.width,
+          y: game.groundY - 100 - Math.random() * 100,
+          type: Math.random() > 0.7 ? '✨' : '🪙',
+          collected: false
+        });
+        game.collectibleTimer = 0;
+      }
+      
+      game.obstacles = game.obstacles.filter(obs => {
+        obs.x -= game.gameSpeed;
+        
+        if (obs.x > -50) {
+          ctx.font = '40px Arial';
+          ctx.fillText(obs.type, obs.x, obs.y);
+          
+          if (game.player.x + game.player.width > obs.x &&
+              game.player.x < obs.x + obs.width &&
+              game.player.y + playerHeight > obs.y - obs.height &&
+              game.player.y < obs.y) {
+            if (customization.accessory === 'sunglasses') {
+              customization.accessory = 'default';
+            } else {
+              endGame();
+            }
+          }
+          return true;
+        }
+        return false;
+      });
+      
+      game.collectibles = game.collectibles.filter(col => {
+        col.x -= game.gameSpeed;
+        
+        if (col.x > -50 && !col.collected) {
+          ctx.font = '30px Arial';
+          ctx.fillText(col.type, col.x, col.y);
+          
+          const hasMagnet = customization.head === 'chef';
+          const magnetRange = hasMagnet ? 150 : 50;
+          
+          const dist = Math.sqrt(
+            Math.pow(game.player.x - col.x, 2) +
+            Math.pow(game.player.y + playerHeight/2 - col.y, 2)
+          );
+          
+          if (dist < magnetRange) {
+            if (hasMagnet && dist > 50) {
+              col.x += (game.player.x - col.x) * 0.1;
+              col.y += (game.player.y + playerHeight/2 - col.y) * 0.1;
+            }
+            
+            if (dist < 50) {
+              col.collected = true;
+              if (col.type === '🪙') {
+                const coinValue = customization.shirt === 'suit' ? 2 : 1;
+                game.coins += coinValue;
+                game.score += 10 * coinValue;
+              } else {
+                game.score += 50;
+              }
+            }
+          }
+          return true;
+        }
+        return !col.collected;
+      });
+      
+      game.score += 1;
+      game.distance += 0.1;
+      
+      if (game.distance % 100 < 0.1) {
+        game.gameSpeed = Math.min(game.gameSpeed + 0.2, 10);
+      }
+      
+      document.getElementById('liveDistance').textContent = Math.floor(game.distance);
+      document.getElementById('liveScore').textContent = Math.floor(game.score);
+      document.getElementById('liveCoins').textContent = '🪙 ' + game.coins;
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+      ctx.fillRect(10, 10, 160, 70);
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 16px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText(Math.floor(game.distance) + 'm', 15, 30);
+      ctx.fillText('Score: ' + Math.floor(game.score), 15, 50);
+      ctx.fillText('🪙 ' + game.coins, 15, 70);
+      
+      ctx.fillStyle = 'rgba(255, 217, 61, 0.95)';
+      ctx.fillRect(canvas.width - 160, 10, 150, 35);
+      ctx.fillStyle = '#000';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 14px Arial';
+      ctx.fillText(themes[currentTheme].name, canvas.width - 85, 32);
+    }
+    
+    function startGame() {
+      customization.head = document.getElementById('headSelect').value;
+      customization.accessory = document.getElementById('accessorySelect').value;
+      customization.shirt = document.getElementById('shirtSelect').value;
+      
+      game.player = { x: 150, y: game.groundY - 60, width: 40, height: 60, velocityY: 0, isJumping: false, isSliding: false };
+      game.obstacles = [];
+      game.collectibles = [];
+      game.background = { x: 0 };
+      game.gameSpeed = 5;
+      game.jumpForce = customization.head === 'wizard' ? -18 : -15;
+      game.score = 0;
+      game.distance = 0;
+      game.coins = 0;
+      game.obstacleTimer = 0;
+      game.collectibleTimer = 0;
+      
+      document.getElementById('menuOverlay').style.display = 'none';
+      document.getElementById('gameoverOverlay').style.display = 'none';
+      document.getElementById('liveStats').style.display = 'flex';
+      
+      gameState = 'playing';
+      if (gameLoop) clearInterval(gameLoop);
+      gameLoop = setInterval(update, 1000 / 60);
+    }
+    
+    function endGame() {
+      gameState = 'gameover';
+      clearInterval(gameLoop);
+      
+      document.getElementById('liveStats').style.display = 'none';
+      document.getElementById('finalDistance').textContent = Math.floor(game.distance);
+      document.getElementById('finalScore').textContent = Math.floor(game.score);
+      document.getElementById('finalCoins').textContent = game.coins;
+      
+      if (game.score > highScore) {
+        highScore = game.score;
+        localStorage.setItem('bananaRunnerHighScore', highScore);
+        document.getElementById('newHighScore').style.display = 'block';
+      } else {
+        document.getElementById('newHighScore').style.display = 'none';
+      }
+      
+      document.getElementById('gameoverOverlay').style.display = 'flex';
+    }
+    
+    function showMenu() {
+      gameState = 'menu';
+      document.getElementById('gameoverOverlay').style.display = 'none';
+      document.getElementById('menuOverlay').style.display = 'flex';
+      
+      if (highScore > 0) {
+        document.getElementById('highScoreDisplay').textContent = '🏆 High Score: ' + highScore;
+        document.getElementById('highScoreDisplay').style.display = 'block';
+      }
+    }
+    
+    window.addEventListener('resize', () => {
+      isMobile = window.innerWidth < 768;
+      resizeCanvas();
+      
+      const controlsGrid = document.getElementById('controlsGrid');
+      if (isMobile) {
+        controlsGrid.innerHTML = `
+          <div class="control-item">
+            <div class="control-label">👆 Tap or Swipe Up</div>
+            <div class="control-desc">Jump</div>
+          </div>
+          <div class="control-item">
+            <div class="control-label">👇 Swipe Down</div>
+            <div class="control-desc">Slide</div>
+          </div>
+        `;
+        document.getElementById('subtitle').textContent = 'Tap to jump, swipe down to slide!';
+      } else {
+        controlsGrid.innerHTML = `
+          <div class="control-item">
+            <div class="control-label">⬆️ Arrow Up / Space</div>
+            <div class="control-desc">Jump</div>
+          </div>
+          <div class="control-item">
+            <div class="control-label">⬇️ Arrow Down</div>
+            <div class="control-desc">Slide</div>
+          </div>
+        `;
+        document.getElementById('subtitle').textContent = 'Jump and slide to avoid obstacles!';
+      }
+    });
+    
+    resizeCanvas();
+    if (highScore > 0) {
+      document.getElementById('highScoreDisplay').textContent = '🏆 High Score: ' + highScore;
+      document.getElementById('highScoreDisplay').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
